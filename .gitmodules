@@ -1,0 +1,6 @@
+[submodule "GameMate/ext"]
+	path = GameMate/ext
+	url = https://github.com/Pennywise007/ext
+[submodule "GameMate/Controls"]
+	path = GameMate/Controls
+	url = https://github.com/Pennywise007/Controls
