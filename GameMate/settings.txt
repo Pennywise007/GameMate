@@ -1,0 +1,39 @@
+"class Settings": {
+    "working": true,
+    "activeTab": 3,
+    "enableButton": -1,
+    "tabs": {
+        "0": {
+            "enabled": true,
+            "gameMode": true,
+            "tabName": "1",
+            "exeName": "ewqeqe",
+            "macroses": {
+            }
+        },
+        "1": {
+            "enabled": true,
+            "gameMode": true,
+            "tabName": "2",
+            "exeName": "11",
+            "macroses": {
+            }
+        },
+        "2": {
+            "enabled": true,
+            "gameMode": true,
+            "tabName": "123213",
+            "exeName": "sh",
+            "macroses": {
+            }
+        },
+        "3": {
+            "enabled": true,
+            "gameMode": true,
+            "tabName": "2",
+            "exeName": "sh",
+            "macroses": {
+            }
+        }
+    }
+}

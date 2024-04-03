@@ -1,48 +1,83 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Controls">
+      <UniqueIdentifier>{78a2276a-82e1-4d67-bfe7-e1d0b921e4a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dialogs">
+      <UniqueIdentifier>{68f6db9f-9385-40a4-89e9-859be1426f77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Base">
+      <UniqueIdentifier>{bac2344e-1ac6-4ae5-8255-ccaa6761bf0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GameMate.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Controls\TabControl\TabControl.h">
+      <Filter>Controls</Filter>
     </ClInclude>
-    <ClInclude Include="GameMateDlg.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Controls\Layout\Layout.h">
+      <Filter>Controls</Filter>
     </ClInclude>
-    <ClInclude Include="framework.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="MainDlg.h">
+      <Filter>Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="AddingTabDlg.h">
+      <Filter>Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
+      <Filter>Base</Filter>
     </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="framework.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="GameMate.h">
+      <Filter>Base</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
-      <Filter>Header Files</Filter>
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Settings.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="GameSettingsDlg.h">
+      <Filter>Dialogs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GameMate.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Controls\TabControl\TabControl.cpp">
+      <Filter>Controls</Filter>
     </ClCompile>
-    <ClCompile Include="GameMateDlg.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Controls\Layout\Layout.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="MainDlg.cpp">
+      <Filter>Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="AddingTabDlg.cpp">
+      <Filter>Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="GameMate.cpp">
+      <Filter>Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Settings.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="GameSettingsDlg.cpp">
+      <Filter>Dialogs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
