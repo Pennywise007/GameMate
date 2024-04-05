@@ -2,6 +2,7 @@
 #include "GameMate.h"
 #include "afxdialogex.h"
 #include "GameSettingsDlg.h"
+#include "EditMacrosDlg.h"
 
 IMPLEMENT_DYNAMIC(CGameSettingsDlg, CDialogEx)
 
@@ -48,6 +49,8 @@ void CGameSettingsDlg::OnCancel()
 
 void CGameSettingsDlg::OnBnClickedButtonAdd()
 {
+	CEditMacrosDlg dlg({}, this);
+	dlg.DoModal();
 	// TODO: Add your control notification handler code here
 }
 

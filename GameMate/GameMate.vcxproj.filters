@@ -23,9 +23,6 @@
     <ClInclude Include="Controls\TabControl\TabControl.h">
       <Filter>Controls</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\Layout\Layout.h">
-      <Filter>Controls</Filter>
-    </ClInclude>
     <ClInclude Include="MainDlg.h">
       <Filter>Dialogs</Filter>
     </ClInclude>
@@ -53,12 +50,19 @@
     <ClInclude Include="GameSettingsDlg.h">
       <Filter>Dialogs</Filter>
     </ClInclude>
+    <ClInclude Include="EditMacrosDlg.h">
+      <Filter>Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="CLis.h" />
+    <ClInclude Include="BindEdit.h">
+      <Filter>Dialogs</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\TabControl\TabControl.cpp">
-      <Filter>Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\Layout\Layout.cpp">
       <Filter>Controls</Filter>
     </ClCompile>
     <ClCompile Include="MainDlg.cpp">
@@ -77,6 +81,16 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="GameSettingsDlg.cpp">
+      <Filter>Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="EditMacrosDlg.cpp">
+      <Filter>Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="CLis.cpp" />
+    <ClCompile Include="BindEdit.cpp">
       <Filter>Dialogs</Filter>
     </ClCompile>
   </ItemGroup>

@@ -3,20 +3,28 @@
 #include <map>
 #include <string>
 #include <list>
+#include <optional>
 
 #include <ext/core/singleton.h>
 #include <ext/serialization/iserializable.h>
 
 struct Macros : ext::serializable::SerializableObject<Macros> {
     struct Action : ext::serializable::SerializableObject<Action> {
-        enum Type {
-            eUp = 0,    // key up or mouse wheel
-            eDown,      // key down or mouse wheel
-            eWait
+        enum class Type {
+            eKeyUp = 0,
+            eKeyDown,
+            eMouse,
         };
 
-        Type type;
-        int keyId;
+        static std::optional<Action> GetActionFromMessage(MSG* pMsg, long long delay);
+
+        std::wstring ToString() const;
+
+        DECLARE_SERIALIZABLE_FIELD(Type, type);
+        DECLARE_SERIALIZABLE_FIELD((long long), delay);
+        DECLARE_SERIALIZABLE_FIELD(UINT, messageId);
+        DECLARE_SERIALIZABLE_FIELD(WPARAM, wparam);
+        DECLARE_SERIALIZABLE_FIELD(LPARAM, lparam);
     };
 
     DECLARE_SERIALIZABLE_FIELD(std::list<Action>, actions);

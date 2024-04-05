@@ -8,8 +8,6 @@
 #include "AddingTabDlg.h"
 #include "GameSettingsDlg.h"
 
-#include <Controls/Layout/Layout.h>
-
 #include <ext/core/check.h>
 
 #ifdef _DEBUG
@@ -52,9 +50,6 @@ BOOL CMainDlg::OnInitDialog()
 	m_tabControlGames.SetCurSel(settings.activeTab);
 
 	OnGamesTabChanged();
-
-	Layout::AnchorWindow(m_tabControlGames(), *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(m_tabControlGames(), *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
 
 	return TRUE;
 }
@@ -117,7 +112,7 @@ void CMainDlg::OnBnClickedButtonDeleteTab()
 	EXT_ASSERT(curSel < (int)tabs.size());
 	tabs.erase(std::next(tabs.begin(), curSel));
 
-	if (curSel >= tabs.size())
+	if (curSel >= (int)tabs.size())
 		curSel = int(tabs.size()) - 1;
 	m_tabControlGames.SetCurSel(curSel);
 
@@ -161,6 +156,7 @@ BOOL CMainDlg::PreTranslateMessage(MSG* pMsg)
 			ShowWindow(SW_MINIMIZE);
 			return TRUE;
 		}
+		break;
 	}
 	}
 

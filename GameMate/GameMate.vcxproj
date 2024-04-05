@@ -192,8 +192,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AddingTabDlg.h" />
-    <ClInclude Include="Controls\Layout\Layout.h" />
+    <ClInclude Include="BindEdit.h" />
+    <ClInclude Include="EditMacrosDlg.h" />
+    <ClInclude Include="CLis.h" />
     <ClInclude Include="Controls\TabControl\TabControl.h" />
+    <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameMate.h" />
     <ClInclude Include="MainDlg.h" />
@@ -205,13 +208,16 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AddingTabDlg.cpp" />
-    <ClCompile Include="Controls\Layout\Layout.cpp">
+    <ClCompile Include="BindEdit.cpp" />
+    <ClCompile Include="EditMacrosDlg.cpp" />
+    <ClCompile Include="CLis.cpp" />
+    <ClCompile Include="Controls\TabControl\TabControl.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Controls\TabControl\TabControl.cpp">
+    <ClCompile Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
