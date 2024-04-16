@@ -6,14 +6,14 @@
 
 #include "Settings.h"
 
-class CBindEdit : public CDialogEx
+class CBindEditDlg : protected CDialogEx
 {
-	DECLARE_DYNAMIC(CBindEdit)
+	DECLARE_DYNAMIC(CBindEditDlg)
 
 public:
-	CBindEdit(CWnd* pParent);
+	CBindEditDlg(CWnd* pParent, std::optional<Macros::Action> action = std::nullopt);
 
-	std::optional<Macros::Action> ExecModal();
+	[[nodiscard]] std::optional<Macros::Action> ExecModal();
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -30,4 +30,5 @@ protected:
 private:
 	CEdit m_editAction;
 	std::optional<Macros::Action> m_lastAction;
+	virtual void OnOK();
 };

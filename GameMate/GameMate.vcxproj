@@ -192,8 +192,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AddingTabDlg.h" />
-    <ClInclude Include="BindEdit.h" />
-    <ClInclude Include="EditMacrosDlg.h" />
+    <ClInclude Include="BindEditDlg.h" />
+    <ClInclude Include="Controls\Edit\CEditBase\CEditBase.h" />
+    <ClInclude Include="Controls\Edit\SpinEdit\SpinEdit.h" />
+    <ClInclude Include="Controls\SpinButton\SpinButton.h" />
+    <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.h" />
+    <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditorImpl.h" />
+    <ClInclude Include="Controls\Tooltip\ToolTip.h" />
+    <ClInclude Include="MacrosEditDlg.h" />
     <ClInclude Include="CLis.h" />
     <ClInclude Include="Controls\TabControl\TabControl.h" />
     <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h" />
@@ -208,8 +214,38 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AddingTabDlg.cpp" />
-    <ClCompile Include="BindEdit.cpp" />
-    <ClCompile Include="EditMacrosDlg.cpp" />
+    <ClCompile Include="BindEditDlg.cpp" />
+    <ClCompile Include="Controls\Edit\CEditBase\CEditBase.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Controls\Edit\SpinEdit\SpinEdit.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Controls\SpinButton\SpinButton.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Controls\Tooltip\ToolTip.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="MacrosEditDlg.cpp" />
     <ClCompile Include="CLis.cpp" />
     <ClCompile Include="Controls\TabControl\TabControl.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>

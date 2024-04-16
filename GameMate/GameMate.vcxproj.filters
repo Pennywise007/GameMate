@@ -50,15 +50,33 @@
     <ClInclude Include="GameSettingsDlg.h">
       <Filter>Dialogs</Filter>
     </ClInclude>
-    <ClInclude Include="EditMacrosDlg.h">
+    <ClInclude Include="MacrosEditDlg.h">
       <Filter>Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h">
       <Filter>Controls</Filter>
     </ClInclude>
     <ClInclude Include="CLis.h" />
-    <ClInclude Include="BindEdit.h">
+    <ClInclude Include="BindEditDlg.h">
       <Filter>Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditorImpl.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Edit\CEditBase\CEditBase.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Edit\SpinEdit\SpinEdit.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\SpinButton\SpinButton.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Tooltip\ToolTip.h">
+      <Filter>Controls</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -83,15 +101,30 @@
     <ClCompile Include="GameSettingsDlg.cpp">
       <Filter>Dialogs</Filter>
     </ClCompile>
-    <ClCompile Include="EditMacrosDlg.cpp">
+    <ClCompile Include="MacrosEditDlg.cpp">
       <Filter>Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.cpp">
       <Filter>Controls</Filter>
     </ClCompile>
     <ClCompile Include="CLis.cpp" />
-    <ClCompile Include="BindEdit.cpp">
+    <ClCompile Include="BindEditDlg.cpp">
       <Filter>Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Edit\CEditBase\CEditBase.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Edit\SpinEdit\SpinEdit.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\SpinButton\SpinButton.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Tooltip\ToolTip.cpp">
+      <Filter>Controls</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

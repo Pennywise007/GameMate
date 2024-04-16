@@ -30,15 +30,13 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedButtonAddTab();
-
-protected:
-	HICON m_hIcon;
+	afx_msg void OnBnClickedButtonDeleteTab();
 
 private:
 	int AddTab(const std::shared_ptr<TabConfiguration>& tabSettings);
 	void OnGamesTabChanged();
 
-public:
+private:
+	HICON m_hIcon;
 	CTabControl m_tabControlGames;
-	afx_msg void OnBnClickedButtonDeleteTab();
 };

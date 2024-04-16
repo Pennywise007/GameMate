@@ -89,7 +89,7 @@ std::wstring Macros::Action::ToString() const
 	case Macros::Action::Type::eKeyUp:
 	{
 		std::wstring keyText(MAX_PATH, L'\0');
-		if (auto l = GetKeyNameText(lparam, keyText.data(), MAX_PATH); l != 0)
+		if (auto l = GetKeyNameText((LONG)lparam, keyText.data(), MAX_PATH); l != 0)
 			keyText.resize(l);
 		else
 		{

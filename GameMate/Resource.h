@@ -7,7 +7,7 @@
 #define IDR_MAINFRAME                   128
 #define IDD_TAB_GAME_SETTINGS           130
 #define IDD_DIALOG_ADDING_TAB           132
-#define IDD_DIALOG_EDIT_MACROS          134
+#define IDD_DIALOG_MACROS_EDIT          134
 #define IDD_DIALOG_BIND_EDIT            137
 #define IDC_TAB1                        1000
 #define IDC_TABCONTROL_GAMES            1000
@@ -29,14 +29,17 @@
 #define IDC_BUTTON_RECORD               1017
 #define IDC_EDIT1                       1024
 #define IDC_EDIT_ACTION                 1024
+#define IDC_EDIT_RANDOMIZE_DELAYS       1024
+#define IDC_BUTTON_DELAY_HELP           1028
+#define IDC_STATIC_DELAY_HELP           1029
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        139
+#define _APS_NEXT_RESOURCE_VALUE        140
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1025
+#define _APS_NEXT_CONTROL_VALUE         1030
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

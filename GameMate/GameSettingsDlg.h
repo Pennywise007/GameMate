@@ -5,6 +5,9 @@
 
 #include "Settings.h"
 
+#include <Controls/Tables/List/ListGroupCtrl/ListGroupCtrl.h>
+#include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
+
 class CGameSettingsDlg : public CDialogEx
 {
 	DECLARE_DYNAMIC(CGameSettingsDlg)
@@ -24,15 +27,19 @@ protected:
 	virtual void OnOK();
 	virtual void OnCancel();
 	afx_msg void OnBnClickedButtonAdd();
-	afx_msg void OnBnClickedButtonEdit();
 	afx_msg void OnBnClickedButtonRemove();
 	afx_msg void OnBnClickedCheckEnabled();
 	afx_msg void OnEnChangeEditGameName();
 
 private:
-	const std::shared_ptr<TabConfiguration> m_configuration;
+	void AddNewMacros(TabConfiguration::Keybind keybind, Macros&& macros);
 
-public:
+private:
+	const std::shared_ptr<TabConfiguration> m_configuration;
+	
 	CButton m_enabled;
 	CEdit m_exeName;
+	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listMacroses;
+public:
+	afx_msg void OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult);
 };
