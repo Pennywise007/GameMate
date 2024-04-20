@@ -37,11 +37,48 @@ struct Macros : ext::serializable::SerializableObject<Macros> {
     DECLARE_SERIALIZABLE_FIELD(double, randomizeDelays, 0);
 };
 
+namespace crosshair {
+enum class Type
+{
+    eDot,
+    eCross,
+    eCrossWithCircle,
+
+    eNone,
+    eCircle,
+    eCrossWithDot,
+    eCircleWithDot,
+    eCircleWithCross,
+    eCrossWithCircleAndDot,
+    eCrossWithDotAndCircle,
+    eCircleWithDotAndCross,
+    eCircleWithCrossAndDot,
+    eDotWithCrossAndCircle,
+    eDotWithCircleAndCross
+};
+
+enum class Size {
+    eSmall,  // 8x8
+    eMedium, // 16x16
+    eLarge   // 32x32
+};
+
+struct Settings : ext::serializable::SerializableObject<Settings> {
+    DECLARE_SERIALIZABLE_FIELD(bool, show, false);
+    DECLARE_SERIALIZABLE_FIELD(crosshair::Size, size, Size::eMedium);
+    DECLARE_SERIALIZABLE_FIELD(crosshair::Type, type, Type::eCross);
+    DECLARE_SERIALIZABLE_FIELD(std::wstring, customName);
+    DECLARE_SERIALIZABLE_FIELD(COLORREF, color, RGB(0, 0, 0));
+};
+
+} // namespace crosshair
+
 struct TabConfiguration : ext::serializable::SerializableObject<TabConfiguration> {
     DECLARE_SERIALIZABLE_FIELD(bool, enabled, true);
     DECLARE_SERIALIZABLE_FIELD(bool, gameMode, true);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, tabName);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, exeName);
+    DECLARE_SERIALIZABLE_FIELD(crosshair::Settings, crosshairSettings);
 
     using Keybind = Macros::Action;
     DECLARE_SERIALIZABLE_FIELD((std::map<Keybind, Macros>), macrosByBind);

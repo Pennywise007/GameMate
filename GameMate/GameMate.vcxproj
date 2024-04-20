@@ -193,12 +193,15 @@
   <ItemGroup>
     <ClInclude Include="AddingTabDlg.h" />
     <ClInclude Include="BindEditDlg.h" />
+    <ClInclude Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.h" />
+    <ClInclude Include="Controls\ComboBox\CIconComboBox\IconComboBox.h" />
     <ClInclude Include="Controls\Edit\CEditBase\CEditBase.h" />
     <ClInclude Include="Controls\Edit\SpinEdit\SpinEdit.h" />
     <ClInclude Include="Controls\SpinButton\SpinButton.h" />
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.h" />
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditorImpl.h" />
     <ClInclude Include="Controls\Tooltip\ToolTip.h" />
+    <ClInclude Include="Controls\TrayHelper\TrayHelper.h" />
     <ClInclude Include="MacrosEditDlg.h" />
     <ClInclude Include="CLis.h" />
     <ClInclude Include="Controls\TabControl\TabControl.h" />
@@ -211,10 +214,23 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Crosshairs.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AddingTabDlg.cpp" />
     <ClCompile Include="BindEditDlg.cpp" />
+    <ClCompile Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Controls\ComboBox\CIconComboBox\IconComboBox.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Controls\Edit\CEditBase\CEditBase.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -245,6 +261,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Controls\TrayHelper\TrayHelper.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Crosshairs.cpp" />
     <ClCompile Include="MacrosEditDlg.cpp" />
     <ClCompile Include="CLis.cpp" />
     <ClCompile Include="Controls\TabControl\TabControl.cpp">
@@ -277,6 +300,9 @@
     <None Include="res\GameMate.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\crosshair_1_16.png" />
+    <Image Include="res\crosshair_1_24.png" />
+    <Image Include="res\crosshair_1_32.png" />
     <Image Include="res\GameMate.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -5,8 +5,11 @@
 
 #include "Settings.h"
 
+#include <Controls/ComboBox/CComboBoxWithSearch/ComboWithSearch.h>
+#include <Controls/ComboBox/CIconComboBox/IconComboBox.h>
 #include <Controls/Tables/List/ListGroupCtrl/ListGroupCtrl.h>
 #include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
+#include <Controls/Tooltip/ToolTip.h>
 
 class CGameSettingsDlg : public CDialogEx
 {
@@ -29,17 +32,31 @@ protected:
 	afx_msg void OnBnClickedButtonAdd();
 	afx_msg void OnBnClickedButtonRemove();
 	afx_msg void OnBnClickedCheckEnabled();
-	afx_msg void OnEnChangeEditGameName();
+	afx_msg void OnCbnSetfocusComboExeName();
+	afx_msg void OnCbnEditchangeComboExeName();
+	afx_msg void OnCbnSelendokComboExeName();
+	afx_msg void OnBnClickedCheckUse();
+	afx_msg void OnBnClickedMfccolorbuttonCrosshairColor();
+	afx_msg void OnCbnSelendokComboCrosshairSelection();
+	afx_msg void OnCbnSelendokComboCrosshairSize();
+	afx_msg void OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult);
 
 private:
 	void AddNewMacros(TabConfiguration::Keybind keybind, Macros&& macros);
+	void ChangeCrosshairColors(COLORREF newColor);
 
 private:
 	const std::shared_ptr<TabConfiguration> m_configuration;
-	
+	std::list<CBitmap> m_crosshairs;
+
 	CButton m_enabled;
-	CEdit m_exeName;
+	ComboWithSearch m_exeName;
+	CIconComboBox m_comboCrosshairs;
 	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listMacroses;
-public:
-	afx_msg void OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult);
+
+	CStatic m_staticCrosshairInfo;
+	controls::CToolTip m_staticCrosshairInfoTooltip;
+	CButton m_checkboxShowCrosshair;
+	CComboBox m_comboboxCrosshairSize;
+	CMFCColorButton m_colorPickerCrosshairColor;
 };

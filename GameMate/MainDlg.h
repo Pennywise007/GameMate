@@ -2,6 +2,7 @@
 #pragma once
 
 #include <Controls/TabControl/TabControl.h>
+#include <Controls/TrayHelper/TrayHelper.h>
 
 #include "Settings.h"
 
@@ -31,6 +32,7 @@ protected:
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedButtonAddTab();
 	afx_msg void OnBnClickedButtonDeleteTab();
+	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 
 private:
 	int AddTab(const std::shared_ptr<TabConfiguration>& tabSettings);
@@ -39,4 +41,5 @@ private:
 private:
 	HICON m_hIcon;
 	CTabControl m_tabControlGames;
+	CTrayHelper m_trayHelper;
 };

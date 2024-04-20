@@ -33,6 +33,7 @@ BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BUTTON_ADD_TAB, &CMainDlg::OnBnClickedButtonAddTab)
 	ON_BN_CLICKED(IDC_BUTTON_DELETE_TAB, &CMainDlg::OnBnClickedButtonDeleteTab)
+	ON_WM_SYSCOMMAND()
 END_MESSAGE_MAP()
 
 BOOL CMainDlg::OnInitDialog()
@@ -50,6 +51,34 @@ BOOL CMainDlg::OnInitDialog()
 	m_tabControlGames.SetCurSel(settings.activeTab);
 
 	OnGamesTabChanged();
+
+	m_trayHelper.addTrayIcon(m_hIcon, L"Game mate",
+							 []()
+							 {
+								 return ::GetSubMenu(LoadMenu(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MENU_TRAY)), 0);
+							 },
+							 nullptr,
+							 [this](UINT commandId)
+							 {
+								 switch (commandId)
+								 {
+								 case ID_MENU_OPEN:
+									 ShowWindow(SW_RESTORE);
+									 SetForegroundWindow();
+									 break;
+								 case ID_MENU_CLOSE:
+									 EndDialog(IDCANCEL);
+									 break;
+								 default:
+									 EXT_ASSERT(!"Не известный пункт меню!");
+									 break;
+								 }
+							 },
+							 [this]()
+							 {
+								 ShowWindow(SW_RESTORE);
+								 SetForegroundWindow();
+							 });
 
 	return TRUE;
 }
@@ -161,4 +190,27 @@ BOOL CMainDlg::PreTranslateMessage(MSG* pMsg)
 	}
 
 	return CDialogEx::PreTranslateMessage(pMsg);
+}
+
+void CMainDlg::OnSysCommand(UINT nID, LPARAM lParam)
+{
+	switch (nID)
+	{
+	case SC_MINIMIZE:
+		// hide our app window
+		ShowWindow(SW_MINIMIZE);
+		ShowWindow(SW_HIDE);
+		// notify user that he can open it through the tray
+		m_trayHelper.showBubble(L"Application is minimized to tray",
+								L"To restore the application, double-click the icon or select the corresponding menu item.",
+								NIIF_INFO,
+								[this]()
+								{
+									ShowWindow(SW_RESTORE);
+									SetForegroundWindow();
+								});
+		break;
+	}
+
+	CDialogEx::OnSysCommand(nID, lParam);
 }

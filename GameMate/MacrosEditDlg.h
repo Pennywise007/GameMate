@@ -35,9 +35,10 @@ protected:
 	afx_msg void OnBnClickedButtonAdd();
 	afx_msg void OnBnClickedButtonRemove();
 	afx_msg void OnBnClickedButtonRecord();
+	afx_msg void OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult);
 
 private:
-	int addActionToTable(const Macros::Action& action, int ind = -1);
+	void addAction(Macros::Action&& action);
 
 private:
 	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listMacroses;
@@ -48,6 +49,4 @@ private:
 
 	Macros m_macros;
 	std::chrono::steady_clock::time_point m_lastActionTime;
-public:
-	afx_msg void OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult);
 };

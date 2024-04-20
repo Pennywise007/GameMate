@@ -1,89 +1,72 @@
 "class Settings": {
     "working": true,
-    "activeTab": 3,
+    "activeTab": 0,
     "enableButton": -1,
     "tabs": {
         "0": {
-            "enabled": true,
+            "enabled": false,
             "gameMode": true,
             "tabName": "1",
-            "exeName": "ewqeqe",
-            "macrosByBind": {
-            }
-        },
-        "1": {
-            "enabled": true,
-            "gameMode": true,
-            "tabName": "2",
-            "exeName": "11",
-            "macrosByBind": {
-            }
-        },
-        "2": {
-            "enabled": true,
-            "gameMode": true,
-            "tabName": "123213",
-            "exeName": "sh",
-            "macrosByBind": {
-            }
-        },
-        "3": {
-            "enabled": true,
-            "gameMode": true,
-            "tabName": "2",
-            "exeName": "sh",
+            "exeName": "helper.exe",
+            "crosshairSettings": {
+                "show": false,
+                "size": 1,
+                "type": 1,
+                "customName": "",
+                "color": 0
+            },
             "macrosByBind": {
                 "Map pair": {
                     "Key": {
                         "type": 0,
                         "delay": 0,
                         "messageId": 257,
-                        "wparam": 71,
-                        "lparam": -1071513599
+                        "wparam": 17,
+                        "lparam": -1071841279
                     },
                     "Value": {
                         "actions": {
                             "0": {
                                 "type": 1,
-                                "delay": 100,
+                                "delay": 190,
                                 "messageId": 256,
-                                "wparam": 71,
-                                "lparam": 2228225
+                                "wparam": 49,
+                                "lparam": 131073
                             },
                             "1": {
                                 "type": 1,
-                                "delay": 39,
+                                "delay": 74,
                                 "messageId": 256,
-                                "wparam": 72,
-                                "lparam": 2293761
+                                "wparam": 50,
+                                "lparam": 196609
                             },
                             "2": {
                                 "type": 0,
-                                "delay": 37,
-                                "messageId": 257,
-                                "wparam": 71,
-                                "lparam": -1071513599
-                            },
-                            "3": {
-                                "type": 1,
-                                "delay": 113,
-                                "messageId": 256,
-                                "wparam": 71,
-                                "lparam": 2228225
-                            },
-                            "4": {
-                                "type": 0,
-                                "delay": 38,
-                                "messageId": 257,
-                                "wparam": 72,
-                                "lparam": -1071448063
-                            },
-                            "5": {
-                                "type": 0,
                                 "delay": 75,
                                 "messageId": 257,
-                                "wparam": 71,
-                                "lparam": -1071513599
+                                "wparam": 49,
+                                "lparam": -1073610751
+                            },
+                            "3": {
+                                "type": 0,
+                                "delay": 74,
+                                "messageId": 257,
+                                "wparam": 50,
+                                "lparam": -1073545215
+                            },
+                            "4": {
+                                "type": 2,
+                                "delay": 674,
+                                "messageId": 513,
+                                "wparam": 1,
+                                "lparam": 22347998
+                            },
+                            "5": {
+                                "type": 2,
+                                "delay": 92,
+                                "messageId": 514,
+                                "wparam": 0,
+                                "lparam": 22347998
                             }
                         },
                         "randomizeDelays": "0"

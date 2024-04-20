@@ -78,6 +78,18 @@
     <ClInclude Include="Controls\Tooltip\ToolTip.h">
       <Filter>Controls</Filter>
     </ClInclude>
+    <ClInclude Include="Controls\TrayHelper\TrayHelper.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Crosshairs.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\ComboBox\CIconComboBox\IconComboBox.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\TabControl\TabControl.cpp">
@@ -126,6 +138,18 @@
     <ClCompile Include="Controls\Tooltip\ToolTip.cpp">
       <Filter>Controls</Filter>
     </ClCompile>
+    <ClCompile Include="Controls\TrayHelper\TrayHelper.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Crosshairs.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\ComboBox\CIconComboBox\IconComboBox.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GameMate.rc">
@@ -139,6 +163,15 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\GameMate.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\crosshair_1_16.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\crosshair_1_24.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\crosshair_1_32.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

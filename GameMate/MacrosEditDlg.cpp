@@ -133,9 +133,11 @@ BOOL CMacrosEditDlg::OnInitDialog()
 	str << m_macros.randomizeDelays;
 	m_editRandomizeDelays.SetWindowTextW(str.str().c_str());
 
-	for (const auto& action : m_macros.actions)
+	decltype(m_macros.actions) actionsCopy;
+	std::swap(actionsCopy, m_macros.actions);
+	for (auto&& action : actionsCopy)
 	{
-		addActionToTable(action);
+		addAction(std::move(action));
 	}
 
 	return TRUE;
@@ -165,8 +167,7 @@ BOOL CMacrosEditDlg::PreTranslateMessage(MSG* pMsg)
 			auto action = Macros::Action::GetActionFromMessage(pMsg, delay);
 			if (action.has_value())
 			{
-				addActionToTable(*action);
-				m_macros.actions.emplace_back(std::move(*action));
+				addAction(std::move(*action));
 				m_lastActionTime = std::move(curTime);
 				return TRUE;
 			}
@@ -193,14 +194,22 @@ BOOL CMacrosEditDlg::PreTranslateMessage(MSG* pMsg)
 	return CDialogEx::PreTranslateMessage(pMsg);
 }
 
-int CMacrosEditDlg::addActionToTable(const Macros::Action& action, int ind)
+void CMacrosEditDlg::addAction(Macros::Action&& action)
 {
-	if (ind == -1)
-		ind = m_listMacroses.GetItemCount();
+	std::vector<int> selectedActions;
+	m_listMacroses.GetSelectedList(selectedActions, true);
 
-	int i = m_listMacroses.InsertItem(ind, std::to_wstring(action.delay).c_str());
-	m_listMacroses.SetItemText(i, Columns::eAction, action.ToString().c_str());
-	return i;
+	int item;
+	if (selectedActions.empty())
+		item = m_listMacroses.GetItemCount();
+	else
+		item = selectedActions.back() + 1;
+
+	m_macros.actions.insert(std::next(m_macros.actions.begin(), item), std::move(action));
+
+	item = m_listMacroses.InsertItem(item, std::to_wstring(action.delay).c_str());
+	m_listMacroses.SetItemText(item, Columns::eAction, action.ToString().c_str());
+	m_listMacroses.SelectItem(item);
 }
 
 void CMacrosEditDlg::OnBnClickedButtonAdd()
@@ -209,19 +218,7 @@ void CMacrosEditDlg::OnBnClickedButtonAdd()
 	if (!action.has_value())
 		return;
 
-	std::vector<int> selectedActions;
-	m_listMacroses.GetSelectedList(selectedActions, true);
-
-	if (selectedActions.empty())
-	{
-		m_listMacroses.SelectItem(addActionToTable(*action), TRUE);
-		m_macros.actions.emplace_back(std::move(*action));
-	}
-	else
-	{
-		m_listMacroses.SelectItem(addActionToTable(*action, selectedActions.back() + 1), TRUE);
-		m_macros.actions.insert(std::next(m_macros.actions.begin(), selectedActions.back() + 1), std::move(*action));
-	}
+	addAction(std::move(*action));
 }
 
 void CMacrosEditDlg::OnBnClickedButtonRemove()

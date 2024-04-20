@@ -55,7 +55,6 @@ BOOL CAddingTabDlg::OnInitDialog()
 	return TRUE;
 }
 
-
 std::shared_ptr<TabConfiguration> CAddingTabDlg::ExecModal()
 {
 	if (CDialogEx::DoModal() != IDOK)
