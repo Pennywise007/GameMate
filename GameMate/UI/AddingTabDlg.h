@@ -10,7 +10,7 @@ class CAddingTabDlg : private CDialogEx
 	DECLARE_DYNAMIC(CAddingTabDlg)
 
 public:
-	CAddingTabDlg(CWnd* pParent = nullptr);   // standard constructor
+	CAddingTabDlg(CWnd* pParent, const TabConfiguration* configuration = nullptr);
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME

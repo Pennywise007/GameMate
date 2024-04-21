@@ -34,6 +34,7 @@ BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_TAB, &CMainDlg::OnBnClickedButtonAddTab)
 	ON_BN_CLICKED(IDC_BUTTON_DELETE_TAB, &CMainDlg::OnBnClickedButtonDeleteTab)
 	ON_WM_SYSCOMMAND()
+	ON_BN_CLICKED(IDC_BUTTON_RENAME_TAB, &CMainDlg::OnBnClickedButtonRenameTab)
 END_MESSAGE_MAP()
 
 BOOL CMainDlg::OnInitDialog()
@@ -126,6 +127,36 @@ void CMainDlg::OnBnClickedButtonAddTab()
 
 	ext::get_service<Settings>().tabs.push_back(newTab);
 	m_tabControlGames.SetCurSel(AddTab(newTab));
+
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
+}
+
+void CMainDlg::OnBnClickedButtonRenameTab()
+{
+	auto curSel = m_tabControlGames.GetCurSel();
+	if (curSel == -1)
+	{
+		EXT_ASSERT(false);
+		return;
+	}
+
+	auto& tabs = ext::get_service<Settings>().tabs;
+	EXT_ASSERT(curSel < (int)tabs.size());
+
+	auto tab = std::next(tabs.begin(), curSel)->get();
+	const auto edditedTab = CAddingTabDlg(this, tab).ExecModal();
+	if (edditedTab == nullptr)
+		return;
+	tab->tabName = edditedTab->tabName;
+
+	TCITEMW item;
+	item.mask = TCIF_TEXT;
+	item.pszText = tab->tabName.data();
+	item.cchTextMax = tab->tabName.size();
+	m_tabControlGames.SetItem(curSel, &item);
+	m_tabControlGames().Invalidate();
+
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
 }
 
 void CMainDlg::OnBnClickedButtonDeleteTab()
@@ -146,6 +177,8 @@ void CMainDlg::OnBnClickedButtonDeleteTab()
 	m_tabControlGames.SetCurSel(curSel);
 
 	OnGamesTabChanged();
+	
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
 }
 
 int CMainDlg::AddTab(const std::shared_ptr<TabConfiguration>& tabSettings)
@@ -167,6 +200,7 @@ void CMainDlg::OnDestroy()
 void CMainDlg::OnGamesTabChanged()
 {
 	GetDlgItem(IDC_BUTTON_DELETE_TAB)->EnableWindow(m_tabControlGames.GetItemCount() != 0);
+	GetDlgItem(IDC_BUTTON_RENAME_TAB)->EnableWindow(m_tabControlGames.GetItemCount() != 0);
 	// TODO ADD BUNNER THAT USER NEED ADD SETTINGS
 }
 

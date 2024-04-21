@@ -8,9 +8,6 @@
     <Filter Include="Controls">
       <UniqueIdentifier>{78a2276a-82e1-4d67-bfe7-e1d0b921e4a2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Dialogs">
-      <UniqueIdentifier>{68f6db9f-9385-40a4-89e9-859be1426f77}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Base">
       <UniqueIdentifier>{bac2344e-1ac6-4ae5-8255-ccaa6761bf0c}</UniqueIdentifier>
     </Filter>
@@ -21,16 +18,13 @@
     <Filter Include="Resource Files\crosshairs">
       <UniqueIdentifier>{a2b78dc7-05ac-434c-a35e-7db5e017f559}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{68f6db9f-9385-40a4-89e9-859be1426f77}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controls\TabControl\TabControl.h">
       <Filter>Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="MainDlg.h">
-      <Filter>Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="AddingTabDlg.h">
-      <Filter>Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
       <Filter>Base</Filter>
@@ -50,18 +44,8 @@
     <ClInclude Include="Settings.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="GameSettingsDlg.h">
-      <Filter>Dialogs</Filter>
-    </ClInclude>
-    <ClInclude Include="MacrosEditDlg.h">
-      <Filter>Dialogs</Filter>
-    </ClInclude>
     <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h">
       <Filter>Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="CLis.h" />
-    <ClInclude Include="BindEditDlg.h">
-      <Filter>Dialogs</Filter>
     </ClInclude>
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.h">
       <Filter>Controls</Filter>
@@ -96,16 +80,25 @@
     <ClInclude Include="Controls\Layout\Layout.h">
       <Filter>Controls</Filter>
     </ClInclude>
+    <ClInclude Include="UI\AddingTabDlg.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\BindEditDlg.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\GameSettingsDlg.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\MacrosEditDlg.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\MainDlg.h">
+      <Filter>UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\TabControl\TabControl.cpp">
       <Filter>Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="MainDlg.cpp">
-      <Filter>Dialogs</Filter>
-    </ClCompile>
-    <ClCompile Include="AddingTabDlg.cpp">
-      <Filter>Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Base</Filter>
@@ -116,18 +109,8 @@
     <ClCompile Include="Settings.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="GameSettingsDlg.cpp">
-      <Filter>Dialogs</Filter>
-    </ClCompile>
-    <ClCompile Include="MacrosEditDlg.cpp">
-      <Filter>Dialogs</Filter>
-    </ClCompile>
     <ClCompile Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.cpp">
       <Filter>Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="CLis.cpp" />
-    <ClCompile Include="BindEditDlg.cpp">
-      <Filter>Dialogs</Filter>
     </ClCompile>
     <ClCompile Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.cpp">
       <Filter>Controls</Filter>
@@ -158,6 +141,21 @@
     </ClCompile>
     <ClCompile Include="Controls\Layout\Layout.cpp">
       <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\AddingTabDlg.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\BindEditDlg.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\GameSettingsDlg.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\MacrosEditDlg.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\MainDlg.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

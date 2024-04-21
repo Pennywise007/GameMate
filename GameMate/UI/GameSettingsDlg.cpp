@@ -178,6 +178,8 @@ BOOL CGameSettingsDlg::OnInitDialog()
 				AddNewMacros(std::move(bind.value()), std::move(currentMacros));
 			}
 
+			ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
+
 			return nullptr;
 		});
 	const auto macrosEdit = [&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
@@ -197,6 +199,8 @@ BOOL CGameSettingsDlg::OnInitDialog()
 			m_listMacroses.DeleteItem(pParams->iItem);
 
 			AddNewMacros(std::move(bind), std::move(macros.value()));
+
+			ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
 
 			return nullptr;
 		};

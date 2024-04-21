@@ -7,7 +7,7 @@
             "enabled": false,
             "gameMode": true,
             "disableWinButton": false,
-            "tabName": "1",
+            "tabName": "tyry",
             "exeName": "helper.exe",
             "crosshairSettings": {
                 "show": true,

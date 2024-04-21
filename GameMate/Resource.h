@@ -43,11 +43,13 @@
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
 #define IDC_BUTTON_COPY_TAB             1003
+#define IDC_BUTTON_RENAME_TAB           1003
 #define IDC_SLIDER1                     1004
 #define IDC_EDIT_TAB_NAME               1005
 #define IDC_STATIC_TAB_NAME             1006
 #define IDC_COMBO_COPY_TAB_SELECTION    1007
 #define IDC_STATIC_TAB_NAME2            1008
+#define IDC_STATIC_COPY_SETTINGS        1008
 #define IDC_CHECK_ENABLED               1009
 #define IDC_LIST_MACROSES               1010
 #define IDC_BUTTON_ADD                  1011
@@ -91,5 +93,3 @@
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
-
-#define SS_REALSIZECONTROL              0x00000040L

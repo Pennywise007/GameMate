@@ -42,4 +42,6 @@ private:
 	HICON m_hIcon;
 	CTabControl m_tabControlGames;
 	CTrayHelper m_trayHelper;
+public:
+	afx_msg void OnBnClickedButtonRenameTab();
 };

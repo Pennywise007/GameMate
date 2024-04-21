@@ -191,8 +191,6 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AddingTabDlg.h" />
-    <ClInclude Include="BindEditDlg.h" />
     <ClInclude Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.h" />
     <ClInclude Include="Controls\ComboBox\CIconComboBox\IconComboBox.h" />
     <ClInclude Include="Controls\Edit\CEditBase\CEditBase.h" />
@@ -203,23 +201,22 @@
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditorImpl.h" />
     <ClInclude Include="Controls\Tooltip\ToolTip.h" />
     <ClInclude Include="Controls\TrayHelper\TrayHelper.h" />
-    <ClInclude Include="MacrosEditDlg.h" />
-    <ClInclude Include="CLis.h" />
     <ClInclude Include="Controls\TabControl\TabControl.h" />
     <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameMate.h" />
-    <ClInclude Include="MainDlg.h" />
-    <ClInclude Include="GameSettingsDlg.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Crosshairs.h" />
+    <ClInclude Include="UI\AddingTabDlg.h" />
+    <ClInclude Include="UI\BindEditDlg.h" />
+    <ClInclude Include="UI\GameSettingsDlg.h" />
+    <ClInclude Include="UI\MacrosEditDlg.h" />
+    <ClInclude Include="UI\MainDlg.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AddingTabDlg.cpp" />
-    <ClCompile Include="BindEditDlg.cpp" />
     <ClCompile Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -275,8 +272,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Crosshairs.cpp" />
-    <ClCompile Include="MacrosEditDlg.cpp" />
-    <ClCompile Include="CLis.cpp" />
     <ClCompile Include="Controls\TabControl\TabControl.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -290,8 +285,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="GameMate.cpp" />
-    <ClCompile Include="MainDlg.cpp" />
-    <ClCompile Include="GameSettingsDlg.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -299,6 +292,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Settings.cpp" />
+    <ClCompile Include="UI\AddingTabDlg.cpp" />
+    <ClCompile Include="UI\BindEditDlg.cpp" />
+    <ClCompile Include="UI\GameSettingsDlg.cpp" />
+    <ClCompile Include="UI\MacrosEditDlg.cpp" />
+    <ClCompile Include="UI\MainDlg.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GameMate.rc" />

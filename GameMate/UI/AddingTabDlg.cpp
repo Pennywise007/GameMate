@@ -15,9 +15,11 @@ enum Mode {
 
 IMPLEMENT_DYNAMIC(CAddingTabDlg, CDialogEx)
 
-CAddingTabDlg::CAddingTabDlg(CWnd* pParent /*=nullptr*/)
+CAddingTabDlg::CAddingTabDlg(CWnd* pParent, const TabConfiguration* configuration /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_ADDING_TAB, pParent)
 {
+	if (configuration)
+		m_dialogResult = *configuration;
 }
 
 void CAddingTabDlg::DoDataExchange(CDataExchange* pDX)
@@ -35,6 +37,16 @@ BOOL CAddingTabDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	m_editName.SetCueBanner(L"Enter tab name...", TRUE);
+
+	if (!m_dialogResult.tabName.empty())
+	{
+		// editing tab
+		m_editName.SetWindowTextW(m_dialogResult.tabName.c_str());
+		m_comboboxCopySettings.ShowWindow(SW_HIDE);
+		GetDlgItem(IDC_STATIC_COPY_SETTINGS)->ShowWindow(SW_HIDE);
+
+		SetWindowText(L"Rename tab");
+	}
 
 	const auto& tabs = ext::get_service<Settings>().tabs;
 	if (tabs.empty())
