@@ -16,6 +16,7 @@
 #include <ext/std/filesystem.h>
 #include <ext/std/string.h>
 
+#include <Controls/DefaultWindowProc.h>
 #include "Controls/Layout/Layout.h"
 #include <Controls/Tooltip/ToolTip.h>
 
@@ -64,20 +65,31 @@ BEGIN_MESSAGE_MAP(CGameSettingsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_ADD, &CGameSettingsDlg::OnBnClickedButtonAdd)
 	ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CGameSettingsDlg::OnBnClickedButtonRemove)
 	ON_BN_CLICKED(IDC_CHECK_ENABLED, &CGameSettingsDlg::OnBnClickedCheckEnabled)
-	ON_CBN_EDITCHANGE(IDC_COMBO_EXE_NAME, &CGameSettingsDlg::OnCbnEditchangeComboExeName)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_MACROSES, &CGameSettingsDlg::OnLvnItemchangedListMacroses)
-	ON_CBN_SETFOCUS(IDC_COMBO_EXE_NAME, &CGameSettingsDlg::OnCbnSetfocusComboExeName)
 	ON_CBN_SELENDOK(IDC_COMBO_EXE_NAME, &CGameSettingsDlg::OnCbnSelendokComboExeName)
 	ON_BN_CLICKED(IDC_CHECK_USE, &CGameSettingsDlg::OnBnClickedCheckUse)
 	ON_BN_CLICKED(IDC_MFCCOLORBUTTON_CROSSHAIR_COLOR, &CGameSettingsDlg::OnBnClickedMfccolorbuttonCrosshairColor)
 	ON_CBN_SELENDOK(IDC_COMBO_CROSSHAIR_SELECTION, &CGameSettingsDlg::OnCbnSelendokComboCrosshairSelection)
 	ON_CBN_SELENDOK(IDC_COMBO_CROSSHAIR_SIZE, &CGameSettingsDlg::OnCbnSelendokComboCrosshairSize)
 	ON_BN_CLICKED(IDC_CHECK_DISABLE_WIN, &CGameSettingsDlg::OnBnClickedCheckDisableWin)
+	ON_CBN_DROPDOWN(IDC_COMBO_EXE_NAME, &CGameSettingsDlg::OnCbnDropdownComboExeName)
 END_MESSAGE_MAP()
 
 BOOL CGameSettingsDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+
+	GetDlgItem(IDC_STATIC_CROSSHAIR_DEMO)->ModifyStyle(0, SS_REALSIZECONTROL);
+	GetDlgItem(IDC_STATIC_CROSSHAIR_INFO)->ModifyStyle(0, SS_REALSIZECONTROL);
+
+	{
+		CWnd* exenameEdit = m_exeName.GetWindow(GW_CHILD);
+		ASSERT(exenameEdit);
+		DefaultWindowProc::OnWindowMessage(*exenameEdit, WM_MOUSEACTIVATE, [&](HWND hWnd, WPARAM wParam, LPARAM lParam, LRESULT& result) {
+			// Show dropdown on mouse click on edit
+			m_exeName.ShowDropDown();
+		}, this);
+	}
 
 	m_enabled.SetCheck(m_configuration->enabled ? BST_CHECKED : BST_UNCHECKED);
 	m_exeName.SetWindowTextW(m_configuration->exeName.c_str());
@@ -294,22 +306,50 @@ void CGameSettingsDlg::OnBnClickedCheckEnabled()
 	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
 }
 
-void CGameSettingsDlg::OnCbnEditchangeComboExeName()
+void CGameSettingsDlg::OnCbnSelendokComboExeName()
 {
+	auto item = m_exeName.GetCurSel();
 	CString text;
-	m_exeName.GetWindowText(text);
+	if (item != -1)
+		m_exeName.GetLBText(m_exeName.GetCurSel(), text);
+	else
+		m_exeName.GetWindowText(text);
+
 	m_configuration->exeName = text;
 
 	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
 }
 
-void CGameSettingsDlg::OnCbnSelendokComboExeName()
+void CGameSettingsDlg::OnCbnDropdownComboExeName()
 {
-	CString text;
-	m_exeName.GetLBText(m_exeName.GetCurSel(), text);
-	m_configuration->exeName = text;
+	auto hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (hProcessSnap == INVALID_HANDLE_VALUE) {
+		return;
+	}
+	EXT_DEFER(CloseHandle(hProcessSnap));
 
-	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
+	PROCESSENTRY32 pe32;
+	pe32.dwSize = sizeof(PROCESSENTRY32);
+	if (!Process32First(hProcessSnap, &pe32)) {
+		EXT_DUMP_IF(true) << "Process32First failed, last error: " << GetLastError();
+		return;
+	}
+
+	std::unordered_set<std::wstring> runningProcessesNames;
+	do {
+		runningProcessesNames.emplace(pe32.szExeFile);
+	} while (Process32Next(hProcessSnap, &pe32));
+
+	CString currentText;
+	m_exeName.GetWindowText(currentText);
+
+	m_exeName.ResetContent();
+	for (const auto& name : runningProcessesNames)
+	{
+		m_exeName.AddString(name.c_str());
+	}
+	m_exeName.SetWindowText(currentText);
+	m_exeName.SetEditSel(0, currentText.GetLength());
 }
 
 void CGameSettingsDlg::AddNewMacros(TabConfiguration::Keybind keybind, Macros&& newMacros)
@@ -498,42 +538,6 @@ void CGameSettingsDlg::OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pRes
 {
 	GetDlgItem(IDC_BUTTON_REMOVE)->EnableWindow(m_listMacroses.GetSelectedCount() > 0);
 	*pResult = 0;
-}
-
-void CGameSettingsDlg::OnCbnSetfocusComboExeName()
-{
-	const auto curCursor = ::SetCursor(LoadCursor(NULL, IDC_WAIT));
-	EXT_DEFER(::SetCursor(curCursor));
-
-	auto hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-	if (hProcessSnap == INVALID_HANDLE_VALUE) {
-		return;
-	}
-	EXT_DEFER(CloseHandle(hProcessSnap));
-
-	PROCESSENTRY32 pe32;
-	pe32.dwSize = sizeof(PROCESSENTRY32);
-	if (!Process32First(hProcessSnap, &pe32)) {
-		EXT_DUMP_IF(true) << "Process32First failed, last error: " << GetLastError();
-		return;
-	}
-
-	std::unordered_set<std::wstring> runningProcessesNames;
-	do {
-		runningProcessesNames.emplace(pe32.szExeFile);
-	} while (Process32Next(hProcessSnap, &pe32));
-
-	CString currentText;
-	m_exeName.GetWindowText(currentText);
-
-	m_exeName.ResetContent();
-	for (const auto& name : runningProcessesNames)
-	{
-		m_exeName.AddString(name.c_str());
-	}
-	m_exeName.SetWindowText(currentText);
-
-	m_exeName.ShowDropDown();
 }
 
 void CGameSettingsDlg::OnBnClickedCheckDisableWin()

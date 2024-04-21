@@ -32,9 +32,8 @@ protected:
 	afx_msg void OnBnClickedButtonAdd();
 	afx_msg void OnBnClickedButtonRemove();
 	afx_msg void OnBnClickedCheckEnabled();
-	afx_msg void OnCbnSetfocusComboExeName();
-	afx_msg void OnCbnEditchangeComboExeName();
 	afx_msg void OnCbnSelendokComboExeName();
+	afx_msg void OnCbnDropdownComboExeName();
 	afx_msg void OnBnClickedCheckDisableWin();
 	afx_msg void OnBnClickedCheckUse();
 	afx_msg void OnBnClickedMfccolorbuttonCrosshairColor();
@@ -64,4 +63,5 @@ private:
 	const std::shared_ptr<TabConfiguration> m_configuration;
 	std::list<CBitmap> m_crosshairs;
 	HICON m_demoIcon = nullptr;
+public:
 };
