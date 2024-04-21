@@ -95,9 +95,7 @@ class Settings : ext::serializable::SerializableObject<Settings>
     ~Settings();
 
 public:
-    DECLARE_SERIALIZABLE_FIELD(bool, working, true);
     DECLARE_SERIALIZABLE_FIELD(int, activeTab, -1);
-    DECLARE_SERIALIZABLE_FIELD(int, enableButton, -1);
     DECLARE_SERIALIZABLE_FIELD(std::list<std::shared_ptr<TabConfiguration>>, tabs);
 };
 

@@ -203,13 +203,14 @@
     <ClInclude Include="Controls\TrayHelper\TrayHelper.h" />
     <ClInclude Include="Controls\TabControl\TabControl.h" />
     <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h" />
+    <ClInclude Include="core\Crosshairs.h" />
+    <ClInclude Include="core\Settings.h" />
+    <ClInclude Include="core\Worker.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameMate.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="Settings.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="Crosshairs.h" />
     <ClInclude Include="UI\AddingTabDlg.h" />
     <ClInclude Include="UI\BindEditDlg.h" />
     <ClInclude Include="UI\GameSettingsDlg.h" />
@@ -271,7 +272,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Crosshairs.cpp" />
     <ClCompile Include="Controls\TabControl\TabControl.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -284,6 +284,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="core\Crosshairs.cpp" />
+    <ClCompile Include="core\Settings.cpp" />
+    <ClCompile Include="core\Worker.cpp" />
     <ClCompile Include="GameMate.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -291,7 +294,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Settings.cpp" />
     <ClCompile Include="UI\AddingTabDlg.cpp" />
     <ClCompile Include="UI\BindEditDlg.cpp" />
     <ClCompile Include="UI\GameSettingsDlg.cpp" />

@@ -4,7 +4,7 @@
 
 #include <optional>
 
-#include "Settings.h"
+#include "core/Settings.h"
 
 class CBindEditDlg : protected CDialogEx
 {

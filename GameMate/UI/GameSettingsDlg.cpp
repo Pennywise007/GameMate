@@ -9,7 +9,8 @@
 #include "GameSettingsDlg.h"
 #include "MacrosEditDlg.h"
 #include "BindEditDlg.h"
-#include "Crosshairs.h"
+
+#include "core/Crosshairs.h"
 
 #include <ext/scope/defer.h>
 #include <ext/std/filesystem.h>

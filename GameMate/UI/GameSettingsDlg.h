@@ -3,7 +3,7 @@
 #include "afxdialogex.h"
 #include <memory>
 
-#include "Settings.h"
+#include "core/Settings.h"
 
 #include <Controls/ComboBox/CComboBoxWithSearch/ComboWithSearch.h>
 #include <Controls/ComboBox/CIconComboBox/IconComboBox.h>

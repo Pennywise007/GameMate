@@ -11,15 +11,15 @@
     <Filter Include="Base">
       <UniqueIdentifier>{bac2344e-1ac6-4ae5-8255-ccaa6761bf0c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Core">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Resource Files\crosshairs">
       <UniqueIdentifier>{a2b78dc7-05ac-434c-a35e-7db5e017f559}</UniqueIdentifier>
     </Filter>
     <Filter Include="UI">
       <UniqueIdentifier>{68f6db9f-9385-40a4-89e9-859be1426f77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="core">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -40,9 +40,6 @@
     </ClInclude>
     <ClInclude Include="Resource.h">
       <Filter>Base</Filter>
-    </ClInclude>
-    <ClInclude Include="Settings.h">
-      <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h">
       <Filter>Controls</Filter>
@@ -71,9 +68,6 @@
     <ClInclude Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.h">
       <Filter>Controls</Filter>
     </ClInclude>
-    <ClInclude Include="Crosshairs.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="Controls\ComboBox\CIconComboBox\IconComboBox.h">
       <Filter>Controls</Filter>
     </ClInclude>
@@ -95,6 +89,15 @@
     <ClInclude Include="UI\MainDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="core\Crosshairs.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Settings.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Worker.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\TabControl\TabControl.cpp">
@@ -105,9 +108,6 @@
     </ClCompile>
     <ClCompile Include="GameMate.cpp">
       <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="Settings.cpp">
-      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.cpp">
       <Filter>Controls</Filter>
@@ -133,9 +133,6 @@
     <ClCompile Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.cpp">
       <Filter>Controls</Filter>
     </ClCompile>
-    <ClCompile Include="Crosshairs.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
     <ClCompile Include="Controls\ComboBox\CIconComboBox\IconComboBox.cpp">
       <Filter>Controls</Filter>
     </ClCompile>
@@ -156,6 +153,15 @@
     </ClCompile>
     <ClCompile Include="UI\MainDlg.cpp">
       <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="core\Crosshairs.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\Settings.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\Worker.cpp">
+      <Filter>core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

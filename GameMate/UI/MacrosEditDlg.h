@@ -4,7 +4,7 @@
 
 #include <chrono>
 
-#include "Settings.h"
+#include "core/Settings.h"
 
 #include <Controls/Edit/SpinEdit/SpinEdit.h>
 #include <Controls/Tables/List/ListGroupCtrl/ListGroupCtrl.h>

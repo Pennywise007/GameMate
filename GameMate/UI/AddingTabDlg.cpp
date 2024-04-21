@@ -2,7 +2,6 @@
 #include "GameMate.h"
 #include "afxdialogex.h"
 #include "AddingTabDlg.h"
-#include "Settings.h"
 
 namespace {
 

@@ -3,7 +3,7 @@
 #include "afxdialogex.h"
 #include "memory"
 
-#include "Settings.h"
+#include "core/Settings.h"
 
 class CAddingTabDlg : private CDialogEx
 {
@@ -33,5 +33,6 @@ private:
 	CEdit m_editName;
 	CComboBox m_comboboxCopySettings;
 
+private:
 	TabConfiguration m_dialogResult;
 };

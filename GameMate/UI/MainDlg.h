@@ -4,7 +4,7 @@
 #include <Controls/TabControl/TabControl.h>
 #include <Controls/TrayHelper/TrayHelper.h>
 
-#include "Settings.h"
+#include "core/Settings.h"
 
 class CMainDlg : public CDialogEx
 {

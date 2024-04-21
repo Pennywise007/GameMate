@@ -14,7 +14,7 @@ Settings::Settings()
 {
     try
     {
-        std::wifstream file(kFileName);
+        std::wifstream file(std::filesystem::get_exe_directory() / kFileName);
         EXT_CHECK(file.is_open()) << "Failed to open file " << kFileName;
         EXT_DEFER(file.close());
 
@@ -36,7 +36,7 @@ Settings::~Settings()
         std::wstring settings;
         Executor::SerializeObject(Factory::TextSerializer(settings), this);
 
-        std::wofstream file(kFileName);
+        std::wofstream file(std::filesystem::get_exe_directory() / kFileName);
         EXT_CHECK(file.is_open()) << "Failed to open file " << kFileName;
         EXT_DEFER(file.close());
         file << settings;

@@ -8,6 +8,8 @@
 #include "AddingTabDlg.h"
 #include "GameSettingsDlg.h"
 
+#include <core/Worker.h>
+
 #include <ext/core/check.h>
 
 #ifdef _DEBUG
@@ -80,6 +82,9 @@ BOOL CMainDlg::OnInitDialog()
 								 ShowWindow(SW_RESTORE);
 								 SetForegroundWindow();
 							 });
+
+	// Starting worker
+	ext::get_service<Worker>();
 
 	return TRUE;
 }
