@@ -5,6 +5,7 @@
 #include "BindEditDlg.h"
 
 #include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
+#include <Controls/Tooltip/ToolTip.h>
 
 #include <ext/core/check.h>
 
@@ -66,7 +67,7 @@ BOOL CMacrosEditDlg::OnInitDialog()
 	m_staticDelayHelp.ModifyStyle(0, SS_ICON);
 	m_staticDelayHelp.SetIcon(icon);
 
-	m_staticDelayTooltip.SetTooltip(&m_staticDelayHelp, L"Some game guards may check if you press buttons with the same delay and can ban you.\n"
+	controls::SetTooltip(m_staticDelayHelp, L"Some game guards may check if you press buttons with the same delay and can ban you.\n"
 		L"To avoid this you can set a percentage of the delay which will be applied to te ation delay randomly.\n"
 		L"Formula: delay ± random(percentage)\n");
 

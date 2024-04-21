@@ -18,6 +18,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Resource Files\crosshairs">
+      <UniqueIdentifier>{a2b78dc7-05ac-434c-a35e-7db5e017f559}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controls\TabControl\TabControl.h">
@@ -90,6 +93,9 @@
     <ClInclude Include="Controls\ComboBox\CIconComboBox\IconComboBox.h">
       <Filter>Controls</Filter>
     </ClInclude>
+    <ClInclude Include="Controls\Layout\Layout.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\TabControl\TabControl.cpp">
@@ -150,6 +156,9 @@
     <ClCompile Include="Controls\ComboBox\CIconComboBox\IconComboBox.cpp">
       <Filter>Controls</Filter>
     </ClCompile>
+    <ClCompile Include="Controls\Layout\Layout.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GameMate.rc">
@@ -165,6 +174,78 @@
     <Image Include="res\GameMate.ico">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\crosshairs\crosshair_0_16.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_0_24.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_0_32.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_1_16.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_1_24.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_1_32.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_2_16.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_2_24.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_2_32.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_3_16.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_3_24.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_3_32.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_4_16.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_4_24.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_4_32.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_5_16.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_5_24.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_5_32.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_6_16.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_6_24.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_6_32.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_7_16.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_7_24.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_7_32.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
     <Image Include="res\crosshair_1_16.png">
       <Filter>Resource Files</Filter>
     </Image>
@@ -173,6 +254,15 @@
     </Image>
     <Image Include="res\crosshair_1_32.png">
       <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_8_16.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_8_24.png">
+      <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\crosshairs\crosshair_8_32.png">
+      <Filter>Resource Files\crosshairs</Filter>
     </Image>
   </ItemGroup>
 </Project>

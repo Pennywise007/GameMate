@@ -1,4 +1,8 @@
 ﻿#include "pch.h"
+
+#include <algorithm>
+#include <regex>
+
 #include "GameMate.h"
 #include "tlhelp32.h"
 #include "afxdialogex.h"
@@ -8,6 +12,11 @@
 #include "Crosshairs.h"
 
 #include <ext/scope/defer.h>
+#include <ext/std/filesystem.h>
+#include <ext/std/string.h>
+
+#include "Controls/Layout/Layout.h"
+#include <Controls/Tooltip/ToolTip.h>
 
 using namespace controls::list::widgets;
 
@@ -29,6 +38,12 @@ CGameSettingsDlg::CGameSettingsDlg(std::shared_ptr<TabConfiguration> configurati
 {
 }
 
+CGameSettingsDlg::~CGameSettingsDlg()
+{
+	if (m_demoIcon != nullptr)
+		::DestroyIcon(m_demoIcon);
+}
+
 void CGameSettingsDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
@@ -40,6 +55,8 @@ void CGameSettingsDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_CROSSHAIR_SIZE, m_comboboxCrosshairSize);
 	DDX_Control(pDX, IDC_MFCCOLORBUTTON_CROSSHAIR_COLOR, m_colorPickerCrosshairColor);
 	DDX_Control(pDX, IDC_STATIC_CROSSHAIR_INFO, m_staticCrosshairInfo);
+	DDX_Control(pDX, IDC_CHECK_DISABLE_WIN, m_checkDisableWinButton);
+	DDX_Control(pDX, IDC_STATIC_CROSSHAIR_DEMO, m_crosshairDemo);
 }
 
 BEGIN_MESSAGE_MAP(CGameSettingsDlg, CDialogEx)
@@ -54,36 +71,18 @@ BEGIN_MESSAGE_MAP(CGameSettingsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_MFCCOLORBUTTON_CROSSHAIR_COLOR, &CGameSettingsDlg::OnBnClickedMfccolorbuttonCrosshairColor)
 	ON_CBN_SELENDOK(IDC_COMBO_CROSSHAIR_SELECTION, &CGameSettingsDlg::OnCbnSelendokComboCrosshairSelection)
 	ON_CBN_SELENDOK(IDC_COMBO_CROSSHAIR_SIZE, &CGameSettingsDlg::OnCbnSelendokComboCrosshairSize)
+	ON_BN_CLICKED(IDC_CHECK_DISABLE_WIN, &CGameSettingsDlg::OnBnClickedCheckDisableWin)
 END_MESSAGE_MAP()
-
-void ChangeBitmapColor(CBitmap& bitmap, COLORREF color)
-{
-    BITMAP bm;
-    bitmap.GetBitmap(&bm);
-
-    std::unique_ptr<BYTE[]> pBits(new BYTE[bm.bmWidthBytes * bm.bmHeight]);
-    ::ZeroMemory(pBits.get(), bm.bmWidthBytes * bm.bmHeight);
-    ::GetBitmapBits(bitmap, bm.bmWidthBytes * bm.bmHeight, pBits.get());
-
-	for (int i = 0; i < bm.bmWidth * bm.bmHeight; ++i) {
-        BYTE* pPixel = pBits.get() + i * 4; // Assuming 32-bit RGBA format
-		if (pPixel[3] != 0)  // Non-transparent pixel
-		{
-			pPixel[0] = GetBValue(color);
-			pPixel[1] = GetGValue(color);
-			pPixel[2] = GetRValue(color);
-			// Alpha component remains unchanged (pPixel[3])
-		}
-	}
-	::SetBitmapBits(bitmap, bm.bmWidthBytes * bm.bmHeight, pBits.get());
-}
 
 BOOL CGameSettingsDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	m_enabled.SetCheck(m_configuration->enabled);
+	m_enabled.SetCheck(m_configuration->enabled ? BST_CHECKED : BST_UNCHECKED);
 	m_exeName.SetWindowTextW(m_configuration->exeName.c_str());
+	m_checkDisableWinButton.SetCheck(m_configuration->disableWinButton ? BST_CHECKED : BST_UNCHECKED);
+	controls::SetTooltip(m_checkDisableWinButton,
+		L"If enabled: ignore single press on windows button(every 0.4s) which prevents game from loosing focus accidentally");
 
 	GetDlgItem(IDC_BUTTON_REMOVE)->EnableWindow(FALSE);
 
@@ -97,130 +96,31 @@ BOOL CGameSettingsDlg::OnInitDialog()
 		m_staticCrosshairInfo.ModifyStyle(0, SS_ICON);
 		m_staticCrosshairInfo.SetIcon(icon);
 
-		m_staticCrosshairInfoTooltip.SetTooltip(&m_staticCrosshairInfo,
-												L"If you want to add your own crosshair put file with name crosshair_X and .png or .ico extenstions to the folder:\n"
-												L"$EXE_FOLDER$\\res");
+		controls::SetTooltip(
+			m_staticCrosshairInfo,
+			L"If you want to add your own crosshair put file with name crosshair_X with .png or .ico extenstion to the folder:\n"
+			L"$GAME_MATE_FOLDER$\\res\n"
+			L"Note: all images bigger than 32x32 will be ignored.");
 	}
 
-	m_comboboxCrosshairSize.AddString(L"Small");
-    m_comboboxCrosshairSize.AddString(L"Medium");
-    m_comboboxCrosshairSize.AddString(L"Large");
+	m_comboboxCrosshairSize.AddString(L"Small(16x16)");
+    m_comboboxCrosshairSize.AddString(L"Medium(24x24)");
+    m_comboboxCrosshairSize.AddString(L"Large(32x32)");
 	ASSERT((int)m_configuration->crosshairSettings.size <= 3);
     m_comboboxCrosshairSize.SetCurSel((int)m_configuration->crosshairSettings.size);
 
 	m_colorPickerCrosshairColor.SetColor(m_configuration->crosshairSettings.color);
 
 	{
-		CPngImage pngImage;
-		pngImage.Load(IDB_PNG_CROSSHAIR_1_16, AfxGetResourceHandle());
+		InitCrosshairsList();
 
-		m_crosshairs.emplace_back();
-		CBitmap& bitmap = m_crosshairs.back();
+		m_crosshairDemo.ModifyStyle(0, SS_ICON);
+		controls::SetTooltip(m_crosshairDemo, L"Demo of the crosshair");
 
-		bitmap.Attach(pngImage.Detach());
-
-		GetDlgItem(IDC_STATIC_CROSSHAIR)->ModifyStyle(0, SS_BITMAP);
-		((CStatic*)(GetDlgItem(IDC_STATIC_CROSSHAIR)))->SetBitmap(bitmap);
-
-		m_comboCrosshairs.InsertItem(0, L"123", 0, 0, 0);
-		m_comboCrosshairs.SetCurSel(0);
-
-		OnBnClickedMfccolorbuttonCrosshairColor();
+		UpdateDemoCrosshair();
 	}
+
 	OnBnClickedCheckUse();
-
-	/*std::list<CBitmap*> crosshairs{&bitmap};
-
-	CRect rect2;
-	m_comboCrosshairs.GetClientRect(rect2);
-
-	//m_comboCrosshairs.SetIconList(crosshairs2, CSize(32, 32));
-	m_comboCrosshairs.SetBitmapsList(crosshairs, CSize(32, 32));
-	m_comboCrosshairs.InsertItem(0, L"123", 0, 0, 0);
-	m_comboCrosshairs.SetCurSel(0);
-
-	m_crosshairs.emplace_back(std::move(bitmap));*/
-
-
-	//ReplaceColor(bitmap, RGB(255, 0, 0));
-	/*
-	CDC dcMem;
-	dcMem.CreateCompatibleDC(NULL);
-	// load the bitmap into the memory device context
-	CBitmap* oldBitmap = dcMem.SelectObject(&bitmap);
-	RGBQUAD colorTable[2]; // for 1-bpp only
-	// grab the color table
-	UINT nColors = GetDIBColorTable(dcMem.GetSafeHdc(), 0, 2, colorTable);
-	nColors = SetDIBColorTable(dcMem.GetSafeHdc(), 0, 2, colorTable);
-	dcMem.SelectObject(oldBitmap);
-	*/
-	/* {
-		CPngImage pngImage;
-		pngImage.Load(IDB_PNG_CROSSHAIR, AfxGetResourceHandle());
-
-		// resize bitmap to 20x20
-		CBitmap bitmap_src;
-		bitmap_src.Attach(pngImage.Detach());
-
-		BITMAP bm = { 0 };
-		bitmap_src.GetBitmap(&bm);
-		auto size = CSize(bm.bmWidth, bm.bmHeight);
-
-		CWindowDC screenCDC(NULL);
-
-		auto hiSize = CSize(20, 20);
-
-		bitmap.CreateCompatibleBitmap(&screenCDC, hiSize.cx, hiSize.cy);
-
-		CDC srcCompatCDC;
-		srcCompatCDC.CreateCompatibleDC(&screenCDC);
-		CDC destCompatCDC;
-		destCompatCDC.CreateCompatibleDC(&screenCDC);
-
-		CMemDC srcDC(srcCompatCDC, CRect(CPoint(), size));
-		auto oldSrcBmp = srcDC.GetDC().SelectObject(&bitmap_src);
-
-		CMemDC destDC(destCompatCDC, CRect(CPoint(), hiSize));
-		auto oldDestBmp = destDC.GetDC().SelectObject(&bitmap);
-
-		destDC.GetDC().StretchBlt(0, 0, hiSize.cx, hiSize.cy, &srcDC.GetDC(), 0, 0, size.cx, size.cy, SRCCOPY);
-
-		srcDC.GetDC().SelectObject(oldSrcBmp);
-		destDC.GetDC().SelectObject(oldDestBmp);
-
-		/*CBitmap bitmap_src;
-		bitmap_src.Attach(pngImage.Detach());
-
-		BITMAP bm = { 0 };
-		bitmap_src.GetBitmap(&bm);
-		auto size = CSize(bm.bmWidth, bm.bmHeight);
-		CWindowDC wndDC(NULL);
-		CDC srcDC;
-		srcDC.CreateCompatibleDC(&wndDC);
-		auto oldSrcBmp = srcDC.SelectObject(&bitmap_src);
-
-		CDC destDC;
-		destDC.CreateCompatibleDC(&wndDC);
-		bitmap.CreateCompatibleBitmap(&wndDC, 15, 15);
-		auto oldDestBmp = destDC.SelectObject(&bitmap);
-
-		destDC.StretchBlt(0, 0, 15, 15, &srcDC, 0, 0, size.cx, size.cy, SRCCOPY);
-	}*/
-
-	// load PNG from IDB_PNG_CROSSHAIR and set it as icon ton the CStatic control
-
-
-	//HICON icon;
-	//auto res = SUCCEEDED(::LoadIconWithScaleDown(GetModuleHandle(NULL), MAKEINTRESOURCE(IDB_PNG_CROSSHAIR), 32, 32, &icon));
-	//ASSERT(res);
-
-	/*HICON icon;
-	auto res = SUCCEEDED(::LoadIconWithScaleDown(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_ICON1), 16, 16, &icon));
-	ASSERT(res);
-
-	GetDlgItem(IDC_STATIC_CROSSHAIR)->ModifyStyle(0, SS_ICON);
-	((CStatic*)(GetDlgItem(IDC_STATIC_CROSSHAIR)))->SetIcon(icon);*/
-
 
 	CRect rect;
 	m_listMacroses.GetClientRect(rect);
@@ -364,6 +264,8 @@ void CGameSettingsDlg::OnBnClickedButtonAdd()
 		return;
 
 	AddNewMacros(std::move(action), std::move(newMacros.value()));
+
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
 }
 
 void CGameSettingsDlg::OnBnClickedButtonRemove()
@@ -376,11 +278,15 @@ void CGameSettingsDlg::OnBnClickedButtonRemove()
 		m_configuration->macrosByBind.erase(std::next(m_configuration->macrosByBind.begin(), *it));
 		m_listMacroses.DeleteItem(*it);
 	}
+
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
 }
 
 void CGameSettingsDlg::OnBnClickedCheckEnabled()
 {
 	m_configuration->enabled = m_enabled.GetCheck() == BST_CHECKED;
+
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
 }
 
 void CGameSettingsDlg::OnCbnEditchangeComboExeName()
@@ -388,6 +294,8 @@ void CGameSettingsDlg::OnCbnEditchangeComboExeName()
 	CString text;
 	m_exeName.GetWindowText(text);
 	m_configuration->exeName = text;
+
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
 }
 
 void CGameSettingsDlg::OnCbnSelendokComboExeName()
@@ -395,6 +303,8 @@ void CGameSettingsDlg::OnCbnSelendokComboExeName()
 	CString text;
 	m_exeName.GetLBText(m_exeName.GetCurSel(), text);
 	m_configuration->exeName = text;
+
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
 }
 
 void CGameSettingsDlg::AddNewMacros(TabConfiguration::Keybind keybind, Macros&& newMacros)
@@ -425,16 +335,158 @@ void CGameSettingsDlg::AddNewMacros(TabConfiguration::Keybind keybind, Macros&& 
 	m_listMacroses.SelectItem(item);
 }
 
-void CGameSettingsDlg::ChangeCrosshairColors(COLORREF newColor)
+void CGameSettingsDlg::UpdateDemoCrosshair()
 {
+	CBitmap bitmap;
+	try {
+		crosshair::LoadCrosshair(m_configuration->crosshairSettings, bitmap);
+	}
+	catch (...)
+	{
+		MessageBox(ext::ManageExceptionText(L"").c_str(), L"Failed to load crosshair for demo", MB_ICONERROR);
+	}
+
+	// Convert bitmap to icon because we don't want to change control size
+	BITMAP bmp;
+	bitmap.GetBitmap(&bmp);
+
+	HBITMAP hbmMask = ::CreateCompatibleBitmap(::GetDC(NULL), bmp.bmWidth, bmp.bmHeight);
+
+	ICONINFO ii = { 0 };
+	ii.fIcon = TRUE;
+	ii.hbmColor = bitmap;
+	ii.hbmMask = hbmMask;
+
+	if (m_demoIcon != nullptr)
+		::DestroyIcon(m_demoIcon);
+	m_demoIcon = ::CreateIconIndirect(&ii);
+
+	::DeleteObject(hbmMask);
+
+	m_crosshairDemo.SetIcon(m_demoIcon);
+}
+
+void CGameSettingsDlg::InitCrosshairsList()
+{
+	crosshair::Settings crosshairSettings;
+	crosshairSettings.size = crosshair::Size::eSmall;
+	crosshairSettings.color = m_configuration->crosshairSettings.color;
+
+	const auto insertCrosshair = [&](crosshair::Type type) {
+		try
+		{
+			m_crosshairs.emplace_back();
+
+			crosshairSettings.type = type;
+			crosshair::LoadCrosshair(crosshairSettings, m_crosshairs.back());
+
+			const std::wstring name = L"Crosshair " + std::to_wstring(m_crosshairs.size());
+			m_comboCrosshairs.InsertItem((int)m_crosshairs.size() - 1, name.c_str(), (int)m_crosshairs.size() - 1);
+		}
+		catch (const std::exception&)
+		{
+			EXT_EXPECT(false) << ext::ManageExceptionText("Failed to load standart crosshair");
+		}
+	};
+
+	insertCrosshair(crosshair::Type::eDot);
+	insertCrosshair(crosshair::Type::eCross);
+	insertCrosshair(crosshair::Type::eCrossWithCircle);
+	insertCrosshair(crosshair::Type::eCircleWithCrossInside);
+	insertCrosshair(crosshair::Type::eCircleWithCrossAndDot);
+	insertCrosshair(crosshair::Type::eCrossWithCircleAndDot);
+	insertCrosshair(crosshair::Type::eCrossWithCircleAndCircleInside);
+	insertCrosshair(crosshair::Type::eDashedCircleAndDot);
+	insertCrosshair(crosshair::Type::eDashedBoxWithCross);
+
+	constexpr int kMaxAllowedCrosshairSize = 32;
+
+	std::map<std::wstring, int> crosshairsByName;
+
+	std::wstring customCrosshairsLoadingError;
+
+	namespace fs = std::filesystem;
+	const auto crosshairsDir = fs::get_exe_directory() / L"res";
+	if (fs::exists(crosshairsDir))
+	{
+		// Iterate over files in the folder
+		for (const auto& entry : fs::directory_iterator(crosshairsDir))
+		{
+			if (!entry.is_regular_file())
+				continue;
+
+			const static std::regex filenameRegex("^crosshair_.*\\.(png|ico)");
+
+			if (!std::regex_match(entry.path().filename().string(), filenameRegex))
+				continue;
+
+			crosshair::Settings crosshairSettings;
+			crosshairSettings.customCrosshairName = entry.path().filename().wstring();
+
+			static std::set<std::wstring> customCrossairsWithErrors;
+			if (customCrossairsWithErrors.find(crosshairSettings.customCrosshairName) != customCrossairsWithErrors.end())
+				continue;
+
+			CBitmap bitmap;
+			try
+			{
+				crosshair::LoadCrosshair(crosshairSettings, bitmap);
+			}
+			catch (...)
+			{
+				customCrossairsWithErrors.emplace(crosshairSettings.customCrosshairName);
+				customCrosshairsLoadingError += ext::ManageExceptionText(L"") + L"\n";
+				continue;
+			}
+
+			BITMAP bm;
+			bitmap.GetBitmap(&bm);
+			if (bm.bmWidth > 32 || bm.bmHeight > 32)
+			{
+				customCrossairsWithErrors.emplace(crosshairSettings.customCrosshairName);
+				continue;
+			}
+
+			// resize it to fit the list
+			crosshair::ResizeCrosshair(bitmap, CSize(15, 15));
+
+			m_crosshairs.emplace_back();
+			m_crosshairs.back().Attach(bitmap.Detach());
+			auto item = m_comboCrosshairs.InsertItem((int)m_crosshairs.size() - 1, crosshairSettings.customCrosshairName.c_str(), (int)m_crosshairs.size() - 1);
+			crosshairsByName[crosshairSettings.customCrosshairName] = item;
+		}
+	}
+
+	if (m_configuration->crosshairSettings.customCrosshairName.empty())
+		m_comboCrosshairs.SetCurSel((int)m_configuration->crosshairSettings.type);
+	else
+	{
+		if (auto it = crosshairsByName.find(m_configuration->crosshairSettings.customCrosshairName); it == crosshairsByName.end())
+		{
+			MessageBox(
+				(L"Previously saved cursor '" + m_configuration->crosshairSettings.customCrosshairName +
+				L"' not found, cursor will be switched to default one.").c_str(),
+				L"Custom cursor not found", MB_ICONWARNING);
+			m_configuration->crosshairSettings.customCrosshairName.clear();
+			ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
+
+			m_comboCrosshairs.SetCurSel((int)m_configuration->crosshairSettings.type);
+		}
+		else
+		{
+			m_comboCrosshairs.SetCurSel(it->second);
+		}
+	}
+
 	std::list<CBitmap*> crosshairs;
 	for (auto& crosshair : m_crosshairs)
 	{
-        ChangeBitmapColor(crosshair, newColor);
 		crosshairs.emplace_back(&crosshair);
-    }
+	}
+	m_comboCrosshairs.SetBitmapsList(crosshairs);
 
-	m_comboCrosshairs.SetBitmapsList(crosshairs, CSize(16, 16));
+	// m_comboCrosshairs control recreated, we need to restor its anchers
+	Layout::AnchorWindow(m_comboCrosshairs, *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
 }
 
 void CGameSettingsDlg::OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult)
@@ -479,26 +531,71 @@ void CGameSettingsDlg::OnCbnSetfocusComboExeName()
 	m_exeName.ShowDropDown();
 }
 
+void CGameSettingsDlg::OnBnClickedCheckDisableWin()
+{
+	m_configuration->disableWinButton = m_checkDisableWinButton.GetCheck() == BST_CHECKED;
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
+}
+
 void CGameSettingsDlg::OnBnClickedCheckUse()
 {
-	bool use = m_checkboxShowCrosshair.GetCheck() == BST_CHECKED;
+	auto& show = m_configuration->crosshairSettings.show;
+	show = m_checkboxShowCrosshair.GetCheck() == BST_CHECKED;
 
-	m_comboboxCrosshairSize.EnableWindow(use);
-	m_colorPickerCrosshairColor.EnableWindow(use);
-	m_comboCrosshairs.EnableWindow(use);
+	m_comboboxCrosshairSize.EnableWindow(show);
+	m_colorPickerCrosshairColor.EnableWindow(show);
+	m_comboCrosshairs.EnableWindow(show);
+
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
 }
 
 void CGameSettingsDlg::OnCbnSelendokComboCrosshairSelection()
 {
-	// TODO: Add your control notification handler code here
+	auto selectedCrosshair = m_comboCrosshairs.GetCurSel();
+
+	bool selectedCustomCrosshair = selectedCrosshair > (int)crosshair::Type::eDashedBoxWithCross;
+	if (selectedCustomCrosshair)
+	{
+		CString text;
+		m_comboCrosshairs.GetWindowText(text);
+
+		m_configuration->crosshairSettings.customCrosshairName = text;
+	}
+	else
+	{
+		m_configuration->crosshairSettings.customCrosshairName.clear();
+		m_configuration->crosshairSettings.type = crosshair::Type(selectedCrosshair);
+	}
+
+	m_comboboxCrosshairSize.EnableWindow(!selectedCustomCrosshair);
+
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
+
+	UpdateDemoCrosshair();
 }
 
 void CGameSettingsDlg::OnCbnSelendokComboCrosshairSize()
 {
-	// TODO: Add your control notification handler code here
+	m_configuration->crosshairSettings.size = crosshair::Size(m_comboboxCrosshairSize.GetCurSel());
+	
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
+
+	UpdateDemoCrosshair();
 }
 
 void CGameSettingsDlg::OnBnClickedMfccolorbuttonCrosshairColor()
 {
-	ChangeCrosshairColors(m_colorPickerCrosshairColor.GetColor());
+	m_configuration->crosshairSettings.color = m_colorPickerCrosshairColor.GetColor();
+
+	std::list<CBitmap*> crosshairs;
+	for (auto& crosshair : m_crosshairs)
+	{
+		crosshair::ChangeCrosshairColor(crosshair, m_configuration->crosshairSettings.color);
+		crosshairs.emplace_back(&crosshair);
+	}
+	m_comboCrosshairs.SetBitmapsList(crosshairs);
+	
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
+
+	UpdateDemoCrosshair();
 }

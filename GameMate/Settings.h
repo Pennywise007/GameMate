@@ -6,7 +6,15 @@
 #include <optional>
 
 #include <ext/core/singleton.h>
+#include <ext/core/dispatcher.h>
 #include <ext/serialization/iserializable.h>
+
+// Notification about user changed any settings
+struct ISettingsChanged : ext::events::IBaseEvent
+{
+    virtual ~ISettingsChanged() = default;
+    virtual void OnSettingsChangedByUser() = 0;
+};
 
 struct Macros : ext::serializable::SerializableObject<Macros> {
     struct Action : ext::serializable::SerializableObject<Action> {
@@ -43,18 +51,12 @@ enum class Type
     eDot,
     eCross,
     eCrossWithCircle,
-
-    eNone,
-    eCircle,
-    eCrossWithDot,
-    eCircleWithDot,
-    eCircleWithCross,
-    eCrossWithCircleAndDot,
-    eCrossWithDotAndCircle,
-    eCircleWithDotAndCross,
+    eCircleWithCrossInside,
     eCircleWithCrossAndDot,
-    eDotWithCrossAndCircle,
-    eDotWithCircleAndCross
+    eCrossWithCircleAndDot,
+    eCrossWithCircleAndCircleInside,
+    eDashedCircleAndDot,
+    eDashedBoxWithCross
 };
 
 enum class Size {
@@ -67,7 +69,7 @@ struct Settings : ext::serializable::SerializableObject<Settings> {
     DECLARE_SERIALIZABLE_FIELD(bool, show, false);
     DECLARE_SERIALIZABLE_FIELD(crosshair::Size, size, Size::eMedium);
     DECLARE_SERIALIZABLE_FIELD(crosshair::Type, type, Type::eCross);
-    DECLARE_SERIALIZABLE_FIELD(std::wstring, customName);
+    DECLARE_SERIALIZABLE_FIELD(std::wstring, customCrosshairName);
     DECLARE_SERIALIZABLE_FIELD(COLORREF, color, RGB(0, 0, 0));
 };
 
@@ -75,7 +77,8 @@ struct Settings : ext::serializable::SerializableObject<Settings> {
 
 struct TabConfiguration : ext::serializable::SerializableObject<TabConfiguration> {
     DECLARE_SERIALIZABLE_FIELD(bool, enabled, true);
-    DECLARE_SERIALIZABLE_FIELD(bool, gameMode, true);
+    DECLARE_SERIALIZABLE_FIELD(bool, gameMode, true); // TODO
+    DECLARE_SERIALIZABLE_FIELD(bool, disableWinButton, false);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, tabName);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, exeName);
     DECLARE_SERIALIZABLE_FIELD(crosshair::Settings, crosshairSettings);

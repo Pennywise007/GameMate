@@ -6,14 +6,15 @@
         "0": {
             "enabled": false,
             "gameMode": true,
+            "disableWinButton": false,
             "tabName": "1",
             "exeName": "helper.exe",
             "crosshairSettings": {
-                "show": false,
-                "size": 1,
-                "type": 1,
-                "customName": "",
-                "color": 0
+                "show": true,
+                "size": 2,
+                "type": 7,
+                "customCrosshairName": "",
+                "color": 8421376
             },
             "macrosByBind": {
                 "Map pair": {

@@ -12,9 +12,33 @@
 #define IDD_DIALOG_BIND_EDIT            137
 #define IDB_PNG_CROSSHAIR               143
 #define IDI_ICON1                       144
-#define IDB_PNG_CROSSHAIR_1_16          145
-#define IDB_PNG_CROSSHAIR_1_24          146
-#define IDB_PNG_CROSSHAIR_1_32          147
+#define IDB_PNG_CROSSHAIR_0_16          145
+#define IDB_PNG_CROSSHAIR_0_24          146
+#define IDB_PNG_CROSSHAIR_0_32          147
+#define IDB_PNG_CROSSHAIR_1_16          148
+#define IDB_PNG_CROSSHAIR_1_24          149
+#define IDB_PNG_CROSSHAIR_1_32          150
+#define IDB_PNG_CROSSHAIR_2_16          151
+#define IDB_PNG_CROSSHAIR_2_24          152
+#define IDB_PNG_CROSSHAIR_2_32          153
+#define IDB_PNG_CROSSHAIR_3_16          154
+#define IDB_PNG_CROSSHAIR_3_24          155
+#define IDB_PNG_CROSSHAIR_3_32          156
+#define IDB_PNG_CROSSHAIR_4_16          157
+#define IDB_PNG_CROSSHAIR_4_24          158
+#define IDB_PNG_CROSSHAIR_4_32          159
+#define IDB_PNG_CROSSHAIR_5_16          160
+#define IDB_PNG_CROSSHAIR_5_24          161
+#define IDB_PNG_CROSSHAIR_5_32          162
+#define IDB_PNG_CROSSHAIR_6_16          163
+#define IDB_PNG_CROSSHAIR_6_24          164
+#define IDB_PNG_CROSSHAIR_6_32          165
+#define IDB_PNG_CROSSHAIR_7_16          166
+#define IDB_PNG_CROSSHAIR_7_24          167
+#define IDB_PNG_CROSSHAIR_7_32          168
+#define IDB_PNG_CROSSHAIR_8_16          169
+#define IDB_PNG_CROSSHAIR_8_24          170
+#define IDB_PNG_CROSSHAIR_8_32          171
 #define IDC_TABCONTROL_GAMES            1000
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
@@ -40,6 +64,7 @@
 #define IDC_STATIC_DELAY_HELP           1029
 #define IDC_COMBO_EXE_NAME              1030
 #define IDC_STATIC_CROSSHAIR            1031
+#define IDC_STATIC_CROSSHAIR_DEMO       1031
 #define IDC_COMBO1                      1032
 #define IDC_COMBO_CROSSHAIR_SELECTION   1032
 #define IDC_COMBO2                      1033
@@ -50,6 +75,7 @@
 #define IDC_STATIC_CROSSHAIR_SIZE       1037
 #define IDC_CHECK_USE                   1038
 #define IDC_STATIC_CROSSHAIR_INFO       1039
+#define IDC_CHECK_DISABLE_WIN           1040
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -59,9 +85,11 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        149
+#define _APS_NEXT_RESOURCE_VALUE        172
 #define _APS_NEXT_COMMAND_VALUE         32775
-#define _APS_NEXT_CONTROL_VALUE         1040
+#define _APS_NEXT_CONTROL_VALUE         1041
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
+
+#define SS_REALSIZECONTROL              0x00000040L

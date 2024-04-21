@@ -6,7 +6,6 @@
 
 #include "Settings.h"
 
-#include <Controls/Tooltip/ToolTip.h>
 #include <Controls/Edit/SpinEdit/SpinEdit.h>
 #include <Controls/Tables/List/ListGroupCtrl/ListGroupCtrl.h>
 #include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
@@ -45,7 +44,6 @@ private:
 	CButton m_buttonRecord;
 	CSpinEdit m_editRandomizeDelays;
 	CStatic m_staticDelayHelp;
-	controls::CToolTip m_staticDelayTooltip;
 
 	Macros m_macros;
 	std::chrono::steady_clock::time_point m_lastActionTime;

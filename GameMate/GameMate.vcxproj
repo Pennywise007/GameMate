@@ -197,6 +197,7 @@
     <ClInclude Include="Controls\ComboBox\CIconComboBox\IconComboBox.h" />
     <ClInclude Include="Controls\Edit\CEditBase\CEditBase.h" />
     <ClInclude Include="Controls\Edit\SpinEdit\SpinEdit.h" />
+    <ClInclude Include="Controls\Layout\Layout.h" />
     <ClInclude Include="Controls\SpinButton\SpinButton.h" />
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.h" />
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditorImpl.h" />
@@ -238,6 +239,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Controls\Edit\SpinEdit\SpinEdit.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Controls\Layout\Layout.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -300,6 +307,33 @@
     <None Include="res\GameMate.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\crosshairs\crosshair_0_16.png" />
+    <Image Include="res\crosshairs\crosshair_0_24.png" />
+    <Image Include="res\crosshairs\crosshair_0_32.png" />
+    <Image Include="res\crosshairs\crosshair_1_16.png" />
+    <Image Include="res\crosshairs\crosshair_1_24.png" />
+    <Image Include="res\crosshairs\crosshair_1_32.png" />
+    <Image Include="res\crosshairs\crosshair_2_16.png" />
+    <Image Include="res\crosshairs\crosshair_2_24.png" />
+    <Image Include="res\crosshairs\crosshair_2_32.png" />
+    <Image Include="res\crosshairs\crosshair_3_16.png" />
+    <Image Include="res\crosshairs\crosshair_3_24.png" />
+    <Image Include="res\crosshairs\crosshair_3_32.png" />
+    <Image Include="res\crosshairs\crosshair_4_16.png" />
+    <Image Include="res\crosshairs\crosshair_4_24.png" />
+    <Image Include="res\crosshairs\crosshair_4_32.png" />
+    <Image Include="res\crosshairs\crosshair_5_16.png" />
+    <Image Include="res\crosshairs\crosshair_5_24.png" />
+    <Image Include="res\crosshairs\crosshair_5_32.png" />
+    <Image Include="res\crosshairs\crosshair_6_16.png" />
+    <Image Include="res\crosshairs\crosshair_6_24.png" />
+    <Image Include="res\crosshairs\crosshair_6_32.png" />
+    <Image Include="res\crosshairs\crosshair_7_16.png" />
+    <Image Include="res\crosshairs\crosshair_7_24.png" />
+    <Image Include="res\crosshairs\crosshair_7_32.png" />
+    <Image Include="res\crosshairs\crosshair_8_16.png" />
+    <Image Include="res\crosshairs\crosshair_8_24.png" />
+    <Image Include="res\crosshairs\crosshair_8_32.png" />
     <Image Include="res\crosshair_1_16.png" />
     <Image Include="res\crosshair_1_24.png" />
     <Image Include="res\crosshair_1_32.png" />
