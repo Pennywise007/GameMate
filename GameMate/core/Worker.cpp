@@ -2,6 +2,7 @@
 #include "psapi.h"
 #include "resource.h"
 
+#include "Crosshairs.h"
 #include "Worker.h"
 
 namespace {
@@ -76,8 +77,9 @@ public:
 
     CMyWnd()
     {
-        // Загрузите ваше изображение в m_bitmap
-        m_bitmap.LoadBitmapW(IDB_PNG_CROSSHAIR_0_16);
+        crosshair::Settings crosshair;
+        crosshair.color = RGB(255, 0, 0);
+        crosshair::LoadCrosshair(crosshair, m_bitmap);
 
         HINSTANCE instance = AfxGetInstanceHandle();
         const CString editLabelClassName(typeid(*this).name());
@@ -98,32 +100,32 @@ public:
                 ::MessageBox(NULL, L"Can`t register class", L"Error", MB_OK);
         }
 
-        // Установите стиль WS_POPUP чтобы окно не имело рамок и заголовка
-        CreateEx(WS_EX_TOPMOST, CString(typeid(*this).name()), NULL, WS_POPUP | WS_VISIBLE, CRect(0, 0, 1000, 1000), NULL, NULL);
+        BITMAP bm;
+        m_bitmap.GetBitmap(&bm);
 
-        // Установите прозрачность окна
-       // SetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE, GetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE) | WS_EX_LAYERED);
+        CreateEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT, CString(typeid(*this).name()), NULL, WS_POPUP | WS_VISIBLE, CRect(0, 0, bm.bmWidth, bm.bmHeight), NULL, NULL);
 
-        // Установите прозрачность окна
-      //  SetLayeredWindowAttributes(RGB(255, 0, 255), 0, LWA_COLORKEY);
+        SetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE, GetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE) | WS_EX_LAYERED);
+        SetLayeredWindowAttributes(RGB(255, 255, 255), 0, LWA_COLORKEY);
     }
 
     afx_msg void OnPaint()
     {
         CPaintDC dc(this); // контекст устройства для рисования
 
-        // Создайте мемориальный контекст устройства для рисования на маске битового блока
-        CDC memDC;
-        memDC.CreateCompatibleDC(&dc);
+        BITMAP bm;
+        m_bitmap.GetBitmap(&bm);
 
-        // Выберите ваш битмап в мемориальный контекст устройства
-        CBitmap* pOldBitmap = memDC.SelectObject(&m_bitmap);
+        std::unique_ptr<BYTE[]> pBits(new BYTE[bm.bmWidthBytes * bm.bmHeight]);
+        ::ZeroMemory(pBits.get(), bm.bmWidthBytes * bm.bmHeight);
+        ::GetBitmapBits(m_bitmap, bm.bmWidthBytes * bm.bmHeight, pBits.get());
 
-        // Нарисуйте битмап в окне
-        dc.BitBlt(0, 0, 100, 100, &memDC, 0, 0, SRCCOPY);
+        for (int i = 0; i < bm.bmWidth * bm.bmHeight; ++i) {
+            BYTE* pPixel = pBits.get() + i * 4; // Assuming 32-bit RGBA format
 
-        // Освободите объекты, чтобы избежать утечек памяти
-        memDC.SelectObject(pOldBitmap);
+            if (pPixel[3] != 0)  // Non-transparent pixel
+                dc.SetPixel(CPoint(i / bm.bmWidth, i % bm.bmWidth), RGB(pPixel[2], pPixel[1], pPixel[0]));
+        }
     }
 
     DECLARE_MESSAGE_MAP()
@@ -134,7 +136,6 @@ BEGIN_MESSAGE_MAP(CMyWnd, CWnd)
 END_MESSAGE_MAP()
 
 std::shared_ptr<CMyWnd> wnd;
-
 
 Worker::Worker()
 {

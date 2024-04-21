@@ -84,7 +84,7 @@ BOOL CMainDlg::OnInitDialog()
 							 });
 
 	// Starting worker
-	ext::get_service<Worker>();
+	EXT_UNUSED(ext::get_service<Worker>());
 
 	return TRUE;
 }
