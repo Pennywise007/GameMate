@@ -108,14 +108,12 @@ CrosshairWindow::CrosshairWindow()
     HINSTANCE instance = AfxGetInstanceHandle();
     const CString className(typeid(*this).name());
 
-    // регистрируем наш клас
     WNDCLASSEX wndClass;
     if (!::GetClassInfoEx(instance, className, &wndClass))
     {
-        // Регистрация класса окна которое используется для редактирования ячеек
         memset(&wndClass, 0, sizeof(WNDCLASSEX));
         wndClass.cbSize = sizeof(WNDCLASSEX);
-        wndClass.style = 0; // TODO CS_DBLCLKS 
+        wndClass.style = 0;
         wndClass.lpfnWndProc = ::DefMDIChildProc;
         wndClass.hInstance = instance;
         wndClass.lpszClassName = className;
@@ -128,8 +126,6 @@ CrosshairWindow::CrosshairWindow()
 
     SetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE, GetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE) | WS_EX_LAYERED);
     SetLayeredWindowAttributes(RGB(255, 255, 255), 0, LWA_COLORKEY);
-
-    //SetRedraw(FALSE);
 }
 
 void CrosshairWindow::SetCrosshair(HWND hWndOfActiveWindow, const Settings& crosshair)

@@ -159,7 +159,7 @@ std::wstring Action::ToString() const
 		actionString = L"Mouse H wheel";
 		break;
 	default:
-		//EXT_ASSERT(false) << "Unknown message id " << messageId;
+		//EXT_ASSERT(false) << "Unknown message id " << messageId; TODO uncomment after serialization fix
 		actionString = (std::to_wstring(messageId) + L": " + std::to_wstring(wParam)).c_str();
 		break;
 	}
@@ -315,6 +315,7 @@ bool Bind::IsBind(UINT commandMessageId, WPARAM commandWParam) const
 		return action.messageId == WM_KEYDOWN && action.wParam == commandWParam;
 	case WM_SYSKEYUP:
 		EXT_ASSERT(false) << "It was calling WM_KEYUP for left alt in hook, check if we need to fix WM_KEYUP case";
+		[[fallthrough]];
 	case WM_SYSKEYDOWN:
 		return action.messageId == WM_SYSKEYDOWN && action.wParam == commandWParam;
 	case WM_LBUTTONDOWN:

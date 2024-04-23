@@ -232,6 +232,7 @@ void CMacrosEditDlg::OnBnClickedButtonRemove()
 		m_macros.actions.erase(std::next(m_macros.actions.begin(), *it));
 		m_listMacroses.DeleteItem(*it);
 	}
+	// TODO add selection
 }
 
 void CMacrosEditDlg::OnBnClickedButtonRecord()

@@ -332,6 +332,8 @@ void CGameSettingsDlg::OnCbnDropdownComboExeName()
 		runningProcessesNames.emplace(pe32.szExeFile);
 	} while (Process32Next(hProcessSnap, &pe32));
 
+	// TODO Extract from set processes with already existing tabs
+
 	CString currentText;
 	m_exeName.GetWindowText(currentText);
 
