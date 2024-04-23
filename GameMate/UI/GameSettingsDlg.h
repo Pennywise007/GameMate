@@ -42,7 +42,7 @@ protected:
 	afx_msg void OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult);
 
 private:
-	void AddNewMacros(TabConfiguration::Keybind keybind, Macros&& macros);
+	void AddNewMacros(const Bind& bind, Macros&& macros);
 	void UpdateDemoCrosshair();
 	void InitCrosshairsList();
 

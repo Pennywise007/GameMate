@@ -1,194 +1,199 @@
-#include "pch.h"
+п»ї#include "pch.h"
 #include "psapi.h"
 #include "resource.h"
 
 #include "Crosshairs.h"
 #include "Worker.h"
 
+#include <ext/thread/thread_pool.h>
+
 namespace {
 
-HWINEVENTHOOK g_hook = nullptr;
-HHOOK g_mouseHook = nullptr;
-HHOOK g_keyboardHook = nullptr;
-
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
-    if (nCode >= 0) {
-        // Получение информации о текущем активном окне
-        /*HWND activeWindow = GetForegroundWindow();
-
-        DWORD pid;
-        GetWindowThreadProcessId(activeWindow, &pid);
-
-        // Получаем дескриптор процесса по его PID
-        HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-        if (hProcess != nullptr) {
-            TCHAR processName[MAX_PATH];
-            GetModuleFileNameEx(hProcess, nullptr, processName, MAX_PATH);
-
-            // Отображаем информацию о процессе и окне в консоль
-            std::wcout << L"Process Name: " << processName << std::endl;
-
-            CloseHandle(hProcess);
-        }*/
-    }
-
-    // Продолжаем цепочку обработки сообщений
-    return CallNextHookEx(g_mouseHook, nCode, wParam, lParam);
+    return ext::get_service<Worker>().OnMouseProc(nCode, wParam, lParam);
 }
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
-    if (nCode >= 0) {
-        // Получение информации о текущем активном окне
-       /* HWND activeWindow = GetForegroundWindow();
-
-        DWORD pid;
-        GetWindowThreadProcessId(activeWindow, &pid);
-
-        // Получаем дескриптор процесса по его PID
-        HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-        if (hProcess != nullptr) {
-            TCHAR processName[MAX_PATH];
-            GetModuleFileNameEx(hProcess, nullptr, processName, MAX_PATH);
-
-            // Отображаем информацию о процессе и окне в консоль
-            std::wcout << L"Process Name: " << processName << std::endl;
-
-            CloseHandle(hProcess);
-        }*/
-    }
-
-    // Продолжаем цепочку обработки сообщений
-    return CallNextHookEx(g_keyboardHook, nCode, wParam, lParam);
+    return ext::get_service<Worker>().OnKeyboardProc(nCode, wParam, lParam);
 }
 
-void CALLBACK windowFocusChanged(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
+void CALLBACK windowFocusChanged(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hWnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
-    int ads = 0;
-    ++ads;
-    // retreive and use the title of hwnd as needed...
+    ext::get_service<Worker>().OnFocusChanged(hWnd);
 }
 
 } // namespace
 
-class CMyWnd : public CWnd
-{
-public:
-    CBitmap m_bitmap;
-
-    CMyWnd()
-    {
-        crosshair::Settings crosshair;
-        crosshair.color = RGB(255, 0, 0);
-        crosshair::LoadCrosshair(crosshair, m_bitmap);
-
-        HINSTANCE instance = AfxGetInstanceHandle();
-        const CString editLabelClassName(typeid(*this).name());
-
-        // регистрируем наш клас
-        WNDCLASSEX wndClass;
-        if (!::GetClassInfoEx(instance, editLabelClassName, &wndClass))
-        {
-            // Регистрация класса окна которое используется для редактирования ячеек
-            memset(&wndClass, 0, sizeof(WNDCLASSEX));
-            wndClass.cbSize = sizeof(WNDCLASSEX);
-            wndClass.style = CS_DBLCLKS;
-            wndClass.lpfnWndProc = ::DefMDIChildProc;
-            wndClass.hInstance = instance;
-            wndClass.lpszClassName = editLabelClassName;
-
-            if (!RegisterClassEx(&wndClass))
-                ::MessageBox(NULL, L"Can`t register class", L"Error", MB_OK);
-        }
-
-        BITMAP bm;
-        m_bitmap.GetBitmap(&bm);
-
-        CreateEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT, CString(typeid(*this).name()), NULL, WS_POPUP | WS_VISIBLE, CRect(0, 0, bm.bmWidth, bm.bmHeight), NULL, NULL);
-
-        SetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE, GetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE) | WS_EX_LAYERED);
-        SetLayeredWindowAttributes(RGB(255, 255, 255), 0, LWA_COLORKEY);
-    }
-
-    afx_msg void OnPaint()
-    {
-        CPaintDC dc(this); // контекст устройства для рисования
-
-        BITMAP bm;
-        m_bitmap.GetBitmap(&bm);
-
-        std::unique_ptr<BYTE[]> pBits(new BYTE[bm.bmWidthBytes * bm.bmHeight]);
-        ::ZeroMemory(pBits.get(), bm.bmWidthBytes * bm.bmHeight);
-        ::GetBitmapBits(m_bitmap, bm.bmWidthBytes * bm.bmHeight, pBits.get());
-
-        for (int i = 0; i < bm.bmWidth * bm.bmHeight; ++i) {
-            BYTE* pPixel = pBits.get() + i * 4; // Assuming 32-bit RGBA format
-
-            if (pPixel[3] != 0)  // Non-transparent pixel
-                dc.SetPixel(CPoint(i / bm.bmWidth, i % bm.bmWidth), RGB(pPixel[2], pPixel[1], pPixel[0]));
-        }
-    }
-
-    DECLARE_MESSAGE_MAP()
-};
-
-BEGIN_MESSAGE_MAP(CMyWnd, CWnd)
-    ON_WM_PAINT()
-END_MESSAGE_MAP()
-
-std::shared_ptr<CMyWnd> wnd;
-
 Worker::Worker()
 {
-    /*g_hook = SetWinEventHook(EVENT_OBJECT_FOCUS, EVENT_OBJECT_FOCUS, NULL, &windowFocusChanged, 0, 0, WINEVENT_OUTOFCONTEXT);
-    if (g_hook == nullptr) {
-        std::cerr << "Failed to set active window hook" << std::endl;
+    ext::get_tracer().Enable();
+
+    m_activeWindowHook = SetWinEventHook(EVENT_OBJECT_FOCUS, EVENT_OBJECT_FOCUS, NULL, &windowFocusChanged, 0, 0, WINEVENT_OUTOFCONTEXT);
+    if (m_activeWindowHook == nullptr) {
+        MessageBox(0, L"Failed to set active window hook", L"Failed to start program", MB_OK | MB_ICONERROR);
+        ExitProcess(400);
     }
 
-    g_mouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseProc, NULL, 0);
-    if (g_mouseHook == nullptr) {
-        std::cerr << "Failed to set mouse hook" << std::endl;
+    m_mouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseProc, NULL, 0);
+    if (m_mouseHook == nullptr) {
+        UnhookWinEvent(m_activeWindowHook);
+        MessageBox(0, L"Failed to set mouse hook", L"Failed to start program", MB_OK | MB_ICONERROR);
+        ExitProcess(401);
     }
 
-    // Установка хука для отслеживания событий клавиатуры
-    g_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, NULL, 0);
-    if (g_keyboardHook == nullptr) {
-        std::cerr << "Failed to set keyboard hook" << std::endl;
-    }*/
-    wnd = std::make_shared<CMyWnd>();
+    m_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, NULL, 0);
+    if (m_keyboardHook == nullptr) {
+        UnhookWinEvent(m_activeWindowHook);
+        UnhookWindowsHookEx(m_mouseHook);
+        MessageBox(0, L"Failed to set keyboard hook", L"Failed to start program", MB_OK | MB_ICONERROR);
+        ExitProcess(402);
+    }
 
-
-    // Установите окно наверх всех других окон
-  /*  wnd.SetWindowPos(&wnd, 0, 0, 0, 0,
-                     SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW | SWP_NOOWNERZORDER | SWP_NOSENDCHANGING);
-  */
     OnSettingsChangedByUser();
 }
 
 Worker::~Worker()
 {
-    /*UnhookWinEvent(g_hook);
-    UnhookWindowsHookEx(g_mouseHook);
-    UnhookWindowsHookEx(g_keyboardHook);*/
+    ASSERT(m_activeWindowHook);
+    UnhookWinEvent(m_activeWindowHook);
+    ASSERT(m_mouseHook);
+    UnhookWindowsHookEx(m_mouseHook);
+    ASSERT(m_keyboardHook);
+    UnhookWindowsHookEx(m_keyboardHook);
+}
+
+void Worker::OnFocusChanged(HWND hWnd)
+{
+    std::wstring activeWindowProcessname;
+
+    DWORD pid;
+    GetWindowThreadProcessId(hWnd, &pid);
+
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    if (hProcess == nullptr)
+        return;
+
+    TCHAR processName[MAX_PATH * 10];
+    GetModuleFileNameEx(hProcess, nullptr, processName, MAX_PATH * 10);
+    CloseHandle(hProcess);
+
+    activeWindowProcessname = PathFindFileName(processName);
+
+    EXT_TRACE_DBG() << L"Active process: " << activeWindowProcessname;
+
+    if (m_activeExeTabConfig)
+    {
+        m_crosshairWindow.ShowWindow(SW_HIDE);
+        m_activeExeTabConfig = nullptr;
+    }
+
+    //if (m_activeProcessName == activeProcessName)
+     //   return;
+
+    // TODO don't allow exe with same names in UI
+
+    auto& settings = ext::get_service<Settings>();
+    for (auto& tab : settings.tabs)
+    {
+        if (tab->exeName == activeWindowProcessname)
+        {
+            m_activeExeTabConfig = tab;
+            break;
+        }
+    }
+
+    // add game mode detection
+    if (!m_activeExeTabConfig || !m_activeExeTabConfig->enabled)
+        return;
+
+    auto& crossahair = m_activeExeTabConfig->crosshairSettings;
+    if (crossahair.show)
+    {
+        auto currentActiveWindow = GetForegroundWindow();
+        if (currentActiveWindow == NULL)
+            currentActiveWindow = hWnd;
+        m_crosshairWindow.SetCrosshair(currentActiveWindow, crossahair);
+    }
+}
+
+LRESULT Worker::OnMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    if (nCode == HC_ACTION && !!m_activeExeTabConfig)
+    {
+        PMSLLHOOKSTRUCT hookStruct = (PMSLLHOOKSTRUCT)lParam;
+        for (auto&& [bind, macro] : m_activeExeTabConfig->macrosByBind)
+        {
+            if (bind.IsBind(wParam, wParam))
+            {
+                // Execute macros on key down and ignore key up
+                switch (wParam)
+                {
+                case WM_LBUTTONUP:
+                case WM_RBUTTONUP:
+                case WM_MBUTTONUP:
+                case WM_XBUTTONUP:
+                    break;
+                default:
+                    m_macrosExecutors.add_task([actions = macro.actions]() {
+                        for (const auto& action : actions)
+                        {
+                            action.ExecuteAction();
+                        }
+                    });
+                    break;
+                }
+
+                return 1;
+            }
+        }
+    }
+
+    return CallNextHookEx(m_mouseHook, nCode, wParam, lParam);
+}
+
+LRESULT Worker::OnKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+    if (nCode == HC_ACTION && !!m_activeExeTabConfig)
+    {
+        PKBDLLHOOKSTRUCT hookStruct = (PKBDLLHOOKSTRUCT)lParam;
+        for (auto&& [bind, macro] : m_activeExeTabConfig->macrosByBind)
+        {
+            if (bind.IsBind(wParam, hookStruct->vkCode))
+            {
+                // Execute macros on key down and ignore key up
+                if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
+                {
+                    m_macrosExecutors.add_task([actions = macro.actions]() {
+                        for (const auto& action : actions)
+                        {
+                            action.ExecuteAction();
+                        }
+                    });
+                }
+
+                return 1;
+            }
+        }
+
+        // Ignore Windows button press
+        if (m_activeExeTabConfig->disableWinButton)
+        {
+            switch (hookStruct->vkCode)
+            {
+            case VK_LWIN:
+            case VK_RWIN:
+                // TODO allow double win press
+                return 1;
+            default:
+                break;
+            }
+        }
+    }
+
+    return CallNextHookEx(m_keyboardHook, nCode, wParam, lParam);
 }
 
 void Worker::OnSettingsChangedByUser()
 {
-    if (m_workingThread.joinable())
-        m_workingThread.interrupt_and_join();
-
-    std::list<TabConfiguration> activeTabSettings;
-    for (const auto& tabSettings : ext::get_service<Settings>().tabs)
-    {
-        if (!tabSettings->enabled)
-            continue;
-        activeTabSettings.emplace_back(*tabSettings);
-    }
-
-    if (!activeTabSettings.empty())
-        m_workingThread.run(&Worker::WorkingThread, this, std::move(activeTabSettings));
-}
-
-void Worker::WorkingThread(std::list<TabConfiguration> activeTabSettings)
-{
-    
+    OnFocusChanged(GetForegroundWindow());
 }

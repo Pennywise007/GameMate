@@ -77,7 +77,7 @@
     <ClInclude Include="UI\AddingTabDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="UI\BindEditDlg.h">
+    <ClInclude Include="UI\ActionEditDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="UI\GameSettingsDlg.h">
@@ -142,7 +142,7 @@
     <ClCompile Include="UI\AddingTabDlg.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="UI\BindEditDlg.cpp">
+    <ClCompile Include="UI\ActionEditDlg.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="UI\GameSettingsDlg.cpp">

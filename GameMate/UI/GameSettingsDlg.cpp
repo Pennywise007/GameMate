@@ -8,7 +8,7 @@
 #include "afxdialogex.h"
 #include "GameSettingsDlg.h"
 #include "MacrosEditDlg.h"
-#include "BindEditDlg.h"
+#include "ActionEditDlg.h"
 
 #include "core/Crosshairs.h"
 
@@ -160,17 +160,13 @@ BOOL CGameSettingsDlg::OnInitDialog()
 			ASSERT((int)macroses.size() > pParams->iItem);
 			auto editableMacrosIt = std::next(macroses.begin(), pParams->iItem);
 
-			auto bind = CBindEditDlg(parentWindow, editableMacrosIt->first).ExecModal();
+			auto bind = CActionEditDlg::EditBind(parentWindow, editableMacrosIt->first);
 			if (!bind.has_value())
-				return nullptr;
-
-			const auto bindText = bind->ToString();
-			if (bindText == editableMacrosIt->first.ToString())
 				return nullptr;
 
 			if (auto sameBindIt = macroses.find(bind.value()); sameBindIt != macroses.end())
 			{
-				if (MessageBox((L"Bind '" + bindText + L"' already exists, do you want to replace it?").c_str(),
+				if (MessageBox((L"Bind '" + bind->ToString() + L"' already exists, do you want to replace it?").c_str(),
 							   L"This bind already exist", MB_ICONWARNING | MB_OKCANCEL) == IDCANCEL)
 					return nullptr;
 
@@ -242,21 +238,17 @@ void CGameSettingsDlg::OnCancel()
 
 void CGameSettingsDlg::OnBnClickedButtonAdd()
 {
-	Macros::Action action;
-	{
-		auto bind = CBindEditDlg(this).ExecModal();
-		if (!bind.has_value())
-			return;
-		action = std::move(bind.value());
-	}
+	auto bind = CActionEditDlg::EditBind(this);
+	if (!bind.has_value())
+		return;
 
-	const auto it = m_configuration->macrosByBind.find(action);
+	const auto it = m_configuration->macrosByBind.find(bind.value());
 	const bool actionExists = it != m_configuration->macrosByBind.end();
 
 	Macros editableMacros;
 	if (actionExists)
 	{
-		auto res = MessageBox((L"Do you want to edit action '" + action.ToString() + L"'?").c_str(), L"Action already has macros", MB_OKCANCEL | MB_ICONWARNING);
+		auto res = MessageBox((L"Do you want to edit action '" + bind->ToString() + L"'?").c_str(), L"Action already has macros", MB_OKCANCEL | MB_ICONWARNING);
 		if (res == IDCANCEL)
 		{
 			m_listMacroses.ClearSelection();
@@ -268,7 +260,7 @@ void CGameSettingsDlg::OnBnClickedButtonAdd()
 	}
 	else {
 		// Adding new item to the table to show user what we adding
-		auto item = m_listMacroses.InsertItem(m_listMacroses.GetItemCount(), action.ToString().c_str());
+		auto item = m_listMacroses.InsertItem(m_listMacroses.GetItemCount(), bind->ToString().c_str());
 		m_listMacroses.SelectItem(item);
 	}
 
@@ -280,7 +272,7 @@ void CGameSettingsDlg::OnBnClickedButtonAdd()
 	if (!newMacros.has_value())
 		return;
 
-	AddNewMacros(std::move(action), std::move(newMacros.value()));
+	AddNewMacros(bind.value(), std::move(newMacros.value()));
 
 	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
 }
@@ -352,10 +344,10 @@ void CGameSettingsDlg::OnCbnDropdownComboExeName()
 	m_exeName.SetEditSel(0, currentText.GetLength());
 }
 
-void CGameSettingsDlg::AddNewMacros(TabConfiguration::Keybind keybind, Macros&& newMacros)
+void CGameSettingsDlg::AddNewMacros(const Bind& keybind, Macros&& newMacros)
 {
 	auto& macros = m_configuration->macrosByBind;
-	auto it = macros.try_emplace(std::move(keybind), std::move(newMacros));
+	auto it = macros.try_emplace(keybind, std::move(newMacros));
 	ASSERT(it.second);
 
 	auto item = (int)std::distance(macros.begin(), it.first);
@@ -366,8 +358,8 @@ void CGameSettingsDlg::AddNewMacros(TabConfiguration::Keybind keybind, Macros&& 
 		if (!actions.empty())
 			actions += L" → ";
 
-		if (action.delay != 0)
-			actions += L"(" + std::to_wstring(action.delay) + L"ms) ";
+		if (action.delayInMilliseconds != 0)
+			actions += L"(" + std::to_wstring(action.delayInMilliseconds) + L"ms) ";
 
 		actions += action.ToString();
 	}

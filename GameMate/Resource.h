@@ -9,7 +9,7 @@
 #define IDD_TAB_GAME_SETTINGS           130
 #define IDD_DIALOG_ADDING_TAB           132
 #define IDD_DIALOG_MACROS_EDIT          134
-#define IDD_DIALOG_BIND_EDIT            137
+#define IDD_DIALOG_ACTION_EDIT          137
 #define IDB_PNG_CROSSHAIR               143
 #define IDI_ICON1                       144
 #define IDB_PNG_CROSSHAIR_0_16          145

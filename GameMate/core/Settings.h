@@ -8,40 +8,46 @@
 #include <ext/core/singleton.h>
 #include <ext/core/dispatcher.h>
 #include <ext/serialization/iserializable.h>
+// TODO rework to inheritance
+struct Action : ext::serializable::SerializableObject<Action> {
+    // Convert message to action
+    [[nodiscard]] static std::optional<Action> FromMessage(MSG* pMsg);
+    // Get text
+    std::wstring ToString() const;
 
-// Notification about user changed any settings
-struct ISettingsChanged : ext::events::IBaseEvent
+    DECLARE_SERIALIZABLE_FIELD(UINT, messageId);
+    DECLARE_SERIALIZABLE_FIELD(WPARAM, wParam);
+    DECLARE_SERIALIZABLE_FIELD(LPARAM, lParam);
+};
+
+struct Bind : ext::serializable::SerializableObject<Bind>
 {
-    virtual ~ISettingsChanged() = default;
-    virtual void OnSettingsChangedByUser() = 0;
+    // Comparision operator for map
+    int operator<(const Bind& other) const { return ToString() < other.ToString(); }
+    // Convert message to bind
+    [[nodiscard]] static std::optional<Bind> GetBindFromMessage(MSG* pMsg);
+    // Get text
+    std::wstring ToString() const { return action.ToString(); }
+    // Check if message equal bind
+    bool IsBind(UINT messageId, WPARAM wParam) const;
+
+    DECLARE_SERIALIZABLE_FIELD(Action, action);
+};
+
+struct MacrosAction : ext::serializable::SerializableObject<MacrosAction> {
+    // Convertion message to action
+    [[nodiscard]] static std::optional<MacrosAction> GetMacrosActionFromMessage(MSG* pMsg, long long delay);
+    // Get action text
+    std::wstring ToString() const;
+    // Execution action
+    void ExecuteAction() const;
+
+    DECLARE_SERIALIZABLE_FIELD(Action, action);
+    DECLARE_SERIALIZABLE_FIELD((long long), delayInMilliseconds, 0);
 };
 
 struct Macros : ext::serializable::SerializableObject<Macros> {
-    struct Action : ext::serializable::SerializableObject<Action> {
-        enum class Type {
-            eKeyUp = 0,
-            eKeyDown,
-            eMouse,
-        };
-
-        static std::optional<Action> GetActionFromMessage(MSG* pMsg, long long delay);
-
-        std::wstring ToString() const;
-
-        int operator<(const Action& other) const
-        {
-            return ToString() < other.ToString();
-        }
-
-        DECLARE_SERIALIZABLE_FIELD(Type, type);
-        DECLARE_SERIALIZABLE_FIELD((long long), delay);
-        DECLARE_SERIALIZABLE_FIELD(UINT, messageId);
-        DECLARE_SERIALIZABLE_FIELD(WPARAM, wparam);
-        DECLARE_SERIALIZABLE_FIELD(LPARAM, lparam);
-    };
-
-   // DECLARE_SERIALIZABLE_FIELD(Action, bind);
-    DECLARE_SERIALIZABLE_FIELD(std::list<Action>, actions);
+    DECLARE_SERIALIZABLE_FIELD(std::list<MacrosAction>, actions);
     DECLARE_SERIALIZABLE_FIELD(double, randomizeDelays, 0);
 };
 
@@ -82,9 +88,7 @@ struct TabConfiguration : ext::serializable::SerializableObject<TabConfiguration
     DECLARE_SERIALIZABLE_FIELD(std::wstring, tabName);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, exeName);
     DECLARE_SERIALIZABLE_FIELD(crosshair::Settings, crosshairSettings);
-
-    using Keybind = Macros::Action;
-    DECLARE_SERIALIZABLE_FIELD((std::map<Keybind, Macros>), macrosByBind);
+    DECLARE_SERIALIZABLE_FIELD((std::map<Bind, Macros>), macrosByBind); // TODO check support of the 2 macroses
 };
 
 class Settings : ext::serializable::SerializableObject<Settings>
@@ -99,3 +103,9 @@ public:
     DECLARE_SERIALIZABLE_FIELD(std::list<std::shared_ptr<TabConfiguration>>, tabs);
 };
 
+// Notification about user changed any settings
+struct ISettingsChanged : ext::events::IBaseEvent
+{
+    virtual ~ISettingsChanged() = default;
+    virtual void OnSettingsChangedByUser() = 0; // TODO check that it called everywhere
+};

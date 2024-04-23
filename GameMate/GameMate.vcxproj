@@ -212,7 +212,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="UI\AddingTabDlg.h" />
-    <ClInclude Include="UI\BindEditDlg.h" />
+    <ClInclude Include="UI\ActionEditDlg.h" />
     <ClInclude Include="UI\GameSettingsDlg.h" />
     <ClInclude Include="UI\MacrosEditDlg.h" />
     <ClInclude Include="UI\MainDlg.h" />
@@ -295,7 +295,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="UI\AddingTabDlg.cpp" />
-    <ClCompile Include="UI\BindEditDlg.cpp" />
+    <ClCompile Include="UI\ActionEditDlg.cpp" />
     <ClCompile Include="UI\GameSettingsDlg.cpp" />
     <ClCompile Include="UI\MacrosEditDlg.cpp" />
     <ClCompile Include="UI\MainDlg.cpp" />

@@ -37,7 +37,7 @@ protected:
 	afx_msg void OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult);
 
 private:
-	void addAction(Macros::Action&& action);
+	void addAction(MacrosAction&& action);
 
 private:
 	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listMacroses;

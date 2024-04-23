@@ -2,7 +2,7 @@
 #include "GameMate.h"
 #include "afxdialogex.h"
 #include "MacrosEditDlg.h"
-#include "BindEditDlg.h"
+#include "ActionEditDlg.h"
 
 #include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
 #include <Controls/Tooltip/ToolTip.h>
@@ -108,7 +108,7 @@ BOOL CMacrosEditDlg::OnInitDialog()
 			editorControl->GetWindowTextW(currentEditorText);
 
 			auto it = std::next(m_macros.actions.begin(), pParams->iItem);
-			it->delay = _wtoi(currentEditorText);
+			it->delayInMilliseconds = _wtoi(currentEditorText);
 
 			return true;
 		});
@@ -117,7 +117,7 @@ BOOL CMacrosEditDlg::OnInitDialog()
 		{
 			auto action = std::next(m_macros.actions.begin(), pParams->iItem);
 
-			auto newAction = CBindEditDlg(this, *action).ExecModal();
+			auto newAction = CActionEditDlg::EditMacros(this, *action);
 			if (newAction.has_value())
 			{
                 *action = std::move(*newAction);
@@ -165,7 +165,7 @@ BOOL CMacrosEditDlg::PreTranslateMessage(MSG* pMsg)
 			auto curTime = std::chrono::steady_clock::now();
 			auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - m_lastActionTime).count();
 
-			auto action = Macros::Action::GetActionFromMessage(pMsg, delay);
+			auto action = MacrosAction::GetMacrosActionFromMessage(pMsg, delay);
 			if (action.has_value())
 			{
 				addAction(std::move(*action));
@@ -195,7 +195,7 @@ BOOL CMacrosEditDlg::PreTranslateMessage(MSG* pMsg)
 	return CDialogEx::PreTranslateMessage(pMsg);
 }
 
-void CMacrosEditDlg::addAction(Macros::Action&& action)
+void CMacrosEditDlg::addAction(MacrosAction&& action)
 {
 	std::vector<int> selectedActions;
 	m_listMacroses.GetSelectedList(selectedActions, true);
@@ -208,14 +208,14 @@ void CMacrosEditDlg::addAction(Macros::Action&& action)
 
 	m_macros.actions.insert(std::next(m_macros.actions.begin(), item), std::move(action));
 
-	item = m_listMacroses.InsertItem(item, std::to_wstring(action.delay).c_str());
+	item = m_listMacroses.InsertItem(item, std::to_wstring(action.delayInMilliseconds).c_str());
 	m_listMacroses.SetItemText(item, Columns::eAction, action.ToString().c_str());
 	m_listMacroses.SelectItem(item);
 }
 
 void CMacrosEditDlg::OnBnClickedButtonAdd()
 {
-	std::optional<Macros::Action> action = CBindEditDlg(this).ExecModal();
+	std::optional<MacrosAction> action = CActionEditDlg::EditMacros(this);
 	if (!action.has_value())
 		return;
 

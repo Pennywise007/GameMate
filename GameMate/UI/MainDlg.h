@@ -31,6 +31,7 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedButtonAddTab();
+	afx_msg void OnBnClickedButtonRenameTab();
 	afx_msg void OnBnClickedButtonDeleteTab();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 
@@ -42,6 +43,4 @@ private:
 	HICON m_hIcon;
 	CTabControl m_tabControlGames;
 	CTrayHelper m_trayHelper;
-public:
-	afx_msg void OnBnClickedButtonRenameTab();
 };
