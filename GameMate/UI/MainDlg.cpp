@@ -46,7 +46,7 @@ BOOL CMainDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
-	const auto& settings = ext::get_service<Settings>();
+	const auto& settings = ext::get_singleton<Settings>();
 	for (const auto& tab : settings.tabs)
 	{
 		AddTab(tab);
@@ -84,7 +84,7 @@ BOOL CMainDlg::OnInitDialog()
 							 });
 
 	// Starting worker
-	EXT_UNUSED(ext::get_service<Worker>());
+	EXT_UNUSED(ext::get_singleton<Worker>());
 
 	return TRUE;
 }
@@ -130,7 +130,7 @@ void CMainDlg::OnBnClickedButtonAddTab()
 	if (newTab == nullptr)
 		return;
 
-	ext::get_service<Settings>().tabs.push_back(newTab);
+	ext::get_singleton<Settings>().tabs.push_back(newTab);
 	m_tabControlGames.SetCurSel(AddTab(newTab));
 
 	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
@@ -145,7 +145,7 @@ void CMainDlg::OnBnClickedButtonRenameTab()
 		return;
 	}
 
-	auto& tabs = ext::get_service<Settings>().tabs;
+	auto& tabs = ext::get_singleton<Settings>().tabs;
 	EXT_ASSERT(curSel < (int)tabs.size());
 
 	auto tab = std::next(tabs.begin(), curSel)->get();
@@ -173,7 +173,7 @@ void CMainDlg::OnBnClickedButtonDeleteTab()
 		return;
 	}
 
-	auto& tabs = ext::get_service<Settings>().tabs;
+	auto& tabs = ext::get_singleton<Settings>().tabs;
 	EXT_ASSERT(curSel < (int)tabs.size());
 	tabs.erase(std::next(tabs.begin(), curSel));
 
@@ -198,7 +198,7 @@ int CMainDlg::AddTab(const std::shared_ptr<TabConfiguration>& tabSettings)
 
 void CMainDlg::OnDestroy()
 {
-	ext::get_service<Settings>().activeTab = m_tabControlGames.GetCurSel();
+	ext::get_singleton<Settings>().activeTab = m_tabControlGames.GetCurSel();
 	CDialogEx::OnDestroy();
 }
 

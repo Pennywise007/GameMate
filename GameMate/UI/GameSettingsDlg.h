@@ -63,5 +63,4 @@ private:
 	const std::shared_ptr<TabConfiguration> m_configuration;
 	std::list<CBitmap> m_crosshairs;
 	HICON m_demoIcon = nullptr;
-public:
 };

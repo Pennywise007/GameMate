@@ -47,7 +47,7 @@ BOOL CAddingTabDlg::OnInitDialog()
 		SetWindowText(L"Rename tab");
 	}
 
-	const auto& tabs = ext::get_service<Settings>().tabs;
+	const auto& tabs = ext::get_singleton<Settings>().tabs;
 	if (tabs.empty())
 	{
 		m_comboboxCopySettings.SetWindowTextW(L"No tabs yet");
@@ -88,7 +88,7 @@ void CAddingTabDlg::OnOK()
 	const auto curSel = m_comboboxCopySettings.GetCurSel() - 1;
 	if (curSel >= 0)
 	{
-		const auto& tabs = ext::get_service<Settings>().tabs;
+		const auto& tabs = ext::get_singleton<Settings>().tabs;
 		EXT_ASSERT(curSel < (int)tabs.size());
 		m_dialogResult = *std::next(tabs.begin(), curSel)->get();
 	}

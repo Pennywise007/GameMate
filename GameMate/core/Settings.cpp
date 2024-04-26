@@ -21,7 +21,7 @@ Settings::Settings()
         const std::wstring settings{ std::istreambuf_iterator<wchar_t>(file),
                                      std::istreambuf_iterator<wchar_t>() };
 
-        Executor::DeserializeObject(Factory::TextDeserializer(settings), this);
+        DeserializeObject(Factory::TextDeserializer(settings), *this);
     }
     catch (const std::exception&)
     {
@@ -34,7 +34,7 @@ Settings::~Settings()
     try
     {
         std::wstring settings;
-        Executor::SerializeObject(Factory::TextSerializer(settings), this);
+        SerializeObject(Factory::TextSerializer(settings), *this);
 
         std::wofstream file(std::filesystem::get_exe_directory() / kFileName);
         EXT_CHECK(file.is_open()) << "Failed to open file " << kFileName;
@@ -173,8 +173,7 @@ std::optional<MacrosAction> MacrosAction::GetMacrosActionFromMessage(MSG* pMsg, 
 	if (!action.has_value())
 		return std::nullopt;
 
-	MacrosAction macrosAction;
-	macrosAction.action = std::move(*action);
+	MacrosAction macrosAction = std::move(*action);
 	macrosAction.delayInMilliseconds = delay;
 	return macrosAction;
 }
@@ -182,7 +181,7 @@ std::optional<MacrosAction> MacrosAction::GetMacrosActionFromMessage(MSG* pMsg, 
 std::wstring MacrosAction::ToString() const
 {
 	std::wstring actionPrefix;
-	switch (action.messageId)
+	switch (messageId)
 	{
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
@@ -202,13 +201,13 @@ std::wstring MacrosAction::ToString() const
 		break;
 	case WM_MOUSEWHEEL:
 	case WM_MOUSEHWHEEL:
-		actionPrefix = GET_WHEEL_DELTA_WPARAM(action.wParam) < 0 ? L"↓ " : L"↑ ";
+		actionPrefix = GET_WHEEL_DELTA_WPARAM(wParam) < 0 ? L"↓ " : L"↑ ";
 		break;
 	default:
 		break;
 	}
 
-	return actionPrefix + action.ToString();
+	return actionPrefix + Action::ToString();
 }
 
 void MacrosAction::ExecuteAction() const
@@ -218,14 +217,14 @@ void MacrosAction::ExecuteAction() const
 	DWORD dwFlags = 0;
 	DWORD dwData = 0;
 
-	switch (action.messageId)
+	switch (messageId)
 	{
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
-		return keybd_event(action.wParam, BYTE((action.lParam & 0x00ff0000) >> 16), 0, 0);
+		return keybd_event(wParam, BYTE((lParam & 0x00ff0000) >> 16), 0, 0);
 	case WM_KEYUP:
 	case WM_SYSKEYUP:
-		return keybd_event(action.wParam, BYTE((action.lParam & 0x00ff0000) >> 16), KEYEVENTF_KEYUP, 0);
+		return keybd_event(wParam, BYTE((lParam & 0x00ff0000) >> 16), KEYEVENTF_KEYUP, 0);
 	case WM_LBUTTONDOWN:
 		dwFlags = MOUSEEVENTF_LEFTDOWN;
 		break;
@@ -252,14 +251,14 @@ void MacrosAction::ExecuteAction() const
 		break;
 	case WM_MOUSEWHEEL:
 		dwFlags = MOUSEEVENTF_WHEEL;
-		dwData = GET_WHEEL_DELTA_WPARAM(action.wParam) < 0 ? -WHEEL_DELTA : WHEEL_DELTA;
+		dwData = GET_WHEEL_DELTA_WPARAM(wParam) < 0 ? -WHEEL_DELTA : WHEEL_DELTA;
 		break;
 	case WM_MOUSEHWHEEL:
 		dwFlags = MOUSEEVENTF_HWHEEL;
-		dwData = GET_WHEEL_DELTA_WPARAM(action.wParam) < 0 ? -WHEEL_DELTA : WHEEL_DELTA;
+		dwData = GET_WHEEL_DELTA_WPARAM(wParam) < 0 ? -WHEEL_DELTA : WHEEL_DELTA;
 		break;
 	default:
-		EXT_ASSERT(false) << L"Unknown mouse message " << action.messageId;
+		EXT_ASSERT(false) << L"Unknown mouse message " << messageId;
 		break;
 	}
 
@@ -275,29 +274,28 @@ std::optional<Bind> Bind::GetBindFromMessage(MSG* pMsg)
 	if (!action.has_value())
 		return std::nullopt;
 
-	Bind bind;
-	bind.action = std::move(*action);
+	Bind bind = std::move(*action);
 
 	// For optimization we store only DOWN bindings
-	switch (bind.action.messageId)
+	switch (bind.messageId)
 	{
 	case WM_KEYUP:
-		bind.action.messageId = WM_KEYDOWN;
+		bind.messageId = WM_KEYDOWN;
 		break;
 	case WM_SYSKEYUP:
-		bind.action.messageId = WM_SYSKEYDOWN;
+		bind.messageId = WM_SYSKEYDOWN;
 		break;
 	case WM_LBUTTONUP:
-		bind.action.messageId = WM_LBUTTONDOWN;
+		bind.messageId = WM_LBUTTONDOWN;
 		break;
 	case WM_RBUTTONUP:
-		bind.action.messageId = WM_RBUTTONDOWN;
+		bind.messageId = WM_RBUTTONDOWN;
 		break;
 	case WM_MBUTTONUP:
-		bind.action.messageId = WM_MBUTTONDOWN;
+		bind.messageId = WM_MBUTTONDOWN;
 		break;
 	case WM_XBUTTONUP:
-		bind.action.messageId = WM_XBUTTONDOWN;
+		bind.messageId = WM_XBUTTONDOWN;
 		break;
 	}
 
@@ -310,30 +308,30 @@ bool Bind::IsBind(UINT commandMessageId, WPARAM commandWParam) const
 	{
 	case WM_KEYUP:
 		// For some reason hook determines WM_KEYUP instead of the WM_SYSKEYUP
-		return (action.messageId == WM_KEYDOWN || action.messageId == WM_SYSKEYDOWN) && action.wParam == commandWParam;
+		return (messageId == WM_KEYDOWN || messageId == WM_SYSKEYDOWN) && wParam == commandWParam;
 	case WM_KEYDOWN:
-		return action.messageId == WM_KEYDOWN && action.wParam == commandWParam;
+		return messageId == WM_KEYDOWN && wParam == commandWParam;
 	case WM_SYSKEYUP:
 		EXT_ASSERT(false) << "It was calling WM_KEYUP for left alt in hook, check if we need to fix WM_KEYUP case";
 		[[fallthrough]];
 	case WM_SYSKEYDOWN:
-		return action.messageId == WM_SYSKEYDOWN && action.wParam == commandWParam;
+		return messageId == WM_SYSKEYDOWN && wParam == commandWParam;
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
-		return action.messageId == WM_LBUTTONDOWN;
+		return messageId == WM_LBUTTONDOWN;
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP:
-		return action.messageId == WM_RBUTTONDOWN;
+		return messageId == WM_RBUTTONDOWN;
 	case WM_MBUTTONDOWN:
 	case WM_MBUTTONUP:
-		return action.messageId == WM_MBUTTONDOWN;
+		return messageId == WM_MBUTTONDOWN;
 	case WM_XBUTTONDOWN:
 	case WM_XBUTTONUP:
-		return action.messageId == WM_XBUTTONDOWN;
+		return messageId == WM_XBUTTONDOWN;
 	case WM_MOUSEWHEEL:
 	case WM_MOUSEHWHEEL:
-		return action.messageId == commandMessageId && GET_WHEEL_DELTA_WPARAM(action.wParam) == GET_WHEEL_DELTA_WPARAM(commandWParam);
+		return messageId == commandMessageId && GET_WHEEL_DELTA_WPARAM(wParam) == GET_WHEEL_DELTA_WPARAM(commandWParam);
 	default:
-		return action.messageId == commandMessageId;
+		return messageId == commandMessageId;
 	}
 }

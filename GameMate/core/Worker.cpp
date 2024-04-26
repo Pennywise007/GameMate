@@ -10,16 +10,16 @@
 namespace {
 
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
-    return ext::get_service<Worker>().OnMouseProc(nCode, wParam, lParam);
+    return ext::get_singleton<Worker>().OnMouseProc(nCode, wParam, lParam);
 }
 
 LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
-    return ext::get_service<Worker>().OnKeyboardProc(nCode, wParam, lParam);
+    return ext::get_singleton<Worker>().OnKeyboardProc(nCode, wParam, lParam);
 }
 
 void CALLBACK windowFocusChanged(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hWnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
 {
-    ext::get_service<Worker>().OnFocusChanged(hWnd);
+    ext::get_singleton<Worker>().OnFocusChanged(hWnd);
 }
 
 } // namespace
@@ -92,7 +92,7 @@ void Worker::OnFocusChanged(HWND hWnd)
 
     // TODO don't allow exe with same names in UI
 
-    auto& settings = ext::get_service<Settings>();
+    auto& settings = ext::get_singleton<Settings>();
     for (auto& tab : settings.tabs)
     {
         if (tab->exeName == activeWindowProcessname)

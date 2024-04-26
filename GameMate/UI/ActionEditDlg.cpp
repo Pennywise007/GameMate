@@ -25,27 +25,24 @@ END_MESSAGE_MAP()
 {
 	std::optional<Action> action;
 	if (editBind.has_value())
-		action = editBind->action;
+		action.emplace(static_cast<const Action&>(editBind.value()));
 
 	if (CActionEditDlg(pParent, Type::eBind, action).DoModal() != IDOK)
 		return std::nullopt;
 
-	Bind bind;
-	bind.action = std::move(action.value());
-	return bind;
+	return std::move(action.value());
 }
 
 [[nodiscard]] std::optional<MacrosAction> CActionEditDlg::EditMacros(CWnd* pParent, const std::optional<MacrosAction>& editMacros)
 {
 	std::optional<Action> action;
 	if (editMacros.has_value())
-		action = editMacros->action;
+		action.emplace(static_cast<const Action&>(editMacros.value()));
 
 	if (CActionEditDlg(pParent, Type::eAction, action).DoModal() != IDOK)
 		return std::nullopt;
 
-	MacrosAction macrosAction;
-	macrosAction.action = std::move(action.value());
+	MacrosAction macrosAction = std::move(action.value());
 	macrosAction.delayInMilliseconds = editMacros.value_or(MacrosAction{}).delayInMilliseconds;
 	return macrosAction;
 }
@@ -98,7 +95,7 @@ BOOL CActionEditDlg::PreTranslateMessage(MSG* pMsg)
 				if (auto action = MacrosAction::GetMacrosActionFromMessage(pMsg, 0); action.has_value())
 				{
 					m_editAction.SetWindowTextW(action->ToString().c_str());
-					m_currentAction = std::move(action->action);
+					m_currentAction.emplace(action.value());
 					return TRUE;
 				}
 			}
@@ -108,7 +105,7 @@ BOOL CActionEditDlg::PreTranslateMessage(MSG* pMsg)
 				if (auto bind = Bind::GetBindFromMessage(pMsg); bind.has_value())
 				{
 					m_editAction.SetWindowTextW(bind->ToString().c_str());
-					m_currentAction = std::move(bind->action);
+					m_currentAction.emplace(bind.value());
 					return TRUE;
 				}
 			}
@@ -133,8 +130,7 @@ std::wstring CActionEditDlg::GetActionText() const
 		return m_currentAction->ToString();
 	case Type::eAction:
 		{
-			MacrosAction macros;
-			macros.action = m_currentAction.value();
+			MacrosAction macros = m_currentAction.value();
 			return macros.ToString();
 		}
 	default:
