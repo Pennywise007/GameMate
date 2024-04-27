@@ -100,7 +100,6 @@ void CALLBACK WinPosChangedProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND h
 
 BEGIN_MESSAGE_MAP(CrosshairWindow, CWnd)
     ON_WM_PAINT()
-    ON_WM_NCDESTROY()
 END_MESSAGE_MAP()
 
 CrosshairWindow::CrosshairWindow()
@@ -122,20 +121,19 @@ CrosshairWindow::CrosshairWindow()
 
         static WindowClassRegistrationLock registrator(wndClass);
     }
-
-    CreateEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT, CString(typeid(*this).name()), NULL, WS_POPUP, CRect(), NULL, NULL);
-
-    SetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE, GetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE) | WS_EX_LAYERED);
-    SetLayeredWindowAttributes(RGB(255, 255, 255), 0, LWA_COLORKEY);
 }
 
 CrosshairWindow::~CrosshairWindow()
 {
-    DestroyWindow();
+    if (IsWindow(*this))
+        RemoveCrosshairWindow();
 }
 
-void CrosshairWindow::AttachCrosshair(HWND hWndOfActiveWindow, const Settings& crosshair)
+void CrosshairWindow::AttachCrosshairToWindow(HWND hWndOfActiveWindow, const Settings& crosshair)
 {
+    // We recreate window every time to avoid transparent collisions
+    ASSERT(!IsWindow(*this));
+
     try
     {
         auto old = m_crosshair.Detach();
@@ -149,24 +147,31 @@ void CrosshairWindow::AttachCrosshair(HWND hWndOfActiveWindow, const Settings& c
         // TODO
     }
 
-    m_attachedWindowHwnd = hWndOfActiveWindow;
+    BITMAP bm;
+    ENSURE(m_crosshair.GetBitmap(&bm) != 0);
 
+    CreateEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT, CString(typeid(*this).name()), NULL, WS_POPUP, CRect(0, 0, bm.bmWidth, bm.bmHeight), NULL, NULL);
+    SetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE, GetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE) | WS_EX_LAYERED);
+    SetLayeredWindowAttributes(RGB(255, 255, 255), 0, LWA_COLORKEY);
+
+    m_attachedWindowHwnd = hWndOfActiveWindow;
     OnWindowPosChanged(m_attachedWindowHwnd);
-    RedrawWindow();
 
     DWORD pid = 0;
     GetWindowThreadProcessId(hWndOfActiveWindow, &pid);
     m_windowPosChangedHook = SetWinEventHook(EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_LOCATIONCHANGE, NULL, WinPosChangedProc, pid, 0, WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
 }
 
-void CrosshairWindow::HideWindow()
+void CrosshairWindow::RemoveCrosshairWindow()
 {
+    m_attachedWindowHwnd = nullptr;
     if (m_windowPosChangedHook)
     {
         UnhookWinEvent(m_windowPosChangedHook);
         m_windowPosChangedHook = nullptr;
     }
-    ShowWindow(SW_HIDE);
+
+    DestroyWindow();
 }
 
 void CrosshairWindow::OnWindowPosChanged(HWND hwnd)
@@ -180,19 +185,16 @@ void CrosshairWindow::OnWindowPosChanged(HWND hwnd)
     CRect activeWindowRect;
     ::GetWindowRect(m_attachedWindowHwnd, activeWindowRect);
 
-    const CRect currentRect(CPoint(activeWindowRect.CenterPoint().x - bm.bmWidth / 2,
-                                   activeWindowRect.CenterPoint().y - bm.bmHeight / 2),
-                            CSize(bm.bmWidth, bm.bmHeight));
-
-    EXT_TRACE() << L"Window pos changed";
+    CPoint topLeft = activeWindowRect.CenterPoint();
+    topLeft.Offset(-bm.bmWidth / 2, -bm.bmHeight / 2);
 
     SetWindowPos(
            nullptr,
-           currentRect.left,
-           currentRect.top,
-           currentRect.Width(),
-           currentRect.Height(),
-           SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOOWNERZORDER | SWP_NOREDRAW);
+           topLeft.x,
+           topLeft.y,
+           0,
+           0,
+           SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOREDRAW);
 }
 
 afx_msg void CrosshairWindow::OnPaint()
@@ -212,18 +214,6 @@ afx_msg void CrosshairWindow::OnPaint()
         if (pPixel[3] != 0)  // Non-transparent pixel
             dc.SetPixel(CPoint(i / bm.bmWidth, i % bm.bmWidth), RGB(pPixel[2], pPixel[1], pPixel[0]));
     }
-}
-
-void CrosshairWindow::OnNcDestroy()
-{
-    CWnd::OnNcDestroy();
-
-    if (m_windowPosChangedHook)
-    {
-        UnhookWinEvent(m_windowPosChangedHook);
-        m_windowPosChangedHook = nullptr;
-    }
-    g_crosshairWindow = nullptr;
 }
 
 } // namespace crosshair

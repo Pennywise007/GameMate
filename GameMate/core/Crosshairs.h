@@ -20,14 +20,13 @@ public:
     CrosshairWindow();
     ~CrosshairWindow();
 
-    void AttachCrosshair(HWND hWndOfActiveWindow, const Settings& crosshair);
-    void HideWindow();
+    void AttachCrosshairToWindow(HWND hWndOfActiveWindow, const Settings& crosshair);
+    void RemoveCrosshairWindow();
 
     void OnWindowPosChanged(HWND hwnd);
 
 private:
     afx_msg void OnPaint();
-    afx_msg void OnNcDestroy();
 
 private:
     HWINEVENTHOOK m_windowPosChangedHook = nullptr;

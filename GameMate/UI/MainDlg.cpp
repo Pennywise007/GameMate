@@ -245,6 +245,7 @@ void CMainDlg::OnSysCommand(UINT nID, LPARAM lParam)
 		// hide our app window
 		ShowWindow(SW_MINIMIZE);
 		ShowWindow(SW_HIDE);
+		// TODO don't show bubble every time
 		// notify user that he can open it through the tray
 		m_trayHelper.showBubble(L"Application is minimized to tray",
 								L"To restore the application, double-click the icon or select the corresponding menu item.",

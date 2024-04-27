@@ -217,9 +217,15 @@ std::wstring MacrosAction::ToString() const
 	return actionPrefix + Action::ToString();
 }
 
-void MacrosAction::ExecuteAction() const
+void MacrosAction::ExecuteAction(double delayRandomize) const
 {
-	Sleep(DWORD(delayInMilliseconds));
+	if (delayInMilliseconds != 0)
+	{
+		auto randomMultiply = 1.;
+		if (delayRandomize)
+			randomMultiply = (100. - delayRandomize + double(rand() % int(delayRandomize * 2. * 1000.)) / 1000.) / 100.;
+		Sleep(DWORD(delayInMilliseconds * randomMultiply));
+	}
 
 	DWORD dwFlags = 0;
 	DWORD dwData = 0;

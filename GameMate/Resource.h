@@ -41,6 +41,8 @@
 #define IDB_PNG_CROSSHAIR_8_32          171
 #define IDI_ICON_START_RECORDING        172
 #define IDI_ICON_STOP_RECORDING         173
+#define IDB_PNG_ARROW_DOWN              174
+#define IDB_PNG_ARROW_UP                175
 #define IDC_TABCONTROL_GAMES            1000
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
@@ -80,6 +82,10 @@
 #define IDC_CHECK_USE                   1038
 #define IDC_STATIC_CROSSHAIR_INFO       1039
 #define IDC_CHECK_DISABLE_WIN           1040
+#define IDC_MFCBUTTON1                  1042
+#define IDC_BUTTON_MOVE_UP              1043
+#define IDC_BUTTON_MOVE_UP2             1044
+#define IDC_BUTTON_MOVE_DOWN            1044
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -89,9 +95,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        174
+#define _APS_NEXT_RESOURCE_VALUE        176
 #define _APS_NEXT_COMMAND_VALUE         32775
-#define _APS_NEXT_CONTROL_VALUE         1041
+#define _APS_NEXT_CONTROL_VALUE         1044
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

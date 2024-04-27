@@ -47,7 +47,7 @@ struct MacrosAction : Action
     // Get action text
     std::wstring ToString() const override;
     // Execution action
-    void ExecuteAction() const;
+    void ExecuteAction(double delayRandomize) const;
 
     REGISTER_SERIALIZABLE_OBJECT(Action);
     DECLARE_SERIALIZABLE_FIELD((long long), delayInMilliseconds, 0);
@@ -120,5 +120,5 @@ public:
 struct ISettingsChanged : ext::events::IBaseEvent
 {
     virtual ~ISettingsChanged() = default;
-    virtual void OnSettingsChangedByUser() = 0; // TODO check that it called everywhere
+    virtual void OnSettingsChangedByUser() = 0;
 };

@@ -23,6 +23,7 @@ void CALLBACK WindowForegroundChangedProc(HWINEVENTHOOK hWinEventHook, DWORD eve
     if (_tcscmp(className, _T("Shell_InputSwitchTopLevelWindow")) == 0) { // Win + Space window, it takes focus but don't return it back
         return;
     }
+    EXT_TRACE_DBG() << className;
 
     ext::get_singleton<Worker>().OnFocusChanged(hWnd);
 }
@@ -85,7 +86,7 @@ void Worker::OnFocusChanged(HWND hWnd)
 
     if (m_activeExeTabConfig)
     {
-        m_crosshairWindow.HideWindow();
+        m_crosshairWindow.RemoveCrosshairWindow();
         m_activeExeTabConfig = nullptr;
     }
 
@@ -107,7 +108,7 @@ void Worker::OnFocusChanged(HWND hWnd)
 
     auto& crossahair = m_activeExeTabConfig->crosshairSettings;
     if (crossahair.show)
-        m_crosshairWindow.AttachCrosshair(hWnd, crossahair);
+        m_crosshairWindow.AttachCrosshairToWindow(hWnd, crossahair);
 }
 
 LRESULT Worker::OnMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -128,10 +129,10 @@ LRESULT Worker::OnMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
                 case WM_XBUTTONUP:
                     break;
                 default:
-                    m_macrosExecutor.add_task([actions = macro.actions]() {
+                    m_macrosExecutor.add_task([actions = macro.actions, delayRandomize = macro.randomizeDelays]() {
                         for (const auto& action : actions)
                         {
-                            action.ExecuteAction();
+                            action.ExecuteAction(delayRandomize);
                         }
                     });
                     break;
@@ -157,10 +158,10 @@ LRESULT Worker::OnKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
                 // Execute macros on key down and ignore key up
                 if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
                 {
-                    m_macrosExecutor.add_task([actions = macro.actions]() {
+                    m_macrosExecutor.add_task([actions = macro.actions, delayRandomize = macro.randomizeDelays]() {
                         for (const auto& action : actions)
                         {
-                            action.ExecuteAction();
+                            action.ExecuteAction(delayRandomize);
                         }
                     });
                 }

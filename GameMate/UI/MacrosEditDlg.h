@@ -28,14 +28,16 @@ public:
 protected:
 	DECLARE_MESSAGE_MAP()
 	
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	virtual BOOL OnInitDialog();
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	afx_msg void OnClose();
+	virtual void DoDataExchange(CDataExchange* pDX) override;    // DDX/DDV support
+	virtual BOOL PreTranslateMessage(MSG* pMsg) override;
+	virtual BOOL OnInitDialog() override;
+	afx_msg void OnDestroy();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnBnClickedButtonAdd();
 	afx_msg void OnBnClickedButtonRemove();
 	afx_msg void OnBnClickedButtonRecord();
+	afx_msg void OnBnClickedButtonMoveUp();
+	afx_msg void OnBnClickedButtonMoveDown();
 	afx_msg void OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult);
 
 private:
@@ -46,7 +48,10 @@ private:
 	CIconButton m_buttonRecord;
 	CSpinEdit m_editRandomizeDelays;
 	CStatic m_staticDelayHelp;
+	CIconButton m_buttonMoveUp;
+	CIconButton m_buttonMoveDown;
 
+private:
 	Macros m_macros;
 	std::optional<std::chrono::steady_clock::time_point> m_lastActionTime;
 };

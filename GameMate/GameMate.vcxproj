@@ -109,6 +109,9 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
+    <Manifest>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -133,6 +136,9 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
+    <Manifest>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -161,6 +167,9 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
+    <Manifest>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -189,6 +198,9 @@
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
+    <Manifest>
+      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Controls\Button\IconButton\IconButton.h" />
@@ -314,6 +326,8 @@
     <None Include="res\GameMate.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\arrow_down.png" />
+    <Image Include="res\arrow_up.png" />
     <Image Include="res\crosshairs\crosshair_0_16.png" />
     <Image Include="res\crosshairs\crosshair_0_24.png" />
     <Image Include="res\crosshairs\crosshair_0_32.png" />
@@ -341,12 +355,8 @@
     <Image Include="res\crosshairs\crosshair_8_16.png" />
     <Image Include="res\crosshairs\crosshair_8_24.png" />
     <Image Include="res\crosshairs\crosshair_8_32.png" />
-    <Image Include="res\crosshair_1_16.png" />
-    <Image Include="res\crosshair_1_24.png" />
-    <Image Include="res\crosshair_1_32.png" />
     <Image Include="res\GameMate.ico" />
     <Image Include="res\start_recording.ico" />
-    <Image Include="res\start_recording.png" />
     <Image Include="res\stop_recording.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -279,8 +279,7 @@ void CGameSettingsDlg::OnBnClickedButtonAdd()
 
 void CGameSettingsDlg::OnBnClickedButtonRemove()
 {
-	std::vector<int> selectedActions;
-	m_listMacroses.GetSelectedList(selectedActions, true);
+	std::vector<int> selectedActions = m_listMacroses.GetSelectedItems();
 
 	for (auto it = selectedActions.rbegin(), end = selectedActions.rend(); it != end; ++it)
 	{
