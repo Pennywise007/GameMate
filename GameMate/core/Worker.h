@@ -1,9 +1,13 @@
 #pragma once
 
+#include <chrono>
+#include <optional>
+
 #include "Crosshairs.h"
 #include "Settings.h"
 
 #include <ext/thread/thread_pool.h>
+#include <ext/thread/scheduler.h>
 
 class Worker : ext::events::ScopeSubscription<ISettingsChanged>
 {
@@ -24,7 +28,11 @@ private:
     HHOOK m_mouseHook = nullptr;
     HHOOK m_keyboardHook = nullptr;
 
-    ext::thread_pool m_macrosExecutors;
-    std::shared_ptr<TabConfiguration> m_activeExeTabConfig;
     crosshair::CrosshairWindow m_crosshairWindow;
+
+    ext::thread_pool m_macrosExecutor = { 1 };
+    std::shared_ptr<TabConfiguration> m_activeExeTabConfig;
+    ext::TaskId m_saveSettingsTaskId;
+
+    std::optional<std::chrono::system_clock::time_point> m_lastWindowsIgnoreTimePoint;
 };

@@ -8,14 +8,21 @@
 
 using namespace ext::serializer;
 
+namespace {
+
 constexpr auto kFileName = L"settings.txt";
+const auto kFullFileName = std::filesystem::get_exe_directory() / kFileName;
+
+} // namespace
 
 Settings::Settings()
 {
+	if (!std::filesystem::exists(kFullFileName))
+		return;
     try
     {
-        std::wifstream file(std::filesystem::get_exe_directory() / kFileName);
-        EXT_CHECK(file.is_open()) << "Failed to open file " << kFileName;
+		std::wifstream file(kFullFileName);
+		EXT_CHECK(file.is_open()) << "Failed to open file " << kFileName;
         EXT_DEFER(file.close());
 
         const std::wstring settings{ std::istreambuf_iterator<wchar_t>(file),
@@ -29,14 +36,14 @@ Settings::Settings()
     }
 }
 
-Settings::~Settings()
+void Settings::SaveSettings()
 {
     try
     {
         std::wstring settings;
         SerializeObject(Factory::TextSerializer(settings), *this);
 
-        std::wofstream file(std::filesystem::get_exe_directory() / kFileName);
+        std::wofstream file(kFullFileName);
         EXT_CHECK(file.is_open()) << "Failed to open file " << kFileName;
         EXT_DEFER(file.close());
         file << settings;
@@ -159,7 +166,7 @@ std::wstring Action::ToString() const
 		actionString = L"Mouse H wheel";
 		break;
 	default:
-		//EXT_ASSERT(false) << "Unknown message id " << messageId; TODO uncomment after serialization fix
+		EXT_ASSERT(false) << "Unknown message id " << messageId;
 		actionString = (std::to_wstring(messageId) + L": " + std::to_wstring(wParam)).c_str();
 		break;
 	}

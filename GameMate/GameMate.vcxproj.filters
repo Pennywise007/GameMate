@@ -98,6 +98,9 @@
     <ClInclude Include="core\Worker.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="Controls\Button\IconButton\IconButton.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\TabControl\TabControl.cpp">
@@ -162,6 +165,9 @@
     </ClCompile>
     <ClCompile Include="core\Worker.cpp">
       <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Button\IconButton\IconButton.cpp">
+      <Filter>Controls</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -267,6 +273,15 @@
     </Image>
     <Image Include="res\crosshairs\crosshair_8_32.png">
       <Filter>Resource Files\crosshairs</Filter>
+    </Image>
+    <Image Include="res\start_recording.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\stop_recording.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\start_recording.png">
+      <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
 </Project>

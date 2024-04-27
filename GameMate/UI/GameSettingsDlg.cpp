@@ -95,7 +95,7 @@ BOOL CGameSettingsDlg::OnInitDialog()
 	m_exeName.SetWindowTextW(m_configuration->exeName.c_str());
 	m_checkDisableWinButton.SetCheck(m_configuration->disableWinButton ? BST_CHECKED : BST_UNCHECKED);
 	controls::SetTooltip(m_checkDisableWinButton,
-		L"If enabled: ignore single press on windows button(every 0.4s) which prevents game from loosing focus accidentally");
+		L"If enabled: ignore single press on windows button(every 1s) which prevents game from loosing focus accidentally");
 
 	GetDlgItem(IDC_BUTTON_REMOVE)->EnableWindow(FALSE);
 
@@ -332,7 +332,13 @@ void CGameSettingsDlg::OnCbnDropdownComboExeName()
 		runningProcessesNames.emplace(pe32.szExeFile);
 	} while (Process32Next(hProcessSnap, &pe32));
 
-	// TODO Extract from set processes with already existing tabs
+	// Extract exe names which already used in other tabs
+	for (const auto& tab : ext::get_singleton<Settings>().tabs)
+	{
+		if (tab == m_configuration)
+			continue;
+		runningProcessesNames.erase(tab->exeName);
+	}
 
 	CString currentText;
 	m_exeName.GetWindowText(currentText);

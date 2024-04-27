@@ -6,6 +6,7 @@
 
 #include "core/Settings.h"
 
+#include <Controls/Button/IconButton/IconButton.h>
 #include <Controls/Edit/SpinEdit/SpinEdit.h>
 #include <Controls/Tables/List/ListGroupCtrl/ListGroupCtrl.h>
 #include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
@@ -31,6 +32,7 @@ protected:
 	virtual BOOL OnInitDialog();
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	afx_msg void OnClose();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnBnClickedButtonAdd();
 	afx_msg void OnBnClickedButtonRemove();
 	afx_msg void OnBnClickedButtonRecord();
@@ -41,10 +43,10 @@ private:
 
 private:
 	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listMacroses;
-	CButton m_buttonRecord;
+	CIconButton m_buttonRecord;
 	CSpinEdit m_editRandomizeDelays;
 	CStatic m_staticDelayHelp;
 
 	Macros m_macros;
-	std::chrono::steady_clock::time_point m_lastActionTime;
+	std::optional<std::chrono::steady_clock::time_point> m_lastActionTime;
 };

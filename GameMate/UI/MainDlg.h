@@ -34,6 +34,7 @@ protected:
 	afx_msg void OnBnClickedButtonRenameTab();
 	afx_msg void OnBnClickedButtonDeleteTab();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
+	afx_msg void OnTcnSelchangeTabcontrolGames(NMHDR* pNMHDR, LRESULT* pResult);
 
 private:
 	int AddTab(const std::shared_ptr<TabConfiguration>& tabSettings);

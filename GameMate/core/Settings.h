@@ -97,7 +97,6 @@ struct TabConfiguration
 {
     REGISTER_SERIALIZABLE_OBJECT();
     DECLARE_SERIALIZABLE_FIELD(bool, enabled, true);
-    DECLARE_SERIALIZABLE_FIELD(bool, gameMode, true); // TODO
     DECLARE_SERIALIZABLE_FIELD(bool, disableWinButton, false);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, tabName);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, exeName);
@@ -108,11 +107,10 @@ struct TabConfiguration
 class Settings
 {
     friend ext::Singleton<Settings>;
-
     Settings();
-    ~Settings();
-
 public:
+    void SaveSettings();
+
     REGISTER_SERIALIZABLE_OBJECT();
     DECLARE_SERIALIZABLE_FIELD(int, activeTab, -1);
     DECLARE_SERIALIZABLE_FIELD(std::list<std::shared_ptr<TabConfiguration>>, tabs);

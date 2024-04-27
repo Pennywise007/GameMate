@@ -5,10 +5,9 @@
 #include "Crosshairs.h"
 #include "Worker.h"
 
-#include <ext/thread/thread_pool.h>
+#include <ext/thread/invoker.h>
 
 namespace {
-
 LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return ext::get_singleton<Worker>().OnMouseProc(nCode, wParam, lParam);
 }
@@ -17,18 +16,14 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return ext::get_singleton<Worker>().OnKeyboardProc(nCode, wParam, lParam);
 }
 
-void CALLBACK windowFocusChanged(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hWnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
-{
+void CALLBACK windowFocusChanged(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hWnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime) {
     ext::get_singleton<Worker>().OnFocusChanged(hWnd);
 }
-
 } // namespace
 
 Worker::Worker()
 {
-    ext::get_tracer().Enable();
-
-    m_activeWindowHook = SetWinEventHook(EVENT_OBJECT_FOCUS, EVENT_OBJECT_FOCUS, NULL, &windowFocusChanged, 0, 0, WINEVENT_OUTOFCONTEXT);
+    m_activeWindowHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, NULL, &windowFocusChanged, 0, 0, WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
     if (m_activeWindowHook == nullptr) {
         MessageBox(0, L"Failed to set active window hook", L"Failed to start program", MB_OK | MB_ICONERROR);
         ExitProcess(400);
@@ -49,7 +44,7 @@ Worker::Worker()
         ExitProcess(402);
     }
 
-    OnSettingsChangedByUser();
+    OnFocusChanged(GetForegroundWindow());
 }
 
 Worker::~Worker()
@@ -87,11 +82,6 @@ void Worker::OnFocusChanged(HWND hWnd)
         m_activeExeTabConfig = nullptr;
     }
 
-    //if (m_activeProcessName == activeProcessName)
-     //   return;
-
-    // TODO don't allow exe with same names in UI
-
     auto& settings = ext::get_singleton<Settings>();
     for (auto& tab : settings.tabs)
     {
@@ -106,14 +96,11 @@ void Worker::OnFocusChanged(HWND hWnd)
     if (!m_activeExeTabConfig || !m_activeExeTabConfig->enabled)
         return;
 
+    m_lastWindowsIgnoreTimePoint.reset();
+
     auto& crossahair = m_activeExeTabConfig->crosshairSettings;
     if (crossahair.show)
-    {
-        auto currentActiveWindow = GetForegroundWindow();
-        if (currentActiveWindow == NULL)
-            currentActiveWindow = hWnd;
-        m_crosshairWindow.SetCrosshair(currentActiveWindow, crossahair);
-    }
+        m_crosshairWindow.SetCrosshair(hWnd, crossahair);
 }
 
 LRESULT Worker::OnMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -134,7 +121,7 @@ LRESULT Worker::OnMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
                 case WM_XBUTTONUP:
                     break;
                 default:
-                    m_macrosExecutors.add_task([actions = macro.actions]() {
+                    m_macrosExecutor.add_task([actions = macro.actions]() {
                         for (const auto& action : actions)
                         {
                             action.ExecuteAction();
@@ -163,7 +150,7 @@ LRESULT Worker::OnKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
                 // Execute macros on key down and ignore key up
                 if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
                 {
-                    m_macrosExecutors.add_task([actions = macro.actions]() {
+                    m_macrosExecutor.add_task([actions = macro.actions]() {
                         for (const auto& action : actions)
                         {
                             action.ExecuteAction();
@@ -182,7 +169,15 @@ LRESULT Worker::OnKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
             {
             case VK_LWIN:
             case VK_RWIN:
-                // TODO allow double win press
+                {
+                    auto now = std::chrono::system_clock::now();
+                    if (m_lastWindowsIgnoreTimePoint.has_value() &&
+                        (now - *m_lastWindowsIgnoreTimePoint) <= std::chrono::seconds(1))
+                        break;
+
+                    if (wParam == WM_KEYUP)
+                        m_lastWindowsIgnoreTimePoint = std::move(now);
+                }
                 return 1;
             default:
                 break;
@@ -196,4 +191,16 @@ LRESULT Worker::OnKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 void Worker::OnSettingsChangedByUser()
 {
     OnFocusChanged(GetForegroundWindow());
+ 
+    // Save settings every 5 seconds after settings changed
+    auto& scheduller = ext::Scheduler::GlobalInstance();
+    if (m_saveSettingsTaskId != ext::kInvalidId)
+        scheduller.RemoveTask(m_saveSettingsTaskId);
+    m_saveSettingsTaskId = scheduller.SubscribeTaskAtTime([]()
+    {
+        ext::InvokeMethodAsync([]() {
+            EXT_TRACE() << L"Save settings";
+            ext::get_singleton<Settings>().SaveSettings();
+        });
+    }, std::chrono::system_clock::now() + std::chrono::seconds(5));
 }

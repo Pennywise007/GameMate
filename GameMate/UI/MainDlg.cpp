@@ -10,6 +10,7 @@
 
 #include <core/Worker.h>
 
+#include <ext/core.h>
 #include <ext/core/check.h>
 
 #ifdef _DEBUG
@@ -19,6 +20,9 @@
 CMainDlg::CMainDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MAIN_DIALOG, pParent)
 {
+	ext::core::Init();
+	ext::get_tracer().Enable(); // TODO
+
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
@@ -32,11 +36,12 @@ void CMainDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
-	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BUTTON_ADD_TAB, &CMainDlg::OnBnClickedButtonAddTab)
 	ON_BN_CLICKED(IDC_BUTTON_RENAME_TAB, &CMainDlg::OnBnClickedButtonRenameTab)
 	ON_BN_CLICKED(IDC_BUTTON_DELETE_TAB, &CMainDlg::OnBnClickedButtonDeleteTab)
 	ON_WM_SYSCOMMAND()
+	ON_NOTIFY(TCN_SELCHANGE, IDC_TABCONTROL_GAMES, &CMainDlg::OnTcnSelchangeTabcontrolGames)
+	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 BOOL CMainDlg::OnInitDialog()
@@ -115,6 +120,13 @@ void CMainDlg::OnPaint()
 	{
 		CDialogEx::OnPaint();
 	}
+}
+
+void CMainDlg::OnDestroy()
+{
+	CDialogEx::OnDestroy();
+
+	ext::get_singleton<Settings>().SaveSettings();
 }
 
 // The system calls this function to obtain the cursor to display while the user drags
@@ -196,12 +208,6 @@ int CMainDlg::AddTab(const std::shared_ptr<TabConfiguration>& tabSettings)
 	return m_tabControlGames.InsertTab(m_tabControlGames.GetItemCount(), tabSettings->tabName.c_str(), settingsTab, CGameSettingsDlg::IDD);
 }
 
-void CMainDlg::OnDestroy()
-{
-	ext::get_singleton<Settings>().activeTab = m_tabControlGames.GetCurSel();
-	CDialogEx::OnDestroy();
-}
-
 void CMainDlg::OnGamesTabChanged()
 {
 	GetDlgItem(IDC_BUTTON_DELETE_TAB)->EnableWindow(m_tabControlGames.GetItemCount() != 0);
@@ -252,4 +258,14 @@ void CMainDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	}
 
 	CDialogEx::OnSysCommand(nID, lParam);
+}
+
+void CMainDlg::OnTcnSelchangeTabcontrolGames(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	auto& settings = ext::get_singleton<Settings>();
+	settings.activeTab = m_tabControlGames.GetCurSel();
+
+	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
+
+	*pResult = 0;
 }

@@ -191,6 +191,7 @@
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Controls\Button\IconButton\IconButton.h" />
     <ClInclude Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.h" />
     <ClInclude Include="Controls\ComboBox\CIconComboBox\IconComboBox.h" />
     <ClInclude Include="Controls\Edit\CEditBase\CEditBase.h" />
@@ -218,6 +219,12 @@
     <ClInclude Include="UI\MainDlg.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Controls\Button\IconButton\IconButton.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -338,6 +345,9 @@
     <Image Include="res\crosshair_1_24.png" />
     <Image Include="res\crosshair_1_32.png" />
     <Image Include="res\GameMate.ico" />
+    <Image Include="res\start_recording.ico" />
+    <Image Include="res\start_recording.png" />
+    <Image Include="res\stop_recording.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

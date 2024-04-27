@@ -1,4 +1,5 @@
 ﻿#include "pch.h"
+#include "resource.h"
 #include "GameMate.h"
 #include "afxdialogex.h"
 #include "MacrosEditDlg.h"
@@ -17,6 +18,12 @@ enum Columns {
 	eDelay = 0,
 	eAction
 };
+
+constexpr UINT kTimerInterval1Sec = 1000;
+
+constexpr UINT kRecordingTimer0Id = 0;
+constexpr UINT kRecordingTimer1Id = 1;
+constexpr UINT kRecordingTimer2Id = 2;
 
 } // namespace
 
@@ -51,6 +58,7 @@ BEGIN_MESSAGE_MAP(CMacrosEditDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_RECORD, &CMacrosEditDlg::OnBnClickedButtonRecord)
 	ON_WM_CLOSE()
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_MACROSES, &CMacrosEditDlg::OnLvnItemchangedListMacroses)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 BOOL CMacrosEditDlg::OnInitDialog()
@@ -88,11 +96,13 @@ BOOL CMacrosEditDlg::OnInitDialog()
 	m_listMacroses.setSubItemEditorController(Columns::eDelay,
 		[](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
 		{
-			auto edit = std::make_shared<CEdit>();
+			auto edit = std::make_shared<CEditBase>();
 
 			edit->Create(SubItemEditorControllerBase::getStandartEditorWndStyle() | 
 				ES_CENTER | CBS_AUTOHSCROLL,
 				CRect(), parentWindow, 0);
+			edit->UsePositiveDigitsOnly();
+			edit->SetUseOnlyIntegersValue();
 
 			CString curSubItemText = pList->GetItemText(pParams->iItem, pParams->iSubItem);
 			edit->SetWindowTextW(curSubItemText);
@@ -141,12 +151,14 @@ BOOL CMacrosEditDlg::OnInitDialog()
 		addAction(std::move(action));
 	}
 
+	m_buttonRecord.SetIcon(IDI_ICON_START_RECORDING, Alignment::LeftCenter);
+
 	return TRUE;
 }
 
 BOOL CMacrosEditDlg::PreTranslateMessage(MSG* pMsg)
 {
-	if (m_buttonRecord.GetCheck() == BST_CHECKED)
+	if (m_lastActionTime.has_value())
 	{
 		switch (pMsg->message)
 		{
@@ -163,7 +175,7 @@ BOOL CMacrosEditDlg::PreTranslateMessage(MSG* pMsg)
 		default:
 		{
 			auto curTime = std::chrono::steady_clock::now();
-			auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - m_lastActionTime).count();
+			auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
 
 			auto action = MacrosAction::GetMacrosActionFromMessage(pMsg, delay);
 			if (action.has_value())
@@ -232,15 +244,53 @@ void CMacrosEditDlg::OnBnClickedButtonRemove()
 		m_macros.actions.erase(std::next(m_macros.actions.begin(), *it));
 		m_listMacroses.DeleteItem(*it);
 	}
-	// TODO add selection
+	m_listMacroses.SelectItem(selectedActions.back() - selectedActions.size() + 1);
 }
 
 void CMacrosEditDlg::OnBnClickedButtonRecord()
 {
+	KillTimer(kRecordingTimer0Id);
+	KillTimer(kRecordingTimer1Id);
+	KillTimer(kRecordingTimer2Id);
+
 	if (m_buttonRecord.GetCheck() == BST_CHECKED)
 	{
-		m_lastActionTime = std::chrono::steady_clock::now();
+		SetTimer(kRecordingTimer0Id, kTimerInterval1Sec, nullptr);
+		m_buttonRecord.SetWindowTextW(L"Record will start in 3...");
+		m_buttonRecord.SetIcon(IDI_ICON_STOP_RECORDING, Alignment::LeftCenter);
 	}
+	else
+	{
+		m_buttonRecord.SetWindowTextW(L"Record actions");
+		m_buttonRecord.SetIcon(IDI_ICON_START_RECORDING, Alignment::LeftCenter);
+		m_lastActionTime.reset();
+	}
+}
+
+void CMacrosEditDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	KillTimer(nIDEvent);
+
+	switch (nIDEvent)
+	{
+	case kRecordingTimer0Id:
+		SetTimer(kRecordingTimer1Id, kTimerInterval1Sec, nullptr);
+		m_buttonRecord.SetWindowTextW(L"Record will start in 2...");
+		break;
+	case kRecordingTimer1Id:
+		SetTimer(kRecordingTimer2Id, kTimerInterval1Sec, nullptr);
+		m_buttonRecord.SetWindowTextW(L"Record will start in 1...");
+		break;
+	case kRecordingTimer2Id:
+		m_buttonRecord.SetWindowTextW(L"Cancel recording");
+		m_lastActionTime = std::chrono::steady_clock::now();
+		break;
+	default:
+		EXT_ASSERT(false) << "Unknown event id " << nIDEvent;
+		break;
+	}
+
+	CDialogEx::OnTimer(nIDEvent);
 }
 
 void CMacrosEditDlg::OnClose()
