@@ -16,16 +16,23 @@ LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return ext::get_singleton<Worker>().OnKeyboardProc(nCode, wParam, lParam);
 }
 
-void CALLBACK windowFocusChanged(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hWnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime) {
+void CALLBACK WindowForegroundChangedProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hWnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime) {
+    TCHAR className[MAX_PATH];
+    GetClassName(hWnd, className, MAX_PATH);
+    // Ignores specific windows
+    if (_tcscmp(className, _T("Shell_InputSwitchTopLevelWindow")) == 0) { // Win + Space window, it takes focus but don't return it back
+        return;
+    }
+
     ext::get_singleton<Worker>().OnFocusChanged(hWnd);
 }
 } // namespace
 
 Worker::Worker()
 {
-    m_activeWindowHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, NULL, &windowFocusChanged, 0, 0, WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+    m_activeWindowHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, NULL, &WindowForegroundChangedProc, 0, 0, WINEVENT_OUTOFCONTEXT);
     if (m_activeWindowHook == nullptr) {
-        MessageBox(0, L"Failed to set active window hook", L"Failed to start program", MB_OK | MB_ICONERROR);
+        MessageBox(0, L"Failed to set system foreground changed hook", L"Failed to start program", MB_OK | MB_ICONERROR);
         ExitProcess(400);
     }
 
@@ -78,7 +85,7 @@ void Worker::OnFocusChanged(HWND hWnd)
 
     if (m_activeExeTabConfig)
     {
-        m_crosshairWindow.ShowWindow(SW_HIDE);
+        m_crosshairWindow.HideWindow();
         m_activeExeTabConfig = nullptr;
     }
 
@@ -100,7 +107,7 @@ void Worker::OnFocusChanged(HWND hWnd)
 
     auto& crossahair = m_activeExeTabConfig->crosshairSettings;
     if (crossahair.show)
-        m_crosshairWindow.SetCrosshair(hWnd, crossahair);
+        m_crosshairWindow.AttachCrosshair(hWnd, crossahair);
 }
 
 LRESULT Worker::OnMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -199,7 +206,6 @@ void Worker::OnSettingsChangedByUser()
     m_saveSettingsTaskId = scheduller.SubscribeTaskAtTime([]()
     {
         ext::InvokeMethodAsync([]() {
-            EXT_TRACE() << L"Save settings";
             ext::get_singleton<Settings>().SaveSettings();
         });
     }, std::chrono::system_clock::now() + std::chrono::seconds(5));

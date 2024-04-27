@@ -30,6 +30,7 @@ private:
 
     crosshair::CrosshairWindow m_crosshairWindow;
 
+    // we use 1 thread to put macros in a single queue
     ext::thread_pool m_macrosExecutor = { 1 };
     std::shared_ptr<TabConfiguration> m_activeExeTabConfig;
     ext::TaskId m_saveSettingsTaskId;
