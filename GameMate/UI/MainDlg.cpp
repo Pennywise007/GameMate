@@ -208,7 +208,7 @@ void CMainDlg::OnBnClickedButtonRenameTab()
 	TCITEMW item;
 	item.mask = TCIF_TEXT;
 	item.pszText = tab->tabName.data();
-	item.cchTextMax = tab->tabName.size();
+	item.cchTextMax = int(tab->tabName.size());
 	m_tabControlGames.SetItem(curSel, &item);
 	m_tabControlGames().Invalidate();
 

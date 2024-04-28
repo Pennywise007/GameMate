@@ -121,7 +121,7 @@ LRESULT Worker::OnMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
         PMSLLHOOKSTRUCT hookStruct = (PMSLLHOOKSTRUCT)lParam;
         for (auto&& [bind, macro] : m_activeExeTabConfig->macrosByBind)
         {
-            if (bind.IsBind(wParam, wParam))
+            if (bind.IsBind(UINT(wParam), wParam))
             {
                 // Execute macros on key down and ignore key up
                 switch (wParam)
@@ -170,7 +170,7 @@ LRESULT Worker::OnKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
         PKBDLLHOOKSTRUCT hookStruct = (PKBDLLHOOKSTRUCT)lParam;
         for (auto&& [bind, macro] : m_activeExeTabConfig->macrosByBind)
         {
-            if (bind.IsBind(wParam, hookStruct->vkCode))
+            if (bind.IsBind(UINT(wParam), hookStruct->vkCode))
             {
                 // Execute macros on key down and ignore key up
                 if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)

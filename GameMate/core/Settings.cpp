@@ -234,10 +234,10 @@ void MacrosAction::ExecuteAction(double delayRandomize) const
 	{
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
-		return keybd_event(wParam, BYTE((lParam & 0x00ff0000) >> 16), 0, 0);
+		return keybd_event(BYTE(wParam), BYTE((lParam & 0x00ff0000) >> 16), 0, 0);
 	case WM_KEYUP:
 	case WM_SYSKEYUP:
-		return keybd_event(wParam, BYTE((lParam & 0x00ff0000) >> 16), KEYEVENTF_KEYUP, 0);
+		return keybd_event(BYTE(wParam), BYTE((lParam & 0x00ff0000) >> 16), KEYEVENTF_KEYUP, 0);
 	case WM_LBUTTONDOWN:
 		dwFlags = MOUSEEVENTF_LEFTDOWN;
 		break;

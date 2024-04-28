@@ -275,7 +275,7 @@ void CMacrosEditDlg::OnBnClickedButtonRemove()
 		std::unique_ptr<MacrosAction> actionPtr((MacrosAction*)m_listMacroses.GetItemDataPtr(*it));
 		m_listMacroses.DeleteItem(*it);
 	}
-	m_listMacroses.SelectItem(selectedActions.back() - selectedActions.size() + 1);
+	m_listMacroses.SelectItem(selectedActions.back() - int(selectedActions.size()) + 1);
 }
 
 void CMacrosEditDlg::OnBnClickedButtonRecord()
