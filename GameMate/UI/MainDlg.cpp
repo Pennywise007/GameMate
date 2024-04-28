@@ -13,6 +13,9 @@
 #include <ext/core.h>
 #include <ext/core/check.h>
 
+#include <Controls/Layout/Layout.h>
+#include <Controls/TrayHelper/TrayHelper.h>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -21,7 +24,6 @@ CMainDlg::CMainDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MAIN_DIALOG, pParent)
 {
 	ext::core::Init();
-	ext::get_tracer().Enable(); // TODO
 
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -31,17 +33,19 @@ void CMainDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 
 	DDX_Control(pDX, IDC_TABCONTROL_GAMES, m_tabControlGames());
+	DDX_Control(pDX, IDC_CHECK_PROGRAM_WORKING, m_checkProgramWorking);
 }
 
 BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_WM_DESTROY()
+	ON_WM_SYSCOMMAND()
 	ON_BN_CLICKED(IDC_BUTTON_ADD_TAB, &CMainDlg::OnBnClickedButtonAddTab)
 	ON_BN_CLICKED(IDC_BUTTON_RENAME_TAB, &CMainDlg::OnBnClickedButtonRenameTab)
 	ON_BN_CLICKED(IDC_BUTTON_DELETE_TAB, &CMainDlg::OnBnClickedButtonDeleteTab)
-	ON_WM_SYSCOMMAND()
+	ON_BN_CLICKED(IDC_CHECK_PROGRAM_WORKING, &CMainDlg::OnBnClickedCheckProgramWorking)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TABCONTROL_GAMES, &CMainDlg::OnTcnSelchangeTabcontrolGames)
-	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 BOOL CMainDlg::OnInitDialog()
@@ -60,36 +64,69 @@ BOOL CMainDlg::OnInitDialog()
 
 	OnGamesTabChanged();
 
-	m_trayHelper.addTrayIcon(m_hIcon, L"Game mate",
-							 []()
-							 {
-								 return ::GetSubMenu(LoadMenu(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MENU_TRAY)), 0);
-							 },
-							 nullptr,
-							 [this](UINT commandId)
-							 {
-								 switch (commandId)
-								 {
-								 case ID_MENU_OPEN:
-									 ShowWindow(SW_RESTORE);
-									 SetForegroundWindow();
-									 break;
-								 case ID_MENU_CLOSE:
-									 EndDialog(IDCANCEL);
-									 break;
-								 default:
-									 EXT_ASSERT(!"Не известный пункт меню!");
-									 break;
-								 }
-							 },
-							 [this]()
-							 {
-								 ShowWindow(SW_RESTORE);
-								 SetForegroundWindow();
-							 });
+	CTrayHelper::Instance().addTrayIcon(
+		m_hIcon, L"Game mate",
+		[]()
+		{
+			HMENU hMenu = ::GetSubMenu(LoadMenu(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MENU_TRAY)), 0);
+			ENSURE(hMenu);
+								 
+			if (ext::get_singleton<Settings>().programWorking)
+				ENSURE(::DeleteMenu(hMenu, ID_MENU_ENABLE_PROGRAM, MF_BYCOMMAND));
+			else
+				ENSURE(::DeleteMenu(hMenu, ID_MENU_DISABLE_PROGRAM, MF_BYCOMMAND));
+
+			if (ext::get_tracer().CanTrace(ext::ITracer::Level::eDebug))
+				ENSURE(::DeleteMenu(hMenu, ID_MENU_ENABLE_TRACES, MF_BYCOMMAND));
+			else
+				ENSURE(::DeleteMenu(hMenu, ID_MENU_DISABLE_TRACES, MF_BYCOMMAND));
+
+			return hMenu;
+		},
+		nullptr,
+		[this](UINT commandId)
+		{
+			switch (commandId)
+			{
+			case ID_MENU_OPEN:
+				ShowWindow(SW_RESTORE);
+				SetForegroundWindow();
+				break;
+			case ID_MENU_ENABLE_PROGRAM:
+			case ID_MENU_DISABLE_PROGRAM:
+				OnBnClickedCheckProgramWorking();
+				break;
+			case ID_MENU_ENABLE_TRACES:
+				ext::get_tracer().Enable();
+				break;
+			case ID_MENU_DISABLE_TRACES:
+				ext::get_tracer().Reset();
+				break;
+			case ID_MENU_CLOSE:
+				EndDialog(IDCANCEL);
+				break;
+			default:
+				EXT_ASSERT(!"Не известный пункт меню!");
+				break;
+			}
+		},
+		[this]()
+		{
+			ShowWindow(SW_RESTORE);
+			SetForegroundWindow();
+		});
 
 	// Starting worker
 	EXT_UNUSED(ext::get_singleton<Worker>());
+
+	UpdateProgramWorkingButton();
+
+	// Don't allow to make our dialog smaller than it is in resource files.
+	CRect rect;
+	GetWindowRect(rect);
+	Layout::SetWindowMinimumSize(*this, rect.Width(), rect.Height());
+
+	// TODO SORT TAB STOPS in resource files
 
 	return TRUE;
 }
@@ -145,7 +182,9 @@ void CMainDlg::OnBnClickedButtonAddTab()
 	ext::get_singleton<Settings>().tabs.push_back(newTab);
 	m_tabControlGames.SetCurSel(AddTab(newTab));
 
-	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
+	OnGamesTabChanged();
+
+	ext::send_event(&ISettingsChanged::OnSettingsChanged);
 }
 
 void CMainDlg::OnBnClickedButtonRenameTab()
@@ -173,7 +212,7 @@ void CMainDlg::OnBnClickedButtonRenameTab()
 	m_tabControlGames.SetItem(curSel, &item);
 	m_tabControlGames().Invalidate();
 
-	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
+	ext::send_event(&ISettingsChanged::OnSettingsChanged);
 }
 
 void CMainDlg::OnBnClickedButtonDeleteTab()
@@ -195,7 +234,7 @@ void CMainDlg::OnBnClickedButtonDeleteTab()
 
 	OnGamesTabChanged();
 	
-	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
+	ext::send_event(&ISettingsChanged::OnSettingsChanged);
 }
 
 int CMainDlg::AddTab(const std::shared_ptr<TabConfiguration>& tabSettings)
@@ -210,9 +249,21 @@ int CMainDlg::AddTab(const std::shared_ptr<TabConfiguration>& tabSettings)
 
 void CMainDlg::OnGamesTabChanged()
 {
-	GetDlgItem(IDC_BUTTON_DELETE_TAB)->EnableWindow(m_tabControlGames.GetItemCount() != 0);
-	GetDlgItem(IDC_BUTTON_RENAME_TAB)->EnableWindow(m_tabControlGames.GetItemCount() != 0);
-	// TODO ADD BUNNER THAT USER NEED ADD SETTINGS
+	bool tabsExist = m_tabControlGames.GetItemCount() != 0;
+	GetDlgItem(IDC_BUTTON_DELETE_TAB)->EnableWindow(tabsExist);
+	GetDlgItem(IDC_BUTTON_RENAME_TAB)->EnableWindow(tabsExist);
+
+	GetDlgItem(IDC_STATIC_NO_TABS)->ShowWindow(tabsExist ? SW_HIDE : SW_SHOW);
+}
+
+void CMainDlg::UpdateProgramWorkingButton()
+{
+	auto& settings = ext::get_singleton<Settings>();
+
+	CString buttonText = settings.programWorking ? L"Disable program" : L"Enable program";
+	buttonText += L"(Shift+F9)";
+	m_checkProgramWorking.SetWindowTextW(buttonText);
+	m_checkProgramWorking.SetCheck(settings.programWorking ? BST_CHECKED : BST_UNCHECKED);
 }
 
 BOOL CMainDlg::PreTranslateMessage(MSG* pMsg)
@@ -245,16 +296,24 @@ void CMainDlg::OnSysCommand(UINT nID, LPARAM lParam)
 		// hide our app window
 		ShowWindow(SW_MINIMIZE);
 		ShowWindow(SW_HIDE);
-		// TODO don't show bubble every time
-		// notify user that he can open it through the tray
-		m_trayHelper.showBubble(L"Application is minimized to tray",
-								L"To restore the application, double-click the icon or select the corresponding menu item.",
-								NIIF_INFO,
-								[this]()
-								{
-									ShowWindow(SW_RESTORE);
-									SetForegroundWindow();
-								});
+
+		auto& settings = ext::get_singleton<Settings>();
+		if (settings.showMinimizedBubble)
+		{
+			settings.showMinimizedBubble = false;
+			ext::send_event(&ISettingsChanged::OnSettingsChanged);
+
+			// notify user that he can open it through the tray
+			CTrayHelper::Instance().showBubble(
+				L"Application is minimized to tray",
+				L"To restore the application, double-click the icon or select the corresponding menu item.",
+				NIIF_INFO,
+				[this]()
+				{
+					ShowWindow(SW_RESTORE);
+					SetForegroundWindow();
+				});
+		}
 		break;
 	}
 
@@ -266,7 +325,19 @@ void CMainDlg::OnTcnSelchangeTabcontrolGames(NMHDR* pNMHDR, LRESULT* pResult)
 	auto& settings = ext::get_singleton<Settings>();
 	settings.activeTab = m_tabControlGames.GetCurSel();
 
-	ext::send_event(&ISettingsChanged::OnSettingsChangedByUser);
+	ext::send_event(&ISettingsChanged::OnSettingsChanged);
 
 	*pResult = 0;
+}
+
+void CMainDlg::OnSettingsChanged()
+{
+	UpdateProgramWorkingButton();
+}
+
+void CMainDlg::OnBnClickedCheckProgramWorking()
+{
+	auto& settings = ext::get_singleton<Settings>();
+	settings.programWorking = !settings.programWorking;
+	ext::send_event(&ISettingsChanged::OnSettingsChanged);
 }

@@ -86,18 +86,24 @@
 #define IDC_BUTTON_MOVE_UP              1043
 #define IDC_BUTTON_MOVE_UP2             1044
 #define IDC_BUTTON_MOVE_DOWN            1044
+#define IDC_CHECK_PROGRAM_WORKING       1045
+#define IDC_STATIC_NO_TABS              1046
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
 #define ID_MENU_CLOSE                   32774
+#define ID_MENU_ENABLE_TRACES           32775
+#define ID_MENU_DISABLE_TRACES          32776
+#define ID_MENU_DISABLE_PROGRAM         32777
+#define ID_MENU_ENABLE_PROGRAM          32778
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        176
-#define _APS_NEXT_COMMAND_VALUE         32775
-#define _APS_NEXT_CONTROL_VALUE         1044
+#define _APS_NEXT_COMMAND_VALUE         32779
+#define _APS_NEXT_CONTROL_VALUE         1047
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

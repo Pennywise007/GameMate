@@ -21,7 +21,7 @@ public:
     LRESULT OnKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 private: // ISettingsChanged
-    void OnSettingsChangedByUser() override;
+    void OnSettingsChanged() override;
 
 private:
     HWINEVENTHOOK m_activeWindowHook = nullptr;

@@ -2,11 +2,12 @@
 #pragma once
 
 #include <Controls/TabControl/TabControl.h>
-#include <Controls/TrayHelper/TrayHelper.h>
 
 #include "core/Settings.h"
 
-class CMainDlg : public CDialogEx
+#include <ext/thread/scheduler.h>
+
+class CMainDlg : public CDialogEx, ext::events::ScopeSubscription<ISettingsChanged>
 {
 // Construction
 public:
@@ -35,13 +36,18 @@ protected:
 	afx_msg void OnBnClickedButtonDeleteTab();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnTcnSelchangeTabcontrolGames(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnBnClickedCheckProgramWorking();
+
+private: // ISettingsChanged
+	void OnSettingsChanged() override;
 
 private:
 	int AddTab(const std::shared_ptr<TabConfiguration>& tabSettings);
 	void OnGamesTabChanged();
+	void UpdateProgramWorkingButton();
 
 private:
 	HICON m_hIcon;
 	CTabControl m_tabControlGames;
-	CTrayHelper m_trayHelper;
+	CButton m_checkProgramWorking;
 };

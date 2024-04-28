@@ -33,12 +33,12 @@ protected:
 	afx_msg void OnBnClickedButtonRemove();
 	afx_msg void OnBnClickedCheckEnabled();
 	afx_msg void OnCbnSelendokComboExeName();
-	afx_msg void OnCbnDropdownComboExeName();
 	afx_msg void OnBnClickedCheckDisableWin();
 	afx_msg void OnBnClickedCheckUse();
 	afx_msg void OnBnClickedMfccolorbuttonCrosshairColor();
 	afx_msg void OnCbnSelendokComboCrosshairSelection();
 	afx_msg void OnCbnSelendokComboCrosshairSize();
+	afx_msg void OnCbnSetfocusComboExeName();
 	afx_msg void OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult);
 
 private:

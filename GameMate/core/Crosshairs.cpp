@@ -125,12 +125,13 @@ CrosshairWindow::CrosshairWindow()
 
 CrosshairWindow::~CrosshairWindow()
 {
-    if (IsWindow(*this))
-        RemoveCrosshairWindow();
+    RemoveCrosshairWindow();
 }
 
 void CrosshairWindow::AttachCrosshairToWindow(HWND hWndOfActiveWindow, const Settings& crosshair)
 {
+    // TODO try to fix paint problems and don't destroy window
+    
     // We recreate window every time to avoid transparent collisions
     ASSERT(!IsWindow(*this));
 
@@ -144,7 +145,8 @@ void CrosshairWindow::AttachCrosshairToWindow(HWND hWndOfActiveWindow, const Set
     }
     catch (...)
     {
-        // TODO
+        MessageBox(ext::ManageExceptionText(L"").c_str(), L"Failed to load crosshair", MB_ICONERROR);
+        return;
     }
 
     BITMAP bm;
@@ -171,7 +173,8 @@ void CrosshairWindow::RemoveCrosshairWindow()
         m_windowPosChangedHook = nullptr;
     }
 
-    DestroyWindow();
+    if (IsWindow(*this))
+        DestroyWindow();
 }
 
 void CrosshairWindow::OnWindowPosChanged(HWND hwnd)

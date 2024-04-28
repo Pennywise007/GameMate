@@ -23,7 +23,7 @@ void CALLBACK WindowForegroundChangedProc(HWINEVENTHOOK hWinEventHook, DWORD eve
     if (_tcscmp(className, _T("Shell_InputSwitchTopLevelWindow")) == 0) { // Win + Space window, it takes focus but don't return it back
         return;
     }
-    EXT_TRACE_DBG() << className;
+    EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << className;
 
     ext::get_singleton<Worker>().OnFocusChanged(hWnd);
 }
@@ -67,6 +67,10 @@ Worker::~Worker()
 
 void Worker::OnFocusChanged(HWND hWnd)
 {
+    auto& settings = ext::get_singleton<Settings>();
+    if (!settings.programWorking)
+        return;
+
     std::wstring activeWindowProcessname;
 
     DWORD pid;
@@ -82,7 +86,7 @@ void Worker::OnFocusChanged(HWND hWnd)
 
     activeWindowProcessname = PathFindFileName(processName);
 
-    EXT_TRACE_DBG() << L"Active process: " << activeWindowProcessname;
+    EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << L"Active process: " << activeWindowProcessname;
 
     if (m_activeExeTabConfig)
     {
@@ -90,7 +94,6 @@ void Worker::OnFocusChanged(HWND hWnd)
         m_activeExeTabConfig = nullptr;
     }
 
-    auto& settings = ext::get_singleton<Settings>();
     for (auto& tab : settings.tabs)
     {
         if (tab->exeName == activeWindowProcessname)
@@ -148,6 +151,20 @@ LRESULT Worker::OnMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 LRESULT Worker::OnKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
+    if (nCode == HC_ACTION && GetKeyState(VK_SHIFT) & 0x8000 && wParam == WM_KEYUP)
+    {
+        // Check Shift+F9 program working combination
+        PKBDLLHOOKSTRUCT hookStruct = (PKBDLLHOOKSTRUCT)lParam;
+        if (hookStruct->vkCode == VK_F9)
+        {
+            auto& settings = ext::get_singleton<Settings>();
+            settings.programWorking = !settings.programWorking;
+            ext::send_event(&ISettingsChanged::OnSettingsChanged);
+
+            return CallNextHookEx(m_keyboardHook, nCode, wParam, lParam);
+        }
+    }
+
     if (nCode == HC_ACTION && !!m_activeExeTabConfig)
     {
         PKBDLLHOOKSTRUCT hookStruct = (PKBDLLHOOKSTRUCT)lParam;
@@ -196,8 +213,18 @@ LRESULT Worker::OnKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
     return CallNextHookEx(m_keyboardHook, nCode, wParam, lParam);
 }
 
-void Worker::OnSettingsChangedByUser()
+void Worker::OnSettingsChanged()
 {
+    if (!ext::get_singleton<Settings>().programWorking)
+    {
+        if (m_activeExeTabConfig)
+        {
+            m_crosshairWindow.RemoveCrosshairWindow();
+            m_activeExeTabConfig = nullptr;
+        }
+        return;
+    }
+
     OnFocusChanged(GetForegroundWindow());
  
     // Save settings every 5 seconds after settings changed

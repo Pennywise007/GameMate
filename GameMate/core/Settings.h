@@ -112,6 +112,8 @@ public:
     void SaveSettings();
 
     REGISTER_SERIALIZABLE_OBJECT();
+    DECLARE_SERIALIZABLE_FIELD(bool, showMinimizedBubble, true);
+    DECLARE_SERIALIZABLE_FIELD(bool, programWorking, true);
     DECLARE_SERIALIZABLE_FIELD(int, activeTab, -1);
     DECLARE_SERIALIZABLE_FIELD(std::list<std::shared_ptr<TabConfiguration>>, tabs);
 };
@@ -120,5 +122,5 @@ public:
 struct ISettingsChanged : ext::events::IBaseEvent
 {
     virtual ~ISettingsChanged() = default;
-    virtual void OnSettingsChangedByUser() = 0;
+    virtual void OnSettingsChanged() = 0;
 };
