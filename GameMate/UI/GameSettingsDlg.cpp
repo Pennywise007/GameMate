@@ -94,6 +94,7 @@ BOOL CGameSettingsDlg::OnInitDialog()
 	m_enabled.SetCheck(m_configuration->enabled ? BST_CHECKED : BST_UNCHECKED);
 	m_exeName.SetWindowTextW(m_configuration->exeName.c_str());
 	m_exeName.AllowCustomText();
+	m_exeName.SetCueBanner(L"Enter process name...(example: steam.exe)");
 
 	m_checkDisableWinButton.SetCheck(m_configuration->disableWinButton ? BST_CHECKED : BST_UNCHECKED);
 	controls::SetTooltip(m_checkDisableWinButton,
