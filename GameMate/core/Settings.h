@@ -113,7 +113,9 @@ public:
 
     REGISTER_SERIALIZABLE_OBJECT();
     DECLARE_SERIALIZABLE_FIELD(bool, showMinimizedBubble, true);
+    DECLARE_SERIALIZABLE_FIELD(bool, tracesEnabled, true);
     DECLARE_SERIALIZABLE_FIELD(bool, programWorking, true);
+    DECLARE_SERIALIZABLE_FIELD(int, driverInputMode, 0);
     DECLARE_SERIALIZABLE_FIELD(int, activeTab, -1);
     DECLARE_SERIALIZABLE_FIELD(std::list<std::shared_ptr<TabConfiguration>>, tabs);
 };

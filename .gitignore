@@ -261,3 +261,6 @@ __pycache__/
 *.pyc
 /include/TelegramThread.h
 /include/tgbot
+
+# Ignore vcpkg dir which will be created during executing prerequisites script
+vcpkg

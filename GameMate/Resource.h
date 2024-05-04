@@ -73,6 +73,7 @@
 #define IDC_STATIC_CROSSHAIR_DEMO       1031
 #define IDC_COMBO1                      1032
 #define IDC_COMBO_CROSSHAIR_SELECTION   1032
+#define IDC_COMBO_INPUT_DRIVER          1032
 #define IDC_COMBO2                      1033
 #define IDC_COMBO_CROSSHAIR_SIZE        1033
 #define IDC_COMBO3                      1034
@@ -83,11 +84,14 @@
 #define IDC_STATIC_CROSSHAIR_INFO       1039
 #define IDC_CHECK_DISABLE_WIN           1040
 #define IDC_MFCBUTTON1                  1042
+#define IDC_MFCBUTTON_INPUT_DRIVER_INFO 1042
 #define IDC_BUTTON_MOVE_UP              1043
 #define IDC_BUTTON_MOVE_UP2             1044
 #define IDC_BUTTON_MOVE_DOWN            1044
 #define IDC_CHECK_PROGRAM_WORKING       1045
 #define IDC_STATIC_NO_TABS              1046
+#define IDC_STATIC_INPUT_DRIVER         1047
+#define IDC_BUTTON1                     1048
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -101,9 +105,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        176
+#define _APS_NEXT_RESOURCE_VALUE        177
 #define _APS_NEXT_COMMAND_VALUE         32779
-#define _APS_NEXT_CONTROL_VALUE         1047
+#define _APS_NEXT_CONTROL_VALUE         1049
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

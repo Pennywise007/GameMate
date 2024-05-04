@@ -37,6 +37,8 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnTcnSelchangeTabcontrolGames(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnBnClickedCheckProgramWorking();
+	afx_msg void OnCbnSelchangeComboInputDriver();
+	afx_msg void OnBnClickedMfcbuttonInputDriverInfo();
 
 private: // ISettingsChanged
 	void OnSettingsChanged() override;
@@ -45,9 +47,13 @@ private:
 	int AddTab(const std::shared_ptr<TabConfiguration>& tabSettings);
 	void OnGamesTabChanged();
 	void UpdateProgramWorkingButton();
+	void UpdateDriverInfoButton();
 
 private:
 	HICON m_hIcon;
 	CTabControl m_tabControlGames;
 	CButton m_checkProgramWorking;
+public:
+	CComboBox m_inputDriver;
+	CMFCButton m_buttonInputDriverInfo;
 };

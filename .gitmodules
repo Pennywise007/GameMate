@@ -1,6 +1,9 @@
-[submodule "GameMate/ext"]
-	path = GameMate/ext
-	url = https://github.com/Pennywise007/ext
 [submodule "GameMate/Controls"]
 	path = GameMate/Controls
 	url = https://github.com/Pennywise007/Controls
+[submodule "IbInputSimulator"]
+	path = IbInputSimulator
+	url = https://github.com/Chaoses-Ib/IbInputSimulator
+[submodule "include/ext"]
+	path = include/ext
+	url = https://github.com/Pennywise007/ext

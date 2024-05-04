@@ -1,0 +1,63 @@
+ Simulator/include/IbInputSimulator/SendTypes/Logitech.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Simulator/include/IbInputSimulator/SendTypes/Logitech.hpp b/Simulator/include/IbInputSimulator/SendTypes/Logitech.hpp
+index e492b34..43401b1 100644
+--- a/Simulator/include/IbInputSimulator/SendTypes/Logitech.hpp
++++ b/Simulator/include/IbInputSimulator/SendTypes/Logitech.hpp
+@@ -229,7 +229,7 @@ namespace Send::Type::Internal {
+         }
+     };
+ 
+-    class Logitech final : virtual public Base, public VirtualKeyStates {
++    class Logitech final : public VirtualKeyStates {
+         LogitechDriver driver;
+     public:
+         Logitech() : VirtualKeyStates(keyboard_report.modifiers, keyboard_mutex) {}
+ Simulator/include/IbInputSimulator/SendTypes/Razer.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Simulator/include/IbInputSimulator/SendTypes/Razer.hpp b/Simulator/include/IbInputSimulator/SendTypes/Razer.hpp
+index 4da7aa8..8841d12 100644
+--- a/Simulator/include/IbInputSimulator/SendTypes/Razer.hpp
++++ b/Simulator/include/IbInputSimulator/SendTypes/Razer.hpp
+@@ -3,7 +3,7 @@
+ #include "usb.hpp"
+ 
+ namespace Send::Type::Internal {
+-    class Razer final : virtual public Base, public VirtualKeyStates {
++    class Razer final : public VirtualKeyStates {
+         HANDLE device;
+ 
+         KeyboardModifiers modifiers;
+ Simulator/include/IbInputSimulator/SendTypes/base.hpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/Simulator/include/IbInputSimulator/SendTypes/base.hpp b/Simulator/include/IbInputSimulator/SendTypes/base.hpp
+index 116d410..8816a5f 100644
+--- a/Simulator/include/IbInputSimulator/SendTypes/base.hpp
++++ b/Simulator/include/IbInputSimulator/SendTypes/base.hpp
+@@ -76,6 +76,7 @@ namespace Send::Type::Internal {
+             this->get_key_state_fallback = get_key_state_fallback;
+         }
+ 
++        virtual ~Base() = default;
+         virtual void destroy() = 0;
+ 
+         virtual uint32_t send_input(const INPUT inputs[], uint32_t n) {
+ Simulator/source/dllmain.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Simulator/source/dllmain.cpp b/Simulator/source/dllmain.cpp
+index 95dded0..053b797 100644
+--- a/Simulator/source/dllmain.cpp
++++ b/Simulator/source/dllmain.cpp
+@@ -165,7 +165,7 @@ DLLAPI void __stdcall IbSendDestroy() {
+     if (!main::send)
+         return;
+     main::send->destroy();
+-    main::send.release();
++    main::send.reset();
+ }
+ 
+ DLLAPI void __stdcall IbSendSyncKeyStates() {

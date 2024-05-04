@@ -7,11 +7,13 @@
 
 #include "AddingTabDlg.h"
 #include "GameSettingsDlg.h"
+#include "InputManager.h"
 
 #include <core/Worker.h>
 
 #include <ext/core.h>
 #include <ext/core/check.h>
+#include <ext/constexpr/map.h>
 
 #include <Controls/Layout/Layout.h>
 #include <Controls/TrayHelper/TrayHelper.h>
@@ -19,6 +21,29 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+
+namespace {
+
+constexpr ext::constexpr_map kComboboxIndexesToInputModes=  {
+	std::pair{0, InputManager::InputMode::Razer},
+	std::pair{1, InputManager::InputMode::Logitech},
+	std::pair{2, InputManager::InputMode::DD},
+	std::pair{3, InputManager::InputMode::MouClassInputInjection},
+	std::pair{4, InputManager::InputMode::SendInput},
+};
+
+constexpr ext::constexpr_map kDriverNames =
+{
+	std::pair{ InputManager::InputMode::Razer, L"Razer driver" },
+	std::pair{ InputManager::InputMode::Logitech, L"Logitech driver" },
+	std::pair{ InputManager::InputMode::DD, L"DD driver" },
+	std::pair{ InputManager::InputMode::MouClassInputInjection, L"Mou driver" },
+	std::pair{ InputManager::InputMode::SendInput, L"Windows default input" },
+};
+
+static_assert(kComboboxIndexesToInputModes.size() == kDriverNames.size());
+
+} // namespace
 
 CMainDlg::CMainDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_MAIN_DIALOG, pParent)
@@ -34,6 +59,8 @@ void CMainDlg::DoDataExchange(CDataExchange* pDX)
 
 	DDX_Control(pDX, IDC_TABCONTROL_GAMES, m_tabControlGames());
 	DDX_Control(pDX, IDC_CHECK_PROGRAM_WORKING, m_checkProgramWorking);
+	DDX_Control(pDX, IDC_COMBO_INPUT_DRIVER, m_inputDriver);
+	DDX_Control(pDX, IDC_MFCBUTTON_INPUT_DRIVER_INFO, m_buttonInputDriverInfo);
 }
 
 BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
@@ -46,6 +73,8 @@ BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_DELETE_TAB, &CMainDlg::OnBnClickedButtonDeleteTab)
 	ON_BN_CLICKED(IDC_CHECK_PROGRAM_WORKING, &CMainDlg::OnBnClickedCheckProgramWorking)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TABCONTROL_GAMES, &CMainDlg::OnTcnSelchangeTabcontrolGames)
+	ON_CBN_SELCHANGE(IDC_COMBO_INPUT_DRIVER, &CMainDlg::OnCbnSelchangeComboInputDriver)
+	ON_BN_CLICKED(IDC_MFCBUTTON_INPUT_DRIVER_INFO, &CMainDlg::OnBnClickedMfcbuttonInputDriverInfo)
 END_MESSAGE_MAP()
 
 BOOL CMainDlg::OnInitDialog()
@@ -55,12 +84,15 @@ BOOL CMainDlg::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);			// Set big icon
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
-	const auto& settings = ext::get_singleton<Settings>();
+	auto& settings = ext::get_singleton<Settings>();
 	for (const auto& tab : settings.tabs)
 	{
 		AddTab(tab);
 	}
 	m_tabControlGames.SetCurSel(settings.activeTab);
+
+	if (settings.tracesEnabled)
+		ext::get_tracer().Enable();
 
 	OnGamesTabChanged();
 
@@ -97,10 +129,14 @@ BOOL CMainDlg::OnInitDialog()
 				OnBnClickedCheckProgramWorking();
 				break;
 			case ID_MENU_ENABLE_TRACES:
+				ext::get_singleton<Settings>().tracesEnabled = true;
 				ext::get_tracer().Enable();
+				ext::send_event(&ISettingsChanged::OnSettingsChanged);
 				break;
 			case ID_MENU_DISABLE_TRACES:
+				ext::get_singleton<Settings>().tracesEnabled = false;
 				ext::get_tracer().Reset();
+				ext::send_event(&ISettingsChanged::OnSettingsChanged);
 				break;
 			case ID_MENU_CLOSE:
 				EndDialog(IDCANCEL);
@@ -116,8 +152,45 @@ BOOL CMainDlg::OnInitDialog()
 			SetForegroundWindow();
 		});
 
-	// Starting worker
-	EXT_UNUSED(ext::get_singleton<Worker>());
+	try
+	{
+		InputManager::InputMode inputMode = InputManager::InputMode(std::max<int>(settings.driverInputMode, 0));
+		auto err = InputManager::InitializeInputMode(inputMode);
+		if (err != InputManager::Error::Success)
+		{
+			inputMode = InputManager::InputMode::Auto;
+
+			EXT_EXPECT(InputManager::InitializeInputMode(inputMode) == InputManager::Error::Success);
+			EXT_EXPECT(inputMode != InputManager::InputMode::Auto);
+			EXT_EXPECT(kDriverNames.contains_key(inputMode));
+			EXT_EXPECT(InputManager::InputMode(settings.driverInputMode) != inputMode);
+
+			MessageBox((L"Fail reason: " + std::wstring(InputManager::kErrorCodes.get_value(err)) +
+					   L". Program will use " + kDriverNames.get_value(inputMode)).c_str(),
+					   L"Previously selected input driver is not available",
+					   MB_ICONEXCLAMATION);
+		}
+
+		EXT_EXPECT(kDriverNames.contains_key(inputMode));
+		
+		if (settings.driverInputMode != int(inputMode))
+		{
+			settings.driverInputMode = int(inputMode);
+			ext::send_event(&ISettingsChanged::OnSettingsChanged);
+		}
+
+		m_inputDriver.InsertString(0, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(0)));
+		m_inputDriver.InsertString(1, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(1)));
+		m_inputDriver.InsertString(2, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(2)));
+		m_inputDriver.InsertString(3, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(3)));
+		m_inputDriver.InsertString(4, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(4)));
+
+		m_inputDriver.SetCurSel(kComboboxIndexesToInputModes.get_key(inputMode));
+	}
+	catch (...)
+	{
+		MessageBox((L"Try to remove config file and restart app. Err:\n" + ext::ManageExceptionText(L"")).c_str(), L"Failed to init input driver", MB_OK);
+	}
 
 	UpdateProgramWorkingButton();
 
@@ -126,7 +199,8 @@ BOOL CMainDlg::OnInitDialog()
 	GetWindowRect(rect);
 	Layout::SetWindowMinimumSize(*this, rect.Width(), rect.Height());
 
-	// TODO SORT TAB STOPS in resource files
+	// Starting worker
+	//EXT_UNUSED(ext::get_singleton<Worker>());
 
 	return TRUE;
 }
@@ -266,6 +340,13 @@ void CMainDlg::UpdateProgramWorkingButton()
 	m_checkProgramWorking.SetCheck(settings.programWorking ? BST_CHECKED : BST_UNCHECKED);
 }
 
+void CMainDlg::UpdateDriverInfoButton()
+{
+	bool showWarning = ext::get_singleton<Settings>().driverInputMode == int(InputManager::InputMode::SendInput);
+	// TODO
+
+}
+
 BOOL CMainDlg::PreTranslateMessage(MSG* pMsg)
 {
 	switch (pMsg->message)
@@ -340,4 +421,48 @@ void CMainDlg::OnBnClickedCheckProgramWorking()
 	auto& settings = ext::get_singleton<Settings>();
 	settings.programWorking = !settings.programWorking;
 	ext::send_event(&ISettingsChanged::OnSettingsChanged);
+}
+
+void CMainDlg::OnCbnSelchangeComboInputDriver()
+{
+	auto curSel = m_inputDriver.GetCurSel();
+	EXT_ASSERT(curSel != -1);
+
+	auto selecetedInputMode = kComboboxIndexesToInputModes.get_value(curSel);
+
+	auto err = InputManager::InitializeInputMode(selecetedInputMode);
+	if (err != InputManager::Error::Success)
+	{
+		auto newInputMode = InputManager::InputMode::Auto;
+		EXT_DUMP_IF(InputManager::InitializeInputMode(newInputMode) != InputManager::Error::Success);
+
+		MessageBox((L"Fail reason: " + std::wstring(InputManager::kErrorCodes.get_value(err)) +
+				   L". Program will use " + kDriverNames.get_value(newInputMode)).c_str(),
+				   (L"Can't use driver " + std::wstring(kDriverNames.get_value(selecetedInputMode))).c_str(),
+				   MB_ICONEXCLAMATION);
+
+		selecetedInputMode = newInputMode;
+		m_inputDriver.SetCurSel(kComboboxIndexesToInputModes.get_key(selecetedInputMode));
+	}
+
+	if (ext::get_singleton<Settings>().driverInputMode == int(selecetedInputMode))
+		return;
+
+	if (selecetedInputMode == InputManager::InputMode::SendInput)
+	{
+		if (MessageBox(L"Be aware that some game guards might detect input from standart windows input and may take some actions against it. "
+					   L"It is recommended to install some input driver to avoid such detections. Do you want to see extra information?",
+					   L"You will use standart windows input", MB_YESNO) == IDYES)
+		{
+			OnBnClickedMfcbuttonInputDriverInfo();
+		}
+	}
+
+	ext::get_singleton<Settings>().driverInputMode = int(selecetedInputMode);
+	ext::send_event(&ISettingsChanged::OnSettingsChanged);
+}
+
+void CMainDlg::OnBnClickedMfcbuttonInputDriverInfo()
+{
+	// TODO
 }
