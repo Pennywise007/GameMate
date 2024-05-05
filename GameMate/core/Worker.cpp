@@ -2,6 +2,7 @@
 #include "psapi.h"
 #include "resource.h"
 
+#include "InputManager.h"
 #include "Crosshairs.h"
 #include "Worker.h"
 
@@ -41,14 +42,6 @@ bool GetProcessName(HWND hWnd, std::wstring& processName)
     }
 
     return true;
-}
-
-LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
-    return ext::get_singleton<Worker>().OnMouseProc(nCode, wParam, lParam);
-}
-
-LRESULT CALLBACK KeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
-    return ext::get_singleton<Worker>().OnKeyboardProc(nCode, wParam, lParam);
 }
 
 void CALLBACK WindowForegroundChangedProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hWnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime)
@@ -91,22 +84,20 @@ Worker::Worker()
     m_activeWindowHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, NULL, &WindowForegroundChangedProc, 0, 0, WINEVENT_OUTOFCONTEXT);
     if (m_activeWindowHook == nullptr) {
         MessageBox(0, L"Failed to set system foreground changed hook", L"Failed to start program", MB_OK | MB_ICONERROR);
-        ExitProcess(400);
+        ExitProcess(500);
     }
 
-    m_mouseHook = SetWindowsHookEx(WH_MOUSE_LL, MouseProc, NULL, 0);
-    if (m_mouseHook == nullptr) {
-        UnhookWinEvent(m_activeWindowHook);
-        MessageBox(0, L"Failed to set mouse hook", L"Failed to start program", MB_OK | MB_ICONERROR);
-        ExitProcess(401);
+    try
+    {
+        using namespace std::placeholders;
+        const int id = InputManager::AddKeyOrMouseHandler(std::bind(&Worker::OnKeyOrMouseEvent, this, _1, _2));
+        EXT_ASSERT(id == 0) << EXT_TRACE_FUNCTION << "We should be the first subscriber, if not change call of the RemoveKeyOrMouseHandler";
     }
-
-    m_keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, KeyboardProc, NULL, 0);
-    if (m_keyboardHook == nullptr) {
+    catch (...)
+    {
         UnhookWinEvent(m_activeWindowHook);
-        UnhookWindowsHookEx(m_mouseHook);
-        MessageBox(0, L"Failed to set keyboard hook", L"Failed to start program", MB_OK | MB_ICONERROR);
-        ExitProcess(402);
+        MessageBox(0, ext::ManageExceptionText(L"").c_str(), L"Failed to start program", MB_OK | MB_ICONERROR);
+        ExitProcess(501);
     }
 
     auto currentActiveWindow = GetForegroundWindow();
@@ -121,10 +112,8 @@ Worker::~Worker()
 {
     ASSERT(m_activeWindowHook);
     UnhookWinEvent(m_activeWindowHook);
-    ASSERT(m_mouseHook);
-    UnhookWindowsHookEx(m_mouseHook);
-    ASSERT(m_keyboardHook);
-    UnhookWindowsHookEx(m_keyboardHook);
+
+    InputManager::RemoveKeyOrMouseHandler(0);
 }
 
 void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
@@ -163,66 +152,26 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
         m_crosshairWindow.AttachCrosshairToWindow(m_activeWindow, crossahair);
 }
 
-LRESULT Worker::OnMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+bool Worker::OnKeyOrMouseEvent(WORD vkKey, bool down)
 {
-    if (nCode == HC_ACTION && !!m_activeExeTabConfig)
+    // Check if program working mode switched
+    if (vkKey == VK_F9 && !down && InputManager::GetKeyState(VK_SHIFT))
     {
-        PMSLLHOOKSTRUCT hookStruct = (PMSLLHOOKSTRUCT)lParam;
-        for (auto&& [bind, macro] : m_activeExeTabConfig->macrosByBind)
-        {
-            if (bind.IsBind(UINT(wParam), wParam))
-            {
-                // Execute macros on key down and ignore key up
-                switch (wParam)
-                {
-                case WM_LBUTTONUP:
-                case WM_RBUTTONUP:
-                case WM_MBUTTONUP:
-                case WM_XBUTTONUP:
-                    break;
-                default:
-                    m_macrosExecutor.add_task([actions = macro.actions, delayRandomize = macro.randomizeDelays]() {
-                        for (const auto& action : actions)
-                        {
-                            action.ExecuteAction(delayRandomize);
-                        }
-                    });
-                    break;
-                }
+        auto& settings = ext::get_singleton<Settings>();
+        settings.programWorking = !settings.programWorking;
+        ext::send_event(&ISettingsChanged::OnSettingsChanged);
 
-                return 1;
-            }
-        }
+        return false;
     }
 
-    return CallNextHookEx(m_mouseHook, nCode, wParam, lParam);
-}
-
-LRESULT Worker::OnKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
-{
-    if (nCode == HC_ACTION && GetKeyState(VK_SHIFT) & 0x8000 && wParam == WM_KEYUP)
+    if (!!m_activeExeTabConfig)
     {
-        // Check Shift+F9 program working combination
-        PKBDLLHOOKSTRUCT hookStruct = (PKBDLLHOOKSTRUCT)lParam;
-        if (hookStruct->vkCode == VK_F9)
-        {
-            auto& settings = ext::get_singleton<Settings>();
-            settings.programWorking = !settings.programWorking;
-            ext::send_event(&ISettingsChanged::OnSettingsChanged);
-
-            return CallNextHookEx(m_keyboardHook, nCode, wParam, lParam);
-        }
-    }
-
-    if (nCode == HC_ACTION && !!m_activeExeTabConfig)
-    {
-        PKBDLLHOOKSTRUCT hookStruct = (PKBDLLHOOKSTRUCT)lParam;
         for (auto&& [bind, macro] : m_activeExeTabConfig->macrosByBind)
         {
-            if (bind.IsBind(UINT(wParam), hookStruct->vkCode))
+            if (bind.IsBindPressed(vkKey))
             {
                 // Execute macros on key down and ignore key up
-                if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN)
+                if (down)
                 {
                     m_macrosExecutor.add_task([actions = macro.actions, delayRandomize = macro.randomizeDelays]() {
                         for (const auto& action : actions)
@@ -232,14 +181,14 @@ LRESULT Worker::OnKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
                     });
                 }
 
-                return 1;
+                return true;
             }
         }
 
         // Ignore Windows button press
         if (m_activeExeTabConfig->disableWinButton)
         {
-            switch (hookStruct->vkCode)
+            switch (vkKey)
             {
             case VK_LWIN:
             case VK_RWIN:
@@ -249,17 +198,17 @@ LRESULT Worker::OnKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
                         (now - *m_lastWindowsIgnoreTimePoint) <= std::chrono::seconds(1))
                         break;
 
-                    if (wParam == WM_KEYUP)
+                    if (!down)
                         m_lastWindowsIgnoreTimePoint = std::move(now);
                 }
-                return 1;
+                return true;
             default:
                 break;
             }
         }
     }
 
-    return CallNextHookEx(m_keyboardHook, nCode, wParam, lParam);
+    return false;
 }
 
 void Worker::OnSettingsChanged()

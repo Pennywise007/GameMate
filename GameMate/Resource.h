@@ -43,6 +43,7 @@
 #define IDI_ICON_STOP_RECORDING         173
 #define IDB_PNG_ARROW_DOWN              174
 #define IDB_PNG_ARROW_UP                175
+#define IDD_DIALOG_INPUT_SIMULATOR      177
 #define IDC_TABCONTROL_GAMES            1000
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
@@ -92,6 +93,16 @@
 #define IDC_STATIC_NO_TABS              1046
 #define IDC_STATIC_INPUT_DRIVER         1047
 #define IDC_BUTTON1                     1048
+#define IDC_MFCLINK1                    1049
+#define IDC_STATIC_GROUP                1050
+#define IDC_MFCLINK_RAZER               1051
+#define IDC_MFCLINK_LOGITECH_8          1052
+#define IDC_MFCLINK3                    1053
+#define IDC_MFCLINK4                    1054
+#define IDC_MFCLINK5                    1055
+#define IDC_MFCLINK6                    1057
+#define IDC_MFCLINK_RAZER_7             1057
+#define IDC_MFCLINK2                    1058
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -105,9 +116,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        177
+#define _APS_NEXT_RESOURCE_VALUE        180
 #define _APS_NEXT_COMMAND_VALUE         32779
-#define _APS_NEXT_CONTROL_VALUE         1049
+#define _APS_NEXT_CONTROL_VALUE         1059
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

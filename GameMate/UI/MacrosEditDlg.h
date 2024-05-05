@@ -52,6 +52,7 @@ private:
 	CIconButton m_buttonMoveDown;
 
 private:
+	int m_keyPressedSubscriptionId = -1;
 	Macros m_macros;
 	std::optional<std::chrono::steady_clock::time_point> m_lastActionTime;
 };

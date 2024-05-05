@@ -9,55 +9,60 @@
 #include <ext/core/dispatcher.h>
 #include <ext/serialization/iserializable.h>
 
-struct Action
-{
-    // Convert message to action
-    [[nodiscard]] static std::optional<Action> FromMessage(MSG* pMsg);
-    // Get text
-    virtual std::wstring ToString() const;
-
-    REGISTER_SERIALIZABLE_OBJECT();
-    DECLARE_SERIALIZABLE_FIELD(UINT, messageId);
-    DECLARE_SERIALIZABLE_FIELD(WPARAM, wParam);
-    DECLARE_SERIALIZABLE_FIELD(LPARAM, lParam);
-};
-
-struct Bind : Action
+struct Bind
 {
     Bind() = default;
-    Bind(const Action& action) : Action(action) {}
+    Bind(WORD _vkKey);
 
-    // Convert message to bind
-    [[nodiscard]] static std::optional<Bind> GetBindFromMessage(MSG* pMsg);
     // Comparision operator for map
     int operator<(const Bind& other) const { return ToString() < other.ToString(); }
-    // Check if message equal bind
-    bool IsBind(UINT messageId, WPARAM wParam) const;
 
-    REGISTER_SERIALIZABLE_OBJECT(Action);
+    // Get text
+    [[nodiscard]] std::wstring ToString() const;
+    // Check if bind was pressed
+    bool IsBindPressed(WORD vkKey) const;
+
+    enum class ExtraKeys
+    {
+        FirstKey,
+        LCtrl = FirstKey,
+        RCtrl,
+        LShift,
+        RShift,
+        LAlt,
+        RAlt,
+        LWin,
+        RWin,
+        LastKey
+    };
+
+    REGISTER_SERIALIZABLE_OBJECT();
+    DECLARE_SERIALIZABLE_FIELD(unsigned, extraKeys);
+    DECLARE_SERIALIZABLE_FIELD(WORD, vkKey);
 };
 
-struct MacrosAction : Action
+struct MacrosAction
 {
     MacrosAction() = default;
-    MacrosAction(const Action& action) : Action(action) {}
+    MacrosAction(WORD _vkKey, bool _down, unsigned _delay) : vkKey(_vkKey), down(_down), delayInMilliseconds(_delay) {}
 
-    // Convertion message to action
-    [[nodiscard]] static std::optional<MacrosAction> GetMacrosActionFromMessage(MSG* pMsg, long long delay);
     // Get action text
-    std::wstring ToString() const override;
+    [[nodiscard]] std::wstring ToString() const;
     // Execution action
-    void ExecuteAction(double delayRandomize) const;
+    void ExecuteAction(float delayRandomize) const;
 
-    REGISTER_SERIALIZABLE_OBJECT(Action);
-    DECLARE_SERIALIZABLE_FIELD((long long), delayInMilliseconds, 0);
+    REGISTER_SERIALIZABLE_OBJECT();
+
+    DECLARE_SERIALIZABLE_FIELD(WORD, vkKey);
+    DECLARE_SERIALIZABLE_FIELD(bool, down);
+    DECLARE_SERIALIZABLE_FIELD(unsigned, delayInMilliseconds, 0);
 };
 
 struct Macros
 {
     REGISTER_SERIALIZABLE_OBJECT();
     DECLARE_SERIALIZABLE_FIELD(std::list<MacrosAction>, actions);
-    DECLARE_SERIALIZABLE_FIELD(double, randomizeDelays, 0);
+    DECLARE_SERIALIZABLE_FIELD(float, randomizeDelays, 0.f);
 };
 
 namespace crosshair {
@@ -88,7 +93,7 @@ struct Settings
     DECLARE_SERIALIZABLE_FIELD(crosshair::Size, size, Size::eMedium);
     DECLARE_SERIALIZABLE_FIELD(crosshair::Type, type, Type::eCross);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, customCrosshairName);
-    DECLARE_SERIALIZABLE_FIELD(COLORREF, color, RGB(0, 0, 0));
+    DECLARE_SERIALIZABLE_FIELD(COLORREF, color, RGB(255, 192, 0));
 };
 
 } // namespace crosshair

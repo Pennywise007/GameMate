@@ -8,6 +8,7 @@
 #include "AddingTabDlg.h"
 #include "GameSettingsDlg.h"
 #include "InputManager.h"
+#include "InputSimulatorInfo.h"
 
 #include <core/Worker.h>
 
@@ -25,20 +26,20 @@
 namespace {
 
 constexpr ext::constexpr_map kComboboxIndexesToInputModes=  {
-	std::pair{0, InputManager::InputMode::Razer},
-	std::pair{1, InputManager::InputMode::Logitech},
-	std::pair{2, InputManager::InputMode::DD},
-	std::pair{3, InputManager::InputMode::MouClassInputInjection},
-	std::pair{4, InputManager::InputMode::SendInput},
+	std::pair{0, InputManager::InputSimulator::Razer},
+	std::pair{1, InputManager::InputSimulator::Logitech},
+	std::pair{2, InputManager::InputSimulator::DD},
+	std::pair{3, InputManager::InputSimulator::MouClassInputInjection},
+	std::pair{4, InputManager::InputSimulator::SendInput},
 };
 
 constexpr ext::constexpr_map kDriverNames =
 {
-	std::pair{ InputManager::InputMode::Razer, L"Razer driver" },
-	std::pair{ InputManager::InputMode::Logitech, L"Logitech driver" },
-	std::pair{ InputManager::InputMode::DD, L"DD driver" },
-	std::pair{ InputManager::InputMode::MouClassInputInjection, L"Mou driver" },
-	std::pair{ InputManager::InputMode::SendInput, L"Windows default input" },
+	std::pair{ InputManager::InputSimulator::Razer, L"Razer driver" },
+	std::pair{ InputManager::InputSimulator::Logitech, L"Logitech driver" },
+	std::pair{ InputManager::InputSimulator::DD, L"DD driver" },
+	std::pair{ InputManager::InputSimulator::MouClassInputInjection, L"Mou driver" },
+	std::pair{ InputManager::InputSimulator::SendInput, L"Don't use simulator" },
 };
 
 static_assert(kComboboxIndexesToInputModes.size() == kDriverNames.size());
@@ -152,22 +153,25 @@ BOOL CMainDlg::OnInitDialog()
 			SetForegroundWindow();
 		});
 
+	// Starting worker
+	EXT_UNUSED(ext::get_singleton<Worker>());
+
 	try
 	{
-		InputManager::InputMode inputMode = InputManager::InputMode(std::max<int>(settings.driverInputMode, 0));
-		auto err = InputManager::InitializeInputMode(inputMode);
-		if (err != InputManager::Error::Success)
+		InputManager::InputSimulator inputMode = InputManager::InputSimulator(std::max<int>(settings.driverInputMode, 0));
+		auto err = InputManager::SetInputSimulator(inputMode);
+		if (err.has_value())
 		{
-			inputMode = InputManager::InputMode::Auto;
+			inputMode = InputManager::InputSimulator::Auto;
 
-			EXT_EXPECT(InputManager::InitializeInputMode(inputMode) == InputManager::Error::Success);
-			EXT_EXPECT(inputMode != InputManager::InputMode::Auto);
+			EXT_EXPECT(!InputManager::SetInputSimulator(inputMode).has_value());
+			EXT_EXPECT(inputMode != InputManager::InputSimulator::Auto);
 			EXT_EXPECT(kDriverNames.contains_key(inputMode));
-			EXT_EXPECT(InputManager::InputMode(settings.driverInputMode) != inputMode);
+			EXT_EXPECT(InputManager::InputSimulator(settings.driverInputMode) != inputMode);
 
-			MessageBox((L"Fail reason: " + std::wstring(InputManager::kErrorCodes.get_value(err)) +
+			MessageBox((L"Fail reason: " + std::wstring(err.value()) +
 					   L". Program will use " + kDriverNames.get_value(inputMode)).c_str(),
-					   L"Previously selected input driver is not available",
+					   L"Previously selected input simulator is not available",
 					   MB_ICONEXCLAMATION);
 		}
 
@@ -189,7 +193,7 @@ BOOL CMainDlg::OnInitDialog()
 	}
 	catch (...)
 	{
-		MessageBox((L"Try to remove config file and restart app. Err:\n" + ext::ManageExceptionText(L"")).c_str(), L"Failed to init input driver", MB_OK);
+		MessageBox((L"Try to remove config file and restart app. Err:\n" + ext::ManageExceptionText(L"")).c_str(), L"Failed to init input simulator", MB_OK);
 	}
 
 	UpdateProgramWorkingButton();
@@ -198,9 +202,6 @@ BOOL CMainDlg::OnInitDialog()
 	CRect rect;
 	GetWindowRect(rect);
 	Layout::SetWindowMinimumSize(*this, rect.Width(), rect.Height());
-
-	// Starting worker
-	//EXT_UNUSED(ext::get_singleton<Worker>());
 
 	return TRUE;
 }
@@ -342,7 +343,7 @@ void CMainDlg::UpdateProgramWorkingButton()
 
 void CMainDlg::UpdateDriverInfoButton()
 {
-	bool showWarning = ext::get_singleton<Settings>().driverInputMode == int(InputManager::InputMode::SendInput);
+	bool showWarning = ext::get_singleton<Settings>().driverInputMode == int(InputManager::InputSimulator::SendInput);
 	// TODO
 
 }
@@ -430,15 +431,15 @@ void CMainDlg::OnCbnSelchangeComboInputDriver()
 
 	auto selecetedInputMode = kComboboxIndexesToInputModes.get_value(curSel);
 
-	auto err = InputManager::InitializeInputMode(selecetedInputMode);
-	if (err != InputManager::Error::Success)
+	auto err = InputManager::SetInputSimulator(selecetedInputMode);
+	if (err.has_value())
 	{
-		auto newInputMode = InputManager::InputMode::Auto;
-		EXT_DUMP_IF(InputManager::InitializeInputMode(newInputMode) != InputManager::Error::Success);
+		auto newInputMode = InputManager::InputSimulator::Auto;
+		EXT_DUMP_IF(InputManager::SetInputSimulator(newInputMode).has_value());
 
-		MessageBox((L"Fail reason: " + std::wstring(InputManager::kErrorCodes.get_value(err)) +
+		MessageBox((L"Fail reason: " + std::wstring(err.value()) +
 				   L". Program will use " + kDriverNames.get_value(newInputMode)).c_str(),
-				   (L"Can't use driver " + std::wstring(kDriverNames.get_value(selecetedInputMode))).c_str(),
+				   (L"Can't use input simulator " + std::wstring(kDriverNames.get_value(selecetedInputMode))).c_str(),
 				   MB_ICONEXCLAMATION);
 
 		selecetedInputMode = newInputMode;
@@ -448,11 +449,11 @@ void CMainDlg::OnCbnSelchangeComboInputDriver()
 	if (ext::get_singleton<Settings>().driverInputMode == int(selecetedInputMode))
 		return;
 
-	if (selecetedInputMode == InputManager::InputMode::SendInput)
+	if (selecetedInputMode == InputManager::InputSimulator::SendInput)
 	{
 		if (MessageBox(L"Be aware that some game guards might detect input from standart windows input and may take some actions against it. "
 					   L"It is recommended to install some input driver to avoid such detections. Do you want to see extra information?",
-					   L"You will use standart windows input", MB_YESNO) == IDYES)
+					   L"You will use standart windows API input", MB_YESNO) == IDYES)
 		{
 			OnBnClickedMfcbuttonInputDriverInfo();
 		}
@@ -464,5 +465,5 @@ void CMainDlg::OnCbnSelchangeComboInputDriver()
 
 void CMainDlg::OnBnClickedMfcbuttonInputDriverInfo()
 {
-	// TODO
+	CInputSimulatorInfo(this).DoModal();
 }

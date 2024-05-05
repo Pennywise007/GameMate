@@ -17,17 +17,16 @@ class Worker : ext::events::ScopeSubscription<ISettingsChanged>
     ~Worker();
 public:
     void OnForegroundChanged(HWND hWnd, const std::wstring& processName);
-    LRESULT OnMouseProc(int nCode, WPARAM wParam, LPARAM lParam);
-    LRESULT OnKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 private: // ISettingsChanged
     void OnSettingsChanged() override;
 
 private:
-    // Windows events hooks
+    bool OnKeyOrMouseEvent(WORD mouseVkKey, bool down);
+
+private:
+    // Active window changed hook
     HWINEVENTHOOK m_activeWindowHook = nullptr;
-    HHOOK m_mouseHook = nullptr;
-    HHOOK m_keyboardHook = nullptr;
     // Transparent window to show top most crosshair
     crosshair::CrosshairWindow m_crosshairWindow;
     // we use 1 thread to put macroses in a single queue

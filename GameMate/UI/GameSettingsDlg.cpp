@@ -8,7 +8,7 @@
 #include "afxdialogex.h"
 #include "GameSettingsDlg.h"
 #include "MacrosEditDlg.h"
-#include "ActionEditDlg.h"
+#include "BaseKeyEditDlg.h"
 
 #include "core/Crosshairs.h"
 
@@ -141,7 +141,7 @@ BOOL CGameSettingsDlg::OnInitDialog()
 	CRect rect;
 	m_listMacroses.GetClientRect(rect);
 
-	constexpr int kKeybindColumnWidth = 50;
+	constexpr int kKeybindColumnWidth = 150;
 	constexpr int kRandomizeDelayColumnWidth = 120;
 	m_listMacroses.InsertColumn(Columns::eKeybind, L"Keybind", LVCFMT_CENTER, kKeybindColumnWidth);
 	m_listMacroses.InsertColumn(Columns::eActions, L"Actions", LVCFMT_CENTER, rect.Width() - kKeybindColumnWidth - kRandomizeDelayColumnWidth);
@@ -163,7 +163,7 @@ BOOL CGameSettingsDlg::OnInitDialog()
 			ASSERT((int)macroses.size() > pParams->iItem);
 			auto editableMacrosIt = std::next(macroses.begin(), pParams->iItem);
 
-			auto bind = CActionEditDlg::EditBind(parentWindow, editableMacrosIt->first);
+			auto bind = CBindEditDlg::EditBind(parentWindow, editableMacrosIt->first);
 			if (!bind.has_value())
 				return nullptr;
 
@@ -241,7 +241,7 @@ void CGameSettingsDlg::OnCancel()
 
 void CGameSettingsDlg::OnBnClickedButtonAdd()
 {
-	auto bind = CActionEditDlg::EditBind(this);
+	auto bind = CBindEditDlg::EditBind(this);
 	if (!bind.has_value())
 		return;
 
@@ -269,11 +269,20 @@ void CGameSettingsDlg::OnBnClickedButtonAdd()
 
 	auto newMacros = CMacrosEditDlg(editableMacros, this).ExecModal();
 
+	// removing previously added item with bind name
 	if (!actionExists)
 		m_listMacroses.DeleteItem(m_listMacroses.GetItemCount() - 1);
 
 	if (!newMacros.has_value())
 		return;
+
+	// removing old copy of eddited macros
+	if (actionExists)
+	{
+		auto sameItem = (int)std::distance(m_configuration->macrosByBind.begin(), it);
+		m_configuration->macrosByBind.erase(it);
+		m_listMacroses.DeleteItem(sameItem);
+	}
 
 	AddNewMacros(bind.value(), std::move(newMacros.value()));
 

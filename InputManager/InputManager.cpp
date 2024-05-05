@@ -2,11 +2,12 @@
 
 #include <array>
 
-#include <ext/core/check.h>
-#include <ext/core/tracer.h>
-
 #include "InputManager.h"
 #include "InputSimulator.hpp"
+
+#include <ext/core/check.h>
+#include <ext/core/tracer.h>
+#include <ext/constexpr/map.h>
 
 namespace {
 
@@ -96,15 +97,15 @@ INPUT CreateKeyboardInput(unsigned short vkCode, bool down)
 
 } // namespace
 
-InputManager::Error InputManager::InitializeInputMode(InputMode& inputMode)
+std::optional<InputManager::Error> InputManager::SetInputSimulator(InputSimulator& inputSimulator)
 {
     IbSendDestroy();
 
     Send::Error error{};
 
-    if (inputMode == InputMode::Auto)
+    if (inputSimulator == InputSimulator::Auto)
     {
-        constexpr std::array driversPriority = {
+        std::array driversPriority = {
             Send::SendType::Razer,
             Send::SendType::Logitech,
             Send::SendType::DD,
@@ -114,45 +115,85 @@ InputManager::Error InputManager::InitializeInputMode(InputMode& inputMode)
 
         for (const auto& mode : driversPriority)
         {
-            inputMode = InputMode(mode);
+            inputSimulator = InputSimulator(mode);
             error = IbSendInit(mode, 0, 0);
             if (error == Send::Error::Success)
                 break;
         }
     }
     else
-        error = IbSendInit(Send::SendType(inputMode), 0, 0);
+        error = IbSendInit(Send::SendType(inputSimulator), 0, 0);
 
     if (error == Send::Error::Success)
     {
-        EXT_TRACE() << EXT_TRACE_FUNCTION << "Driver successfully initialized " << uint32_t(inputMode);
+        EXT_TRACE() << EXT_TRACE_FUNCTION << "Input simulator successfully set " << uint32_t(inputSimulator);
 
         // If we use default SendInput method it means that we send event with injected flag which can be detected
         // by some anti-cheat programs, will try to extract this flag(no proves that it works, but a lot of people recommend)
-        if (inputMode == InputMode::SendInput)
+        if (inputSimulator == InputSimulator::SendInput)
             ext::get_singleton<InputManager>().m_extractInjectedEvents = true;
+        return std::nullopt;
     }
     else
-        EXT_TRACE_ERR() << EXT_TRACE_FUNCTION << "Failed to init driver " << uint32_t(inputMode)
-            << ", err " << uint32_t(error);
+    {
+        std::map<Send::Error, const wchar_t*> kErrorCodes = {
+            { Send::Error::InvalidArgument,    L"invalid argument"},
+            { Send::Error::LibraryNotFound,    L"library not found"},
+            { Send::Error::LibraryLoadFailed,  L"library load failed"},
+            { Send::Error::LibraryError,       L"library error"},
+            { Send::Error::DeviceCreateFailed, L"device creation failed"},
+            { Send::Error::DeviceNotFound,     L"device not found"},
+            { Send::Error::DeviceOpenFailed,   L"device open failed"},
+        };
 
-    return Error(error);
+        const auto* errorText = kErrorCodes[error];
+        EXT_TRACE_ERR() << EXT_TRACE_FUNCTION << "Failed to set input simulator " << uint32_t(inputSimulator)
+            << ", err " << uint32_t(error) << "(" << errorText << ")";
+        return errorText;
+    }
 }
 
+//#define DONT_USE_HOOK
+
 InputManager::InputManager()
+#ifdef DONT_USE_HOOK
+    : m_keyboardHook(nullptr)
+    , m_mouseHook(nullptr)
+#else
     : m_keyboardHook(SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, nullptr, 0))
     , m_mouseHook(SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, nullptr, 0))
+#endif
 {
-    EXT_ASSERT(m_keyboardHook);
-    EXT_ASSERT(m_mouseHook);
+#ifndef DONT_USE_HOOK
+    for (size_t i = 0; i < m_keyStates.size(); ++i)
+    {
+        m_keyStates[i] = ::GetKeyState(i) & 0x8000;
+    }
+
+    ::GetCursorPos(&m_mousePosition);
+
+    try
+    {
+        EXT_EXPECT(m_keyboardHook) << EXT_TRACE_FUNCTION << "Failed to set keyboard hook, err " << GetLastError();
+        EXT_EXPECT(m_mouseHook) << EXT_TRACE_FUNCTION << "Failed to set mouse hook, err " << GetLastError();
+    }
+    catch (...)
+    {
+        if (m_keyboardHook)
+            UnhookWindowsHookEx(m_keyboardHook);
+        if (m_mouseHook)
+            UnhookWindowsHookEx(m_mouseHook);
+        throw;
+    }
+#endif
 }
 
 InputManager::~InputManager()
 {
-    if (m_keyboardHook)
-        UnhookWindowsHookEx(m_keyboardHook);
-    if (m_mouseHook)
-        UnhookWindowsHookEx(m_mouseHook);
+#ifndef DONT_USE_HOOK
+    UnhookWindowsHookEx(m_keyboardHook);
+    UnhookWindowsHookEx(m_mouseHook);
+#endif
     IbSendDestroy();
 }
 
@@ -165,7 +206,8 @@ LRESULT CALLBACK InputManager::LowLevelKeyboardProc(const int nCode, const WPARA
         const auto isDown = wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN;
 
         auto& instance = ext::get_singleton<InputManager>();
-        instance.OnKeyboardStateEvent(key, isDown);
+        if (instance.OnKeyOrMouseEvent(key, isDown))
+            return 1;
 
         if (instance.m_extractInjectedEvents)
         {
@@ -182,44 +224,45 @@ LRESULT CALLBACK InputManager::LowLevelMouseProc(const int nCode, const WPARAM w
     {
         const auto pMouse = reinterpret_cast<PMSLLHOOKSTRUCT>(lParam);
 
+        bool absorbEvent = false;
         auto& instance = ext::get_singleton<InputManager>();
         switch (wParam)
         {
         case WM_LBUTTONDOWN:
-            instance.OnMouseStateEvent(VK_LBUTTON, true);
+            absorbEvent = instance.OnKeyOrMouseEvent(VK_LBUTTON, true);
             break;
         case WM_LBUTTONUP:
-            instance.OnMouseStateEvent(VK_LBUTTON, false);
+            absorbEvent = instance.OnKeyOrMouseEvent(VK_LBUTTON, false);
             break;
         case WM_RBUTTONDOWN:
-            instance.OnMouseStateEvent(VK_RBUTTON, true);
+            absorbEvent = instance.OnKeyOrMouseEvent(VK_RBUTTON, true);
             break;
         case WM_RBUTTONUP:
-            instance.OnMouseStateEvent(VK_RBUTTON, false);
+            absorbEvent = instance.OnKeyOrMouseEvent(VK_RBUTTON, false);
             break;
         case WM_MBUTTONDOWN:
-            instance.OnMouseStateEvent(VK_MBUTTON, true);
+            absorbEvent = instance.OnKeyOrMouseEvent(VK_MBUTTON, true);
             break;
         case WM_MBUTTONUP:
-            instance.OnMouseStateEvent(VK_MBUTTON, false);
+            absorbEvent = instance.OnKeyOrMouseEvent(VK_MBUTTON, false);
             break;
         case WM_XBUTTONDOWN:
             if (HIWORD(pMouse->mouseData) == XBUTTON1)
-                instance.OnMouseStateEvent(VK_XBUTTON1, true);
+                absorbEvent = instance.OnKeyOrMouseEvent(VK_XBUTTON1, true);
             else if (HIWORD(pMouse->mouseData) == XBUTTON2)
-                instance.OnMouseStateEvent(VK_XBUTTON2, true);
+                absorbEvent = instance.OnKeyOrMouseEvent(VK_XBUTTON2, true);
             break;
         case WM_XBUTTONUP:
             if (HIWORD(pMouse->mouseData) == XBUTTON1)
-                instance.OnMouseStateEvent(VK_XBUTTON1, false);
+                absorbEvent = instance.OnKeyOrMouseEvent(VK_XBUTTON1, false);
             else if (HIWORD(pMouse->mouseData) == XBUTTON2)
-                instance.OnMouseStateEvent(VK_XBUTTON2, false);
+                absorbEvent = instance.OnKeyOrMouseEvent(VK_XBUTTON2, false);
             break;
         case WM_MOUSEWHEEL:
-            instance.OnMouseStateEvent(VK_MOUSE_WHEEL, GET_WHEEL_DELTA_WPARAM(wParam) < 0);
+            absorbEvent = instance.OnKeyOrMouseEvent(VK_MOUSE_WHEEL, GET_WHEEL_DELTA_WPARAM(wParam) < 0);
             break;
         case WM_MOUSEHWHEEL:
-            instance.OnMouseStateEvent(VK_MOUSE_HWHEEL, GET_WHEEL_DELTA_WPARAM(wParam) < 0);
+            absorbEvent = instance.OnKeyOrMouseEvent(VK_MOUSE_HWHEEL, GET_WHEEL_DELTA_WPARAM(wParam) < 0);
             break;
         case WM_MOUSEMOVE:
             instance.UpdateMousePosition(pMouse->pt.x, pMouse->pt.y);
@@ -228,6 +271,9 @@ LRESULT CALLBACK InputManager::LowLevelMouseProc(const int nCode, const WPARAM w
             EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Unrecognized mouse command " << wParam;
             break;
         }
+
+        if (absorbEvent)
+            return 1;
 
         if (instance.m_extractInjectedEvents)
         {
@@ -239,20 +285,17 @@ LRESULT CALLBACK InputManager::LowLevelMouseProc(const int nCode, const WPARAM w
     return CallNextHookEx(nullptr, nCode, wParam, lParam);
 }
 
-void InputManager::OnMouseStateEvent(WORD mouseVkKey, bool isDown)
+bool InputManager::OnKeyOrMouseEvent(WORD vkCode, bool isPressed)
 {
-    for (auto&& [_, callback] : m_onMouseEvents)
-    {
-        callback(mouseVkKey, isDown);
-    }
-}
+    m_keyStates[vkCode] = isPressed;
 
-void InputManager::OnKeyboardStateEvent(WORD vkKey, bool isDown)
-{
-    for (auto&& [_, callback] : m_onKeyStateEvents)
+    for (auto&& [_, callback] : m_onKeyOrMouseEvents)
     {
-        callback(vkKey, isDown);
+        if (callback(vkCode, isPressed))
+            return true;
     }
+
+    return false;
 }
 
 void InputManager::UpdateMousePosition(LONG x, LONG y)
@@ -272,19 +315,42 @@ void InputManager::UpdateMousePosition(LONG x, LONG y)
 
 bool InputManager::GetKeyState(DWORD vkCode)
 {
-    return ::GetKeyState(vkCode) & 0x8000;
+    auto& keyStates = ext::get_singleton<InputManager>().m_keyStates;
+    if (vkCode < keyStates.size()) {
+        return keyStates[vkCode];
+    }
+    return false;
 }
 
 POINT InputManager::GetMousePosition()
 {
-    // TODO do we need it?
     return ext::get_singleton<InputManager>().m_mousePosition;
+}
+
+unsigned InputManager::AddKeyOrMouseHandler(OnKeyOrMouseCallback handler)
+{
+    auto& manager = ext::get_singleton<InputManager>();
+    unsigned id = 0;
+    auto& events = manager.m_onKeyOrMouseEvents;
+    if (!events.empty())
+        id = events.rbegin()->first + 1;
+    auto res = events.try_emplace(id, std::move(handler));
+    EXT_ASSERT(res.second);
+    return id;
+}
+
+void InputManager::RemoveKeyOrMouseHandler(unsigned id)
+{
+    auto& manager = ext::get_singleton<InputManager>();
+    auto res = manager.m_onKeyOrMouseEvents.erase(id);
+    EXT_ASSERT(res == 1);
 }
 
 unsigned InputManager::AddMouseMoveHandler(OnMouseMoveCallback handler)
 {
+    auto& manager = ext::get_singleton<InputManager>();
     unsigned id = 0;
-    auto& events = ext::get_singleton<InputManager>().m_onMouseMoveEvents;
+    auto& events = manager.m_onMouseMoveEvents;
     if (!events.empty())
         id = events.rbegin()->first + 1;
     auto res = events.try_emplace(id, std::move(handler));
@@ -294,48 +360,31 @@ unsigned InputManager::AddMouseMoveHandler(OnMouseMoveCallback handler)
 
 void InputManager::RemoveMouseMoveHandler(unsigned id)
 {
-    auto res = ext::get_singleton<InputManager>().m_onMouseMoveEvents.erase(id);
+    auto& manager = ext::get_singleton<InputManager>();
+    auto res = manager.m_onMouseMoveEvents.erase(id);
     EXT_ASSERT(res == 1);
 }
 
-unsigned InputManager::AddMouseEventHandler(OnMouseEventCallback handler)
+void InputManager::SendKeyOrMouse(WORD vkCode, bool isDown)
 {
-    unsigned id = 0;
-    auto& events = ext::get_singleton<InputManager>().m_onMouseEvents;
-    if (!events.empty())
-        id = events.rbegin()->first + 1;
-    auto res = events.try_emplace(id, std::move(handler));
-    EXT_ASSERT(res.second);
-    return id;
+    if ((vkCode >= VK_LBUTTON && vkCode <= VK_XBUTTON2) || vkCode == VK_MOUSE_WHEEL || vkCode == VK_MOUSE_HWHEEL)
+    {
+        if (isDown)
+            return MouseSendDown(vkCode);
+        else
+            return MouseSendUp(vkCode);
+    }
+
+    if (isDown)
+        return KeyboardSendDown(vkCode);
+    else
+        return KeyboardSendUp(vkCode);
 }
 
-void InputManager::RemoveMouseEventHandler(unsigned id)
-{
-    auto res = ext::get_singleton<InputManager>().m_onMouseEvents.erase(id);
-    EXT_ASSERT(res == 1);
-}
-
-unsigned InputManager::AddKeyStateEventHandler(OnKeyboardEventCallback handler)
-{
-    unsigned id = 0;
-    auto& events = ext::get_singleton<InputManager>().m_onKeyStateEvents;
-    if (!events.empty())
-        id = events.rbegin()->first + 1;
-    auto res = events.try_emplace(id, std::move(handler));
-    EXT_ASSERT(res.second);
-    return id;
-}
-
-void InputManager::RemoveKeyStateEventHandler(unsigned id)
-{
-    auto res = ext::get_singleton<InputManager>().m_onKeyStateEvents.erase(id);
-    EXT_ASSERT(res == 1);
-}
-
-void InputManager::MouseSendDown(DWORD mouseVkKey)
+void InputManager::MouseSendDown(DWORD mouseVkCode)
 {
     Send::MouseButton button;
-    switch (mouseVkKey)
+    switch (mouseVkCode)
     {
     case VK_LBUTTON:
         button = Send::MouseButton::LeftDown;
@@ -359,11 +408,11 @@ void InputManager::MouseSendDown(DWORD mouseVkKey)
                 EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse wheel down";
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
-                INPUT input = CreateMouseInput(mouseVkKey, true);
+                INPUT input = CreateMouseInput(mouseVkCode, true);
                 SendInput(1, &input, sizeof(INPUT));
-                return;
 #endif // SEND_INPUT_ON_DRIVER_FAIL
             }
+            return;
         }
         break;
     case VK_MOUSE_HWHEEL:
@@ -386,31 +435,31 @@ void InputManager::MouseSendDown(DWORD mouseVkKey)
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
                 SendInput(1, &input, sizeof(INPUT));
-                return;
 #endif // SEND_INPUT_ON_DRIVER_FAIL
             }
+            return;
         }
         break;
     default:
-        EXT_ASSERT(false) << "Unknown mouse vk key " << mouseVkKey;
+        EXT_ASSERT(false) << "Unknown mouse vk key " << mouseVkCode;
         return;
     }
 
     if (!IbSendMouseClick(button))
     {
-        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse down for " << mouseVkKey;
+        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse down for " << mouseVkCode;
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
-        INPUT input = CreateMouseInput(mouseVkKey, true);
+        INPUT input = CreateMouseInput(mouseVkCode, true);
         SendInput(1, &input, sizeof(INPUT));
 #endif // SEND_INPUT_ON_DRIVER_FAIL
     }
 }
 
-void InputManager::MouseSendUp(DWORD mouseVkKey)
+void InputManager::MouseSendUp(DWORD mouseVkCode)
 {
     Send::MouseButton button;
-    switch (mouseVkKey)
+    switch (mouseVkCode)
     {
     case VK_LBUTTON:
         button = Send::MouseButton::LeftUp;
@@ -434,11 +483,11 @@ void InputManager::MouseSendUp(DWORD mouseVkKey)
                 EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse wheel down";
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
-                INPUT input = CreateMouseInput(mouseVkKey, false);
+                INPUT input = CreateMouseInput(mouseVkCode, false);
                 SendInput(1, &input, sizeof(INPUT));
-                return;
 #endif // SEND_INPUT_ON_DRIVER_FAIL
             }
+            return;
         }
         break;
     case VK_MOUSE_HWHEEL:
@@ -461,22 +510,22 @@ void InputManager::MouseSendUp(DWORD mouseVkKey)
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
                 SendInput(1, &input, sizeof(INPUT));
-                return;
 #endif // SEND_INPUT_ON_DRIVER_FAIL
             }
+            return;
         }
         break;
     default:
-        EXT_ASSERT(false) << "Unknown mouse vk key " << mouseVkKey;
+        EXT_ASSERT(false) << "Unknown mouse vk key " << mouseVkCode;
         return;
     }
 
     if (!IbSendMouseClick(button))
     {
-        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse down for " << mouseVkKey;
+        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse down for " << mouseVkCode;
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
-        INPUT input = CreateMouseInput(mouseVkKey, true);
+        INPUT input = CreateMouseInput(mouseVkCode, true);
         SendInput(1, &input, sizeof(INPUT));
 #endif // SEND_INPUT_ON_DRIVER_FAIL
     }

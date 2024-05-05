@@ -3,7 +3,8 @@
 #include "GameMate.h"
 #include "afxdialogex.h"
 #include "MacrosEditDlg.h"
-#include "ActionEditDlg.h"
+#include "BaseKeyEditDlg.h"
+#include "InputManager.h"
 
 #include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
 #include <Controls/Tooltip/ToolTip.h>
@@ -137,7 +138,7 @@ BOOL CMacrosEditDlg::OnInitDialog()
 
 			MacrosAction* action = (MacrosAction*)list->GetItemDataPtr(pParams->iItem);
 
-			auto newAction = CActionEditDlg::EditMacros(this, *action);
+			auto newAction = CMacrosActionEditDlg::EditMacros(this, *action);
 			if (newAction.has_value())
 			{
                 *action = std::move(*newAction);
@@ -168,11 +169,45 @@ BOOL CMacrosEditDlg::OnInitDialog()
 	m_buttonMoveDown.SetBitmap(IDB_PNG_ARROW_DOWN, Alignment::CenterCenter);
 	m_buttonMoveDown.SetWindowTextW(L"");
 
+	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkKey, bool isDown) -> bool {
+		if (!m_lastActionTime.has_value())
+			return false;
+
+		switch (vkKey)
+		{
+		case VK_LBUTTON:
+			{
+				CPoint cursor;
+				::GetCursorPos(&cursor);
+
+				// Process stop recording and OK click
+				auto window = ::WindowFromPoint(cursor);
+				if (window == m_buttonRecord.m_hWnd ||
+					window == GetDlgItem(IDOK)->m_hWnd)
+					return false;
+
+				[[fallthrough]];
+			}
+		default:
+			{
+				auto curTime = std::chrono::steady_clock::now();
+				auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
+
+				addAction(MacrosAction(vkKey, isDown, int(delay)));
+				m_lastActionTime = std::move(curTime);
+				return true;
+			}
+		}
+	});
+
 	return TRUE;
 }
 
 void CMacrosEditDlg::OnDestroy()
 {
+	if (m_keyPressedSubscriptionId != -1)
+		InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
+
 	CDialogEx::OnDestroy();
 
 	CString text;
@@ -190,37 +225,6 @@ void CMacrosEditDlg::OnDestroy()
 
 BOOL CMacrosEditDlg::PreTranslateMessage(MSG* pMsg)
 {
-	if (m_lastActionTime.has_value())
-	{
-		switch (pMsg->message)
-		{
-		case WM_LBUTTONDOWN:
-		case WM_LBUTTONUP:
-		{
-			// Process stop recording and OK click
-			if (pMsg->hwnd == m_buttonRecord.m_hWnd ||
-				pMsg->hwnd == GetDlgItem(IDOK)->m_hWnd)
-				break;
-
-			[[fallthrough]];
-		}
-		default:
-		{
-			auto curTime = std::chrono::steady_clock::now();
-			auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
-
-			auto action = MacrosAction::GetMacrosActionFromMessage(pMsg, delay);
-			if (action.has_value())
-			{
-				addAction(std::move(*action));
-				m_lastActionTime = std::move(curTime);
-				return TRUE;
-			}
-			break;
-		}
-		}
-	}
-
 	switch (pMsg->message)
 	{
 	case WM_KEYDOWN:
@@ -259,7 +263,7 @@ void CMacrosEditDlg::addAction(MacrosAction&& action)
 
 void CMacrosEditDlg::OnBnClickedButtonAdd()
 {
-	std::optional<MacrosAction> action = CActionEditDlg::EditMacros(this);
+	std::optional<MacrosAction> action = CMacrosActionEditDlg::EditMacros(this);
 	if (!action.has_value())
 		return;
 
