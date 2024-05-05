@@ -4,11 +4,6 @@ git submodule update --recursive
  
 :: Installing IbInputSimulator dependencies
 
-:: Changing the code to fix https://github.com/Chaoses-Ib/IbInputSimulator/issues/15
-pushd IbInputSimulator
-git apply .\..\IbInputSimulator_patch.diff
-popd
-
 :: Installing vcpkg
 git clone https://github.com/microsoft/vcpkg
 call .\vcpkg\bootstrap-vcpkg.bat
@@ -42,7 +37,3 @@ popd
 
 xcopy "%InputSimulatorBuildDir%\Simulator\Debug" "x64\Debug" /s /e /i /Y
 xcopy "%InputSimulatorBuildDir%\Simulator\Release" "x64\Release" /s /e /i /Y
-
-:: Reverting changes from patch in IbInputSimulator
-cd IbInputSimulator
-git checkout -- .

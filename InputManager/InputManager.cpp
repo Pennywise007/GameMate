@@ -153,7 +153,7 @@ std::optional<InputManager::Error> InputManager::SetInputSimulator(InputSimulato
     }
 }
 
-//#define DONT_USE_HOOK
+// #define DONT_USE_HOOK
 
 InputManager::InputManager()
 #ifdef DONT_USE_HOOK
