@@ -14,7 +14,7 @@ protected:
 
 	// Dialog Data
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_DIALOG_ACTION_EDIT };
+	enum { IDD = IDD_DIALOG_BIND_EDIT };
 #endif
 
 protected:

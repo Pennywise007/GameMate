@@ -46,6 +46,9 @@
 #define IDD_DIALOG_INPUT_SIMULATOR      177
 #define IDD_DIALOG_ACTIONS_EXECUTOR     180
 #define IDB_PNG_SETTINGS                184
+#define IDB_PNG_ADD                     185
+#define IDB_PNG2                        186
+#define IDB_PNG_DELETE                  186
 #define IDC_TABCONTROL_GAMES            1000
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
@@ -117,6 +120,7 @@
 #define IDC_GROUP_REPEAT_INTERVAL       1067
 #define IDC_MFCMENUBUTTON_ENABLED       1068
 #define IDC_MFCMENUBUTTON2              1069
+#define IDC_STATIC_ACTIONS              1072
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -130,9 +134,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        185
+#define _APS_NEXT_RESOURCE_VALUE        187
 #define _APS_NEXT_COMMAND_VALUE         32779
-#define _APS_NEXT_CONTROL_VALUE         1072
+#define _APS_NEXT_CONTROL_VALUE         1073
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

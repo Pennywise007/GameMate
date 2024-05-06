@@ -8,7 +8,7 @@
 IMPLEMENT_DYNAMIC(CBaseKeyEditDlg, CDialogEx)
 
 CBaseKeyEditDlg::CBaseKeyEditDlg(CWnd* pParent)
-	: CDialogEx(IDD_DIALOG_ACTION_EDIT, pParent)
+	: CDialogEx(IDD_DIALOG_BIND_EDIT, pParent)
 {
 }
 

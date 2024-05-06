@@ -334,6 +334,7 @@
     <None Include="res\GameMate.rc2" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="res\add.png" />
     <Image Include="res\arrow_down.png" />
     <Image Include="res\arrow_up.png" />
     <Image Include="res\crosshairs\crosshair_0_16.png" />
@@ -363,6 +364,7 @@
     <Image Include="res\crosshairs\crosshair_8_16.png" />
     <Image Include="res\crosshairs\crosshair_8_24.png" />
     <Image Include="res\crosshairs\crosshair_8_32.png" />
+    <Image Include="res\delete.png" />
     <Image Include="res\GameMate.ico" />
     <Image Include="res\settings.png" />
     <Image Include="res\start_recording.ico" />

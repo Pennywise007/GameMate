@@ -3,9 +3,10 @@
 
 #include "core/Settings.h"
 
+#include "ActionsEditDlg.h"
+
 #include <Controls/Edit/SpinEdit/SpinEdit.h>
 #include <Controls/Button/IconButton/IconButton.h>
-#include <Controls/Tables/List/ListGroupCtrl/ListGroupCtrl.h>
 
 class CActionsExecutorDlg : public CDialogEx, ext::events::ScopeSubscription<ISettingsChanged>
 {
@@ -30,7 +31,6 @@ protected:
 	afx_msg void OnBnClickedRadioRepeatTimes();
 	afx_msg void OnBnClickedCheckEnabled();
 	afx_msg void OnBnClickedMfcbuttonHotkey();
-	afx_msg void OnNMClickListActions(NMHDR* pNMHDR, LRESULT* pResult);
 
 	DECLARE_MESSAGE_MAP()
 
@@ -41,10 +41,10 @@ private:
 	void UpdateEnableButtonText();
 	void UpdateSettingsFromControl(CSpinEdit& edit, unsigned& setting);
 	void EditActions();
-	void UpdateActions();
 
 private: // Controls
-	CListGroupCtrl m_listActions;
+	CStatic m_actionsGroup;
+	CActionsEditView m_actionsEditView;
 
 	CSpinEdit m_editIntervalMinutes;
 	CSpinEdit m_editIntervalSeconds;

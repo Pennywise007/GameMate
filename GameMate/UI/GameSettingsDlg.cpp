@@ -27,7 +27,7 @@ namespace {
 
 enum Columns {
 	eKeybind = 0,
-	eActions,
+	eMacros,
 	eRandomizeDelay
 };
 
@@ -142,19 +142,12 @@ BOOL CGameSettingsDlg::OnInitDialog()
 	CRect rect;
 	m_listActions.GetClientRect(rect);
 
-	constexpr int kKeybindColumnWidth = 150;
-	constexpr int kRandomizeDelayColumnWidth = 120;
+	constexpr int kKeybindColumnWidth = 80;
+	constexpr int kRandomizeDelayColumnWidth = 50;
 	m_listActions.InsertColumn(Columns::eKeybind, L"Keybind", LVCFMT_CENTER, kKeybindColumnWidth);
-	m_listActions.InsertColumn(Columns::eActions, L"actionsByBind", LVCFMT_CENTER, rect.Width() - kKeybindColumnWidth - kRandomizeDelayColumnWidth);
+	m_listActions.InsertColumn(Columns::eMacros, L"Macros", LVCFMT_CENTER, rect.Width() - kKeybindColumnWidth - kRandomizeDelayColumnWidth);
 	m_listActions.InsertColumn(Columns::eRandomizeDelay, L"Randomize delay(%)", LVCFMT_CENTER, kRandomizeDelayColumnWidth);
-
-	LVCOLUMN colInfo;
-	colInfo.mask = LVCF_FMT;
-	m_listActions.GetColumn(Columns::eKeybind, &colInfo);
-	colInfo.fmt |= LVCFMT_FIXED_WIDTH | LVCFMT_CENTER;
-	m_listActions.SetColumn(Columns::eKeybind, &colInfo);
-
-	m_listActions.SetProportionalResizingColumns({ Columns::eActions });
+	m_listActions.SetProportionalResizingColumns({ Columns::eMacros });
 	
 	m_listActions.setSubItemEditorController(Columns::eKeybind,
 		[&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
@@ -170,6 +163,9 @@ BOOL CGameSettingsDlg::OnInitDialog()
 
 			if (auto sameBindIt = actionsByBind.find(bind.value()); sameBindIt != actionsByBind.end())
 			{
+				if (sameBindIt == editableActionsIt)
+					return nullptr;
+
 				if (MessageBox((L"Bind '" + bind->ToString() + L"' already exists, do you want to replace it?").c_str(),
 							   L"This bind already exist", MB_ICONWARNING | MB_OKCANCEL) == IDCANCEL)
 					return nullptr;
@@ -217,7 +213,7 @@ BOOL CGameSettingsDlg::OnInitDialog()
 
 			return nullptr;
 		};
-	m_listActions.setSubItemEditorController(Columns::eActions, ActionsEdit);
+	m_listActions.setSubItemEditorController(Columns::eMacros, ActionsEdit);
 	m_listActions.setSubItemEditorController(Columns::eRandomizeDelay, ActionsEdit);
 
 	auto currentActions = std::move(m_configuration->actionsByBind);
@@ -339,7 +335,7 @@ void CGameSettingsDlg::AddNewActions(const Bind& keybind, Actions&& newActions)
 
 		actions += action.ToString();
 	}
-	m_listActions.SetItemText(item, Columns::eActions, actions.c_str());
+	m_listActions.SetItemText(item, Columns::eMacros, actions.c_str());
 
 	std::wostringstream str;
 	str << it.first->second.randomizeDelays;

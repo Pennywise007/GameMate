@@ -292,5 +292,11 @@
     <Image Include="res\settings.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\add.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\delete.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

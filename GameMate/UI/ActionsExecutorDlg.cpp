@@ -4,9 +4,10 @@
 
 #include "ActionsExecutorDlg.h"
 #include "BaseKeyEditDlg.h"
-#include "ActionsEditDlg.h"
 
 #include "core/Settings.h"
+
+#include <Controls/Layout/Layout.h>
 
 namespace {
 
@@ -21,6 +22,9 @@ IMPLEMENT_DYNAMIC(CActionsExecutorDlg, CDialogEx)
 
 CActionsExecutorDlg::CActionsExecutorDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_ACTIONS_EXECUTOR, pParent)
+	, m_actionsEditView(static_cast<CWnd*>(&m_actionsGroup),
+						ext::get_singleton<Settings>().actions_executor.actionsSettings,
+						[]() { ext::send_event(&ISettingsChanged::OnSettingsChanged); })
 {
 }
 
@@ -35,7 +39,7 @@ void CActionsExecutorDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_RADIO_REPEAT_UNTIL_STOPPED, m_radioRepeatUntilStop);
 	DDX_Control(pDX, IDC_RADIO_REPEAT_TIMES, m_radioRepeatTimes);
 	DDX_Control(pDX, IDC_EDIT_REPEAT_TIMES, m_editRepeatTimes);
-	DDX_Control(pDX, IDC_LIST_ACTIONS, m_listActions);
+	DDX_Control(pDX, IDC_STATIC_ACTIONS, m_actionsGroup);
 }
 
 BEGIN_MESSAGE_MAP(CActionsExecutorDlg, CDialogEx)
@@ -47,28 +51,11 @@ BEGIN_MESSAGE_MAP(CActionsExecutorDlg, CDialogEx)
 	ON_EN_CHANGE(IDC_EDIT_INTERVAL_SEC, &CActionsExecutorDlg::OnEnChangeEditIntervalSec)
 	ON_EN_CHANGE(IDC_EDIT_INTERVAL_MILLISEC, &CActionsExecutorDlg::OnEnChangeEditIntervalMillisec)
 	ON_EN_CHANGE(IDC_EDIT_REPEAT_TIMES, &CActionsExecutorDlg::OnEnChangeEditRepeatTimes)
-	ON_NOTIFY(NM_CLICK, IDC_LIST_ACTIONS, &CActionsExecutorDlg::OnNMClickListActions)
 END_MESSAGE_MAP()
 
 BOOL CActionsExecutorDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-
-	CRect rect;
-	m_listActions.GetClientRect(rect);
-
-	constexpr int kDelayColumnWidth = 70;
-	m_listActions.InsertColumn(Columns::eDelay, L"Delay(ms)", LVCFMT_CENTER, kDelayColumnWidth);
-	m_listActions.InsertColumn(Columns::eAction, L"Action", LVCFMT_LEFT, rect.Width() - kDelayColumnWidth);
-
-	LVCOLUMN colInfo;
-	colInfo.mask = LVCF_FMT;
-	m_listActions.GetColumn(Columns::eDelay, &colInfo);
-	colInfo.fmt |= LVCFMT_FIXED_WIDTH | LVCFMT_CENTER;
-	m_listActions.SetColumn(Columns::eDelay, &colInfo);
-	m_listActions.SetProportionalResizingColumns({ Columns::eAction });
-	
-	UpdateActions();
 
 	const auto initSpinEdit = [](CSpinEdit& edit, unsigned value) {
 		edit.UsePositiveDigitsOnly();
@@ -102,6 +89,10 @@ BOOL CActionsExecutorDlg::OnInitDialog()
 	UpdateEnableButtonText();
 
 	m_buttonHotkey.SetBitmap(IDB_PNG_SETTINGS, Alignment::CenterCenter);
+
+	m_actionsEditView.Create(CActionsEditDlg::IDD, static_cast<CWnd*>(&m_actionsGroup));
+
+	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
 
 	return TRUE;
 }
@@ -172,7 +163,7 @@ void CActionsExecutorDlg::UpdateEnableButtonText()
 {
 	const auto& settings = ext::get_singleton<Settings>().actions_executor;
 	const auto buttonName = std::string_swprintf(L"%s\n(%s)",
-		settings.enabled ? L"Stop" : L"False",
+		settings.enabled ? L"Stop" : L"Start",
 		settings.enableBind.ToString().c_str());
 	m_buttonEnable.SetWindowTextW(buttonName.c_str());
 }
@@ -195,31 +186,6 @@ void CActionsExecutorDlg::EditActions()
 	if (!updatedActions.has_value())
 		return;
 
-	UpdateActions();
-
 	currentActions = std::move(updatedActions.value());
 	ext::send_event(&ISettingsChanged::OnSettingsChanged);
 }
-
-void CActionsExecutorDlg::UpdateActions()
-{
-	m_listActions.DeleteAllItems();
-
-	const auto& actions = ext::get_singleton<Settings>().actions_executor.actionsSettings.actions;
-
-	auto itemId = 0;
-	for (const auto& action : actions)
-	{
-		auto item = m_listActions.InsertItem(itemId++, std::to_wstring(action.delayInMilliseconds).c_str());
-		m_listActions.SetItemText(item, Columns::eAction, action.ToString().c_str());
-	}
-}
-
-void CActionsExecutorDlg::OnNMClickListActions(NMHDR* pNMHDR, LRESULT* pResult)
-{
-	LPNMITEMACTIVATE pNMItemActivate = reinterpret_cast<LPNMITEMACTIVATE>(pNMHDR);
-	*pResult = 0;
-
-	EditActions();
-}
-

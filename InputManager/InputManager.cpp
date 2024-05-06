@@ -13,7 +13,7 @@
 
 namespace {
 
-// #define SEND_INPUT_ON_DRIVER_FAIL
+//#define SEND_INPUT_ON_DRIVER_FAIL
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
 
@@ -167,7 +167,7 @@ InputManager::InputManager()
 #ifndef DONT_USE_HOOK
     for (size_t i = 0; i < m_keyStates.size(); ++i)
     {
-        m_keyStates[i] = ::GetKeyState(i) & 0x8000;
+        m_keyStates[i] = ::GetKeyState(int(i)) & 0x8000;
     }
 
     ::GetCursorPos(&m_mousePosition);
