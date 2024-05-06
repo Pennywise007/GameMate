@@ -1,6 +1,7 @@
 #include "pch.h"
-#include "GameMate.h"
 #include "afxdialogex.h"
+#include "resource.h"
+
 #include "BaseKeyEditDlg.h"
 #include "InputManager.h"
 
@@ -28,8 +29,8 @@ BOOL CBaseKeyEditDlg::OnInitDialog()
 	m_editAction.SetWindowTextW(GetActionText().c_str());
 	m_editAction.HideCaret();
 
-	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkKey, bool isDown) -> bool {
-		switch (vkKey)
+	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkCode, bool isDown) -> bool {
+		switch (vkCode)
 		{
 		case VK_LBUTTON:
 			{
@@ -40,7 +41,7 @@ BOOL CBaseKeyEditDlg::OnInitDialog()
 				auto window = ::WindowFromPoint(cursor);
 				if (window != GetDlgItem(IDOK)->m_hWnd)
 				{
-					OnVkKeyAction(vkKey, isDown);
+					OnVkCodeAction(vkCode, isDown);
 					m_editAction.SetWindowTextW(GetActionText().c_str());
 				}
 
@@ -49,7 +50,7 @@ BOOL CBaseKeyEditDlg::OnInitDialog()
 			}
 		}
 
-		OnVkKeyAction(vkKey, isDown);
+		OnVkCodeAction(vkCode, isDown);
 		m_editAction.SetWindowTextW(GetActionText().c_str());
 
 		return true;
@@ -65,26 +66,33 @@ void CBaseKeyEditDlg::OnDestroy()
 	CDialogEx::OnDestroy();
 }
 
-IMPLEMENT_DYNAMIC(CMacrosActionEditDlg, CBaseKeyEditDlg)
+IMPLEMENT_DYNAMIC(CActionEditDlg, CBaseKeyEditDlg)
 
-BEGIN_MESSAGE_MAP(CMacrosActionEditDlg, CBaseKeyEditDlg)
+BEGIN_MESSAGE_MAP(CActionEditDlg, CBaseKeyEditDlg)
 END_MESSAGE_MAP()
 
-CMacrosActionEditDlg::CMacrosActionEditDlg(CWnd* pParent, std::optional<MacrosAction>& action)
+CActionEditDlg::CActionEditDlg(CWnd* pParent, std::optional<Action>& action)
 	: CBaseKeyEditDlg(pParent)
 	, m_currentAction(action)
 {}
 
-[[nodiscard]] std::optional<MacrosAction> CMacrosActionEditDlg::EditMacros(CWnd* pParent, const std::optional<MacrosAction>& editMacros)
+BOOL CActionEditDlg::OnInitDialog()
 {
-	std::optional<MacrosAction> action = editMacros;
-	if (CMacrosActionEditDlg(pParent, action).DoModal() != IDOK)
+	auto res = CBaseKeyEditDlg::OnInitDialog();
+	SetWindowText(L"Action editor");
+	return res;
+}
+
+[[nodiscard]] std::optional<Action> CActionEditDlg::EditAction(CWnd* pParent, const std::optional<Action>& _action)
+{
+	std::optional<Action> action = _action;
+	if (CActionEditDlg(pParent, action).DoModal() != IDOK)
 		return std::nullopt;
 
 	return action;
 }
 
-std::wstring CMacrosActionEditDlg::GetActionText() const
+std::wstring CActionEditDlg::GetActionText() const
 {
 	if (m_currentAction.has_value())
 		return m_currentAction->ToString();
@@ -92,15 +100,15 @@ std::wstring CMacrosActionEditDlg::GetActionText() const
 	return L"Enter action...";
 }
 
-void CMacrosActionEditDlg::OnVkKeyAction(WORD vkKey, bool down)
+void CActionEditDlg::OnVkCodeAction(WORD vkCode, bool down)
 {
 	auto currentDelay = 0u;
 	if (m_currentAction.has_value())
 		currentDelay = m_currentAction->delayInMilliseconds;
-	m_currentAction.emplace(vkKey, down, currentDelay);
+	m_currentAction.emplace(vkCode, down, currentDelay);
 }
 
-void CMacrosActionEditDlg::OnOK()
+void CActionEditDlg::OnOK()
 {
 	if (!m_currentAction.has_value() &&
 		(MessageBox(L"You need to enter action, press any key or mouse button", L"No action selected", MB_OKCANCEL) == IDOK))
@@ -138,10 +146,10 @@ std::wstring CBindEditDlg::GetActionText() const
 	return L"Enter bind...";
 }
 
-void CBindEditDlg::OnVkKeyAction(WORD vkKey, bool down)
+void CBindEditDlg::OnVkCodeAction(WORD vkCode, bool down)
 {
 	if (down)
-		m_currentBind.emplace(vkKey);
+		m_currentBind.emplace(vkCode);
 }
 
 void CBindEditDlg::OnOK()

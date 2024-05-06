@@ -228,11 +228,12 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="UI\ActionsExecutorDlg.h" />
     <ClInclude Include="UI\AddingTabDlg.h" />
     <ClInclude Include="UI\BaseKeyEditDlg.h" />
-    <ClInclude Include="UI\InputSimulatorInfo.h" />
+    <ClInclude Include="UI\InputSimulatorInfoDlg.h" />
     <ClInclude Include="UI\GameSettingsDlg.h" />
-    <ClInclude Include="UI\MacrosEditDlg.h" />
+    <ClInclude Include="UI\ActionsEditDlg.h" />
     <ClInclude Include="UI\MainDlg.h" />
   </ItemGroup>
   <ItemGroup>
@@ -318,11 +319,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="UI\ActionsExecutorDlg.cpp" />
     <ClCompile Include="UI\AddingTabDlg.cpp" />
     <ClCompile Include="UI\BaseKeyEditDlg.cpp" />
-    <ClCompile Include="UI\InputSimulatorInfo.cpp" />
+    <ClCompile Include="UI\InputSimulatorInfoDlg.cpp" />
     <ClCompile Include="UI\GameSettingsDlg.cpp" />
-    <ClCompile Include="UI\MacrosEditDlg.cpp" />
+    <ClCompile Include="UI\ActionsEditDlg.cpp" />
     <ClCompile Include="UI\MainDlg.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -362,6 +364,7 @@
     <Image Include="res\crosshairs\crosshair_8_24.png" />
     <Image Include="res\crosshairs\crosshair_8_32.png" />
     <Image Include="res\GameMate.ico" />
+    <Image Include="res\settings.png" />
     <Image Include="res\start_recording.ico" />
     <Image Include="res\stop_recording.ico" />
   </ItemGroup>

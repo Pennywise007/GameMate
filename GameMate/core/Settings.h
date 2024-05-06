@@ -12,7 +12,7 @@
 struct Bind
 {
     Bind() = default;
-    Bind(WORD _vkKey);
+    Bind(WORD _vkCode);
 
     // Comparision operator for map
     int operator<(const Bind& other) const { return ToString() < other.ToString(); }
@@ -20,7 +20,7 @@ struct Bind
     // Get text
     [[nodiscard]] std::wstring ToString() const;
     // Check if bind was pressed
-    bool IsBindPressed(WORD vkKey) const;
+    bool IsBindPressed(WORD vkCode) const;
 
     enum class ExtraKeys
     {
@@ -38,30 +38,41 @@ struct Bind
 
     REGISTER_SERIALIZABLE_OBJECT();
     DECLARE_SERIALIZABLE_FIELD(unsigned, extraKeys);
-    DECLARE_SERIALIZABLE_FIELD(WORD, vkKey);
+    DECLARE_SERIALIZABLE_FIELD(WORD, vkCode);
 };
 
-struct MacrosAction
+struct Action
 {
-    MacrosAction() = default;
-    MacrosAction(WORD _vkKey, bool _down, unsigned _delay) : vkKey(_vkKey), down(_down), delayInMilliseconds(_delay) {}
+    Action() = default;
+    Action(WORD _vkCode, bool _down, unsigned _delay);
+    Action(long mouseMovedToPointX, long mouseMovedToPointY);
+
 
     // Get action text
     [[nodiscard]] std::wstring ToString() const;
     // Execution action
-    void ExecuteAction(float delayRandomize) const;
+    void ExecuteAction(float delayRandomize, bool applyMousePos) const;
 
     REGISTER_SERIALIZABLE_OBJECT();
 
-    DECLARE_SERIALIZABLE_FIELD(WORD, vkKey);
-    DECLARE_SERIALIZABLE_FIELD(bool, down);
+    enum class Type
+    {
+        eMouseAction,
+        eKeyAction,
+        eMouseMove
+    };
+    DECLARE_SERIALIZABLE_FIELD(Type, type, Type::eKeyAction);
+    DECLARE_SERIALIZABLE_FIELD(WORD, vkCode, 0);
+    DECLARE_SERIALIZABLE_FIELD(bool, down, false);
     DECLARE_SERIALIZABLE_FIELD(unsigned, delayInMilliseconds, 0);
+    DECLARE_SERIALIZABLE_FIELD(long, mouseX, 0);
+    DECLARE_SERIALIZABLE_FIELD(long, mouseY, 0);
 };
 
-struct Macros
+struct Actions
 {
     REGISTER_SERIALIZABLE_OBJECT();
-    DECLARE_SERIALIZABLE_FIELD(std::list<MacrosAction>, actions);
+    DECLARE_SERIALIZABLE_FIELD(std::list<Action>, actions);
     DECLARE_SERIALIZABLE_FIELD(float, randomizeDelays, 0.f);
 };
 
@@ -106,8 +117,32 @@ struct TabConfiguration
     DECLARE_SERIALIZABLE_FIELD(std::wstring, tabName);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, exeName);
     DECLARE_SERIALIZABLE_FIELD(crosshair::Settings, crosshairSettings);
-    DECLARE_SERIALIZABLE_FIELD((std::map<Bind, Macros>), macrosByBind);
+    DECLARE_SERIALIZABLE_FIELD((std::map<Bind, Actions>), actionsByBind);
 };
+
+namespace actions_executor {
+
+enum class RepeatMode {
+    eTimes,
+    eUntilStopped
+};
+
+struct Settings
+{
+    REGISTER_SERIALIZABLE_OBJECT();
+    bool enabled = false;
+
+    DECLARE_SERIALIZABLE_FIELD(Actions, actionsSettings);
+    DECLARE_SERIALIZABLE_FIELD(Bind, enableBind, Bind(VK_F6));
+    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalMinutes, 0);
+    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalSeconds, 0);
+    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalMilliseconds, 0);
+
+    DECLARE_SERIALIZABLE_FIELD(RepeatMode, repeatMode, RepeatMode::eTimes);
+    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatTimes, 0);
+};
+
+} // namespace actions_executor
 
 class Settings
 {
@@ -123,6 +158,7 @@ public:
     DECLARE_SERIALIZABLE_FIELD(int, driverInputMode, 0);
     DECLARE_SERIALIZABLE_FIELD(int, activeTab, -1);
     DECLARE_SERIALIZABLE_FIELD(std::list<std::shared_ptr<TabConfiguration>>, tabs);
+    DECLARE_SERIALIZABLE_FIELD(actions_executor::Settings, actions_executor);
 };
 
 // Notification about user changed any settings

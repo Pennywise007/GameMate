@@ -83,7 +83,7 @@
     <ClInclude Include="UI\GameSettingsDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="UI\MacrosEditDlg.h">
+    <ClInclude Include="UI\ActionsEditDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="UI\MainDlg.h">
@@ -101,7 +101,10 @@
     <ClInclude Include="Controls\Button\IconButton\IconButton.h">
       <Filter>Controls</Filter>
     </ClInclude>
-    <ClInclude Include="UI\InputSimulatorInfo.h">
+    <ClInclude Include="UI\InputSimulatorInfoDlg.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\ActionsExecutorDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -154,7 +157,7 @@
     <ClCompile Include="UI\GameSettingsDlg.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="UI\MacrosEditDlg.cpp">
+    <ClCompile Include="UI\ActionsEditDlg.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="UI\MainDlg.cpp">
@@ -172,7 +175,10 @@
     <ClCompile Include="Controls\Button\IconButton\IconButton.cpp">
       <Filter>Controls</Filter>
     </ClCompile>
-    <ClCompile Include="UI\InputSimulatorInfo.cpp">
+    <ClCompile Include="UI\InputSimulatorInfoDlg.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\ActionsExecutorDlg.cpp">
       <Filter>UI</Filter>
     </ClCompile>
   </ItemGroup>
@@ -281,6 +287,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\start_recording.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\settings.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

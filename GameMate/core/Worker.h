@@ -22,7 +22,7 @@ private: // ISettingsChanged
     void OnSettingsChanged() override;
 
 private:
-    bool OnKeyOrMouseEvent(WORD mouseVkKey, bool down);
+    bool OnKeyOrMouseEvent(WORD mouseVkCode, bool down);
 
 private:
     // Active window changed hook

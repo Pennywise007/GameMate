@@ -1,8 +1,8 @@
 ﻿#include "pch.h"
-#include "resource.h"
-#include "GameMate.h"
 #include "afxdialogex.h"
-#include "MacrosEditDlg.h"
+#include "resource.h"
+
+#include "ActionsEditDlg.h"
 #include "BaseKeyEditDlg.h"
 #include "InputManager.h"
 
@@ -28,26 +28,27 @@ constexpr UINT kRecordingTimer2Id = 2;
 
 } // namespace
 
-IMPLEMENT_DYNAMIC(CMacrosEditDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(CActionsEditDlg, CDialogEx)
 
-CMacrosEditDlg::CMacrosEditDlg(const Macros& macros, CWnd* pParent /*=nullptr*/)
+CActionsEditDlg::CActionsEditDlg(CWnd* pParent, Actions& macros)
 	: CDialogEx(IDD_DIALOG_MACROS_EDIT, pParent)
 	, m_macros(macros)
 {
 }
 
-std::optional<Macros> CMacrosEditDlg::ExecModal()
+std::optional<Actions> CActionsEditDlg::ExecModal(CWnd* pParent, const Actions& currentActions)
 {
-	if (DoModal() != IDOK)
+	Actions actions = currentActions;
+	if (CActionsEditDlg(pParent, actions).DoModal() != IDOK)
 		return std::nullopt;
 
-	return m_macros;
+	return actions;
 }
 
-void CMacrosEditDlg::DoDataExchange(CDataExchange* pDX)
+void CActionsEditDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_LIST_MACROSES, m_listMacroses);
+	DDX_Control(pDX, IDC_LIST_MACROSES, m_listActions);
 	DDX_Control(pDX, IDC_BUTTON_RECORD, m_buttonRecord);
 	DDX_Control(pDX, IDC_EDIT_RANDOMIZE_DELAYS, m_editRandomizeDelays);
 	DDX_Control(pDX, IDC_STATIC_DELAY_HELP, m_staticDelayHelp);
@@ -55,18 +56,18 @@ void CMacrosEditDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_MOVE_DOWN, m_buttonMoveDown);
 }
 
-BEGIN_MESSAGE_MAP(CMacrosEditDlg, CDialogEx)
-	ON_BN_CLICKED(IDC_BUTTON_ADD, &CMacrosEditDlg::OnBnClickedButtonAdd)
-	ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CMacrosEditDlg::OnBnClickedButtonRemove)
-	ON_BN_CLICKED(IDC_BUTTON_RECORD, &CMacrosEditDlg::OnBnClickedButtonRecord)
+BEGIN_MESSAGE_MAP(CActionsEditDlg, CDialogEx)
+	ON_BN_CLICKED(IDC_BUTTON_ADD, &CActionsEditDlg::OnBnClickedButtonAdd)
+	ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CActionsEditDlg::OnBnClickedButtonRemove)
+	ON_BN_CLICKED(IDC_BUTTON_RECORD, &CActionsEditDlg::OnBnClickedButtonRecord)
 	ON_WM_TIMER()
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_MACROSES, &CMacrosEditDlg::OnLvnItemchangedListMacroses)
-	ON_BN_CLICKED(IDC_BUTTON_MOVE_UP, &CMacrosEditDlg::OnBnClickedButtonMoveUp)
-	ON_BN_CLICKED(IDC_BUTTON_MOVE_DOWN, &CMacrosEditDlg::OnBnClickedButtonMoveDown)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_MACROSES, &CActionsEditDlg::OnLvnItemchangedListActions)
+	ON_BN_CLICKED(IDC_BUTTON_MOVE_UP, &CActionsEditDlg::OnBnClickedButtonMoveUp)
+	ON_BN_CLICKED(IDC_BUTTON_MOVE_DOWN, &CActionsEditDlg::OnBnClickedButtonMoveDown)
 	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
-BOOL CMacrosEditDlg::OnInitDialog()
+BOOL CActionsEditDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
@@ -84,21 +85,21 @@ BOOL CMacrosEditDlg::OnInitDialog()
 		L"To avoid this you can set a percentage of the delay which will be applied to te ation delay randomly.\n"
 		L"Formula: delay ± random(percentage)\n");
 
-	m_listMacroses.GetClientRect(rect);
+	m_listActions.GetClientRect(rect);
 
-	constexpr int kDelayColumnWidth = 120;
-	m_listMacroses.InsertColumn(Columns::eDelay, L"Delay(ms)", LVCFMT_CENTER, kDelayColumnWidth);
-	m_listMacroses.InsertColumn(Columns::eAction, L"Action", LVCFMT_LEFT, rect.Width() - kDelayColumnWidth);
+	constexpr int kDelayColumnWidth = 70;
+	m_listActions.InsertColumn(Columns::eDelay, L"Delay(ms)", LVCFMT_CENTER, kDelayColumnWidth);
+	m_listActions.InsertColumn(Columns::eAction, L"Action", LVCFMT_LEFT, rect.Width() - kDelayColumnWidth);
 	
 	LVCOLUMN colInfo;
 	colInfo.mask = LVCF_FMT;
-	m_listMacroses.GetColumn(Columns::eDelay, &colInfo);
+	m_listActions.GetColumn(Columns::eDelay, &colInfo);
 	colInfo.fmt |= LVCFMT_FIXED_WIDTH | LVCFMT_CENTER;
-	m_listMacroses.SetColumn(Columns::eDelay, &colInfo);
+	m_listActions.SetColumn(Columns::eDelay, &colInfo);
 	
-	m_listMacroses.SetProportionalResizingColumns({ Columns::eAction });
+	m_listActions.SetProportionalResizingColumns({ Columns::eAction });
 
-	m_listMacroses.setSubItemEditorController(Columns::eDelay,
+	m_listActions.setSubItemEditorController(Columns::eDelay,
 		[](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
 		{
 			auto edit = std::make_shared<CEditBase>();
@@ -125,24 +126,24 @@ BOOL CMacrosEditDlg::OnInitDialog()
 			auto* list = dynamic_cast<CListGroupCtrl*>(pList);
 			ASSERT(list);
 
-			MacrosAction* action = (MacrosAction*)list->GetItemDataPtr(pParams->iItem);
+			Action* action = (Action*)list->GetItemDataPtr(pParams->iItem);
 			action->delayInMilliseconds = _wtoi(currentEditorText);
 
 			return true;
 		});
-	m_listMacroses.setSubItemEditorController(Columns::eAction,
+	m_listActions.setSubItemEditorController(Columns::eAction,
 		[&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
 		{
 			auto* list = dynamic_cast<CListGroupCtrl*>(pList);
 			ASSERT(list);
 
-			MacrosAction* action = (MacrosAction*)list->GetItemDataPtr(pParams->iItem);
+			Action* action = (Action*)list->GetItemDataPtr(pParams->iItem);
 
-			auto newAction = CMacrosActionEditDlg::EditMacros(this, *action);
+			auto newAction = CActionEditDlg::EditAction(this, *action);
 			if (newAction.has_value())
 			{
                 *action = std::move(*newAction);
-                m_listMacroses.SetItemText(pParams->iItem, Columns::eAction, action->ToString().c_str());
+                m_listActions.SetItemText(pParams->iItem, Columns::eAction, action->ToString().c_str());
             }
 
 			return nullptr;
@@ -169,11 +170,11 @@ BOOL CMacrosEditDlg::OnInitDialog()
 	m_buttonMoveDown.SetBitmap(IDB_PNG_ARROW_DOWN, Alignment::CenterCenter);
 	m_buttonMoveDown.SetWindowTextW(L"");
 
-	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkKey, bool isDown) -> bool {
+	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkCode, bool isDown) -> bool {
 		if (!m_lastActionTime.has_value())
 			return false;
 
-		switch (vkKey)
+		switch (vkCode)
 		{
 		case VK_LBUTTON:
 			{
@@ -193,17 +194,19 @@ BOOL CMacrosEditDlg::OnInitDialog()
 				auto curTime = std::chrono::steady_clock::now();
 				auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
 
-				addAction(MacrosAction(vkKey, isDown, int(delay)));
+				addAction(Action(vkCode, isDown, int(delay)));
 				m_lastActionTime = std::move(curTime);
 				return true;
 			}
 		}
 	});
 
+	updateButtonStates();
+
 	return TRUE;
 }
 
-void CMacrosEditDlg::OnDestroy()
+void CActionsEditDlg::OnDestroy()
 {
 	if (m_keyPressedSubscriptionId != -1)
 		InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
@@ -216,14 +219,14 @@ void CMacrosEditDlg::OnDestroy()
 	str >> m_macros.randomizeDelays;
 
 	ASSERT(m_macros.actions.empty());
-	for (auto item = 0, size = m_listMacroses.GetItemCount(); item < size; ++item)
+	for (auto item = 0, size = m_listActions.GetItemCount(); item < size; ++item)
 	{
-		std::unique_ptr<MacrosAction> actionPtr((MacrosAction*)m_listMacroses.GetItemDataPtr(item));
+		std::unique_ptr<Action> actionPtr((Action*)m_listActions.GetItemDataPtr(item));
 		m_macros.actions.emplace_back(std::move(*actionPtr));
 	}
 }
 
-BOOL CMacrosEditDlg::PreTranslateMessage(MSG* pMsg)
+BOOL CActionsEditDlg::PreTranslateMessage(MSG* pMsg)
 {
 	switch (pMsg->message)
 	{
@@ -243,46 +246,54 @@ BOOL CMacrosEditDlg::PreTranslateMessage(MSG* pMsg)
 	return CDialogEx::PreTranslateMessage(pMsg);
 }
 
-void CMacrosEditDlg::addAction(MacrosAction&& action)
+void CActionsEditDlg::addAction(Action&& action)
 {
-	std::vector<int> selectedActions = m_listMacroses.GetSelectedItems();
+	std::vector<int> selectedActions = m_listActions.GetSelectedItems();
 
 	int item;
 	if (selectedActions.empty())
-		item = m_listMacroses.GetItemCount();
+		item = m_listActions.GetItemCount();
 	else
 		item = selectedActions.back() + 1;
 
-	item = m_listMacroses.InsertItem(item, std::to_wstring(action.delayInMilliseconds).c_str());
-	m_listMacroses.SetItemText(item, Columns::eAction, action.ToString().c_str());
-	m_listMacroses.SelectItem(item);
+	item = m_listActions.InsertItem(item, std::to_wstring(action.delayInMilliseconds).c_str());
+	m_listActions.SetItemText(item, Columns::eAction, action.ToString().c_str());
+	m_listActions.SelectItem(item);
 
-	std::unique_ptr<MacrosAction> actionPtr = std::make_unique<MacrosAction>(std::move(action));
-	m_listMacroses.SetItemDataPtr(item, actionPtr.release());
+	std::unique_ptr<Action> actionPtr = std::make_unique<Action>(std::move(action));
+	m_listActions.SetItemDataPtr(item, actionPtr.release());
 }
 
-void CMacrosEditDlg::OnBnClickedButtonAdd()
+void CActionsEditDlg::updateButtonStates()
 {
-	std::optional<MacrosAction> action = CMacrosActionEditDlg::EditMacros(this);
+	auto selectionExist = m_listActions.GetSelectedCount() > 0;
+	GetDlgItem(IDC_BUTTON_REMOVE)->EnableWindow(selectionExist);
+	m_buttonMoveUp.EnableWindow(selectionExist);
+	m_buttonMoveDown.EnableWindow(selectionExist);
+}
+
+void CActionsEditDlg::OnBnClickedButtonAdd()
+{
+	std::optional<Action> action = CActionEditDlg::EditAction(this);
 	if (!action.has_value())
 		return;
 
 	addAction(std::move(*action));
 }
 
-void CMacrosEditDlg::OnBnClickedButtonRemove()
+void CActionsEditDlg::OnBnClickedButtonRemove()
 {
-	std::vector<int> selectedActions = m_listMacroses.GetSelectedItems();
+	std::vector<int> selectedActions = m_listActions.GetSelectedItems();
 
 	for (auto it = selectedActions.rbegin(), end = selectedActions.rend(); it != end; ++it)
 	{
-		std::unique_ptr<MacrosAction> actionPtr((MacrosAction*)m_listMacroses.GetItemDataPtr(*it));
-		m_listMacroses.DeleteItem(*it);
+		std::unique_ptr<Action> actionPtr((Action*)m_listActions.GetItemDataPtr(*it));
+		m_listActions.DeleteItem(*it);
 	}
-	m_listMacroses.SelectItem(selectedActions.back() - int(selectedActions.size()) + 1);
+	m_listActions.SelectItem(selectedActions.back() - int(selectedActions.size()) + 1);
 }
 
-void CMacrosEditDlg::OnBnClickedButtonRecord()
+void CActionsEditDlg::OnBnClickedButtonRecord()
 {
 	KillTimer(kRecordingTimer0Id);
 	KillTimer(kRecordingTimer1Id);
@@ -302,7 +313,7 @@ void CMacrosEditDlg::OnBnClickedButtonRecord()
 	}
 }
 
-void CMacrosEditDlg::OnTimer(UINT_PTR nIDEvent)
+void CActionsEditDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	KillTimer(nIDEvent);
 
@@ -328,21 +339,18 @@ void CMacrosEditDlg::OnTimer(UINT_PTR nIDEvent)
 	CDialogEx::OnTimer(nIDEvent);
 }
 
-void CMacrosEditDlg::OnBnClickedButtonMoveUp()
+void CActionsEditDlg::OnBnClickedButtonMoveUp()
 {
-	m_listMacroses.MoveSelectedItems(true);
+	m_listActions.MoveSelectedItems(true);
 }
 
-void CMacrosEditDlg::OnBnClickedButtonMoveDown()
+void CActionsEditDlg::OnBnClickedButtonMoveDown()
 {
-	m_listMacroses.MoveSelectedItems(false);
+	m_listActions.MoveSelectedItems(false);
 }
 
-void CMacrosEditDlg::OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult)
+void CActionsEditDlg::OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	auto selectionExist = m_listMacroses.GetSelectedCount() > 0;
-	GetDlgItem(IDC_BUTTON_REMOVE)->EnableWindow(selectionExist);
-	m_buttonMoveUp.EnableWindow(selectionExist);
-	m_buttonMoveDown.EnableWindow(selectionExist);
+	updateButtonStates();
 	*pResult = 0;
 }

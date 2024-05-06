@@ -1,6 +1,7 @@
 #include "pch.h"
-#include "GameMate.h"
 #include "afxdialogex.h"
+#include "resource.h"
+
 #include "AddingTabDlg.h"
 
 namespace {

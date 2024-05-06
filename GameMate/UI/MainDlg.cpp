@@ -1,14 +1,16 @@
 
 #include "pch.h"
 #include "framework.h"
-#include "GameMate.h"
-#include "MainDlg.h"
 #include "afxdialogex.h"
+#include "resource.h"
 
+#include "MainDlg.h"
 #include "AddingTabDlg.h"
 #include "GameSettingsDlg.h"
+#include "InputSimulatorInfoDlg.h"
+#include "ActionsExecutorDlg.h"
+
 #include "InputManager.h"
-#include "InputSimulatorInfo.h"
 
 #include <core/Worker.h>
 
@@ -69,12 +71,12 @@ BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_WM_DESTROY()
 	ON_WM_SYSCOMMAND()
+	ON_NOTIFY(TCN_SELCHANGE, IDC_TABCONTROL_GAMES, &CMainDlg::OnTcnSelchangeTabcontrolGames)
+	ON_CBN_SELCHANGE(IDC_COMBO_INPUT_DRIVER, &CMainDlg::OnCbnSelchangeComboInputDriver)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_TAB, &CMainDlg::OnBnClickedButtonAddTab)
 	ON_BN_CLICKED(IDC_BUTTON_RENAME_TAB, &CMainDlg::OnBnClickedButtonRenameTab)
 	ON_BN_CLICKED(IDC_BUTTON_DELETE_TAB, &CMainDlg::OnBnClickedButtonDeleteTab)
 	ON_BN_CLICKED(IDC_CHECK_PROGRAM_WORKING, &CMainDlg::OnBnClickedCheckProgramWorking)
-	ON_NOTIFY(TCN_SELCHANGE, IDC_TABCONTROL_GAMES, &CMainDlg::OnTcnSelchangeTabcontrolGames)
-	ON_CBN_SELCHANGE(IDC_COMBO_INPUT_DRIVER, &CMainDlg::OnCbnSelchangeComboInputDriver)
 	ON_BN_CLICKED(IDC_MFCBUTTON_INPUT_DRIVER_INFO, &CMainDlg::OnBnClickedMfcbuttonInputDriverInfo)
 END_MESSAGE_MAP()
 
@@ -465,5 +467,6 @@ void CMainDlg::OnCbnSelchangeComboInputDriver()
 
 void CMainDlg::OnBnClickedMfcbuttonInputDriverInfo()
 {
-	CInputSimulatorInfo(this).DoModal();
+	// TODO CInputSimulatorInfoDlg(this).DoModal();
+	CActionsExecutorDlg(this).DoModal();
 }

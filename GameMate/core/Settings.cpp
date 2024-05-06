@@ -15,7 +15,7 @@ namespace {
 constexpr auto kFileName = L"settings.txt";
 const auto kFullFileName = std::filesystem::get_exe_directory() / kFileName;
 
-constexpr ext::constexpr_map kExtraKeysToVkKeys = {
+constexpr ext::constexpr_map kExtraKeysTovkCodes = {
 	std::pair{Bind::ExtraKeys::LCtrl,	VK_LCONTROL},
 	std::pair{Bind::ExtraKeys::RCtrl,	VK_RCONTROL},
 	std::pair{Bind::ExtraKeys::LShift,	VK_LSHIFT},
@@ -26,10 +26,10 @@ constexpr ext::constexpr_map kExtraKeysToVkKeys = {
 	std::pair{Bind::ExtraKeys::RWin,	VK_RWIN},
 };
 
-std::wstring VkKeyToText(WORD vkKey)
+std::wstring VkCodeToText(WORD vkCode)
 {
 	unsigned extFlag = 0;
-	switch (vkKey)
+	switch (vkCode)
 	{
 	case VK_LBUTTON:
 		return L"Left click";
@@ -54,14 +54,15 @@ std::wstring VkKeyToText(WORD vkKey)
 	case VK_HOME:
 	case VK_INSERT:
 	case VK_DELETE:
-	case VK_LEFT: 
-	case VK_RIGHT: 
-	case VK_UP: 
+	case VK_LEFT:
+	case VK_RIGHT:
+	case VK_UP:
 	case VK_DOWN:
 	case VK_LWIN:
-	case VK_RWIN: 
-	case VK_APPS: 
-	case VK_RCONTROL: 
+	case VK_RWIN:
+	case VK_APPS:
+	case VK_RCONTROL:
+	case VK_SNAPSHOT: // TODO CHECK
 	case VK_RMENU:
 		extFlag = 1;
 		break;
@@ -69,15 +70,15 @@ std::wstring VkKeyToText(WORD vkKey)
 		break;
 	}
 
-	UINT scanCode = MapVirtualKey(vkKey, MAPVK_VK_TO_VSC);
+	UINT scanCode = MapVirtualKey(vkCode, MAPVK_VK_TO_VSC);
 
 	std::wstring actionString(MAX_PATH, L'\0');
 	if (auto l = GetKeyNameText(scanCode << 16 | (extFlag << 24), actionString.data(), MAX_PATH); l != 0)
 		actionString.resize(l);
 	else
 	{
-		EXT_TRACE_ERR() << "Failed to get key text for vkKey " << vkKey << ", err = " << GetLastError();
-		return std::to_wstring(vkKey);
+		EXT_TRACE_ERR() << "Failed to get key text for vkCode " << vkCode << ", err = " << GetLastError();
+		return std::to_wstring(vkCode);
 	}
 
 	return actionString;
@@ -85,13 +86,13 @@ std::wstring VkKeyToText(WORD vkKey)
 
 } // namespace
 
-Bind::Bind(WORD _vkKey)
-	: vkKey(_vkKey)
+Bind::Bind(WORD _vkCode)
+	: vkCode(_vkCode)
 {
 	for (auto key = unsigned(ExtraKeys::FirstKey), last = unsigned(ExtraKeys::LastKey); key < last; ++key)
 	{
-		WORD extraVkKey = kExtraKeysToVkKeys.get_value(ExtraKeys(key));
-		if (vkKey == extraVkKey || !InputManager::GetKeyState(extraVkKey))
+		WORD extravkCode = kExtraKeysTovkCodes.get_value(ExtraKeys(key));
+		if (vkCode == extravkCode || !InputManager::GetKeyState(extravkCode))
 			continue;
 
 		extraKeys |= (1u << key);
@@ -107,36 +108,74 @@ Bind::Bind(WORD _vkKey)
 		if ((extraKeys & (1u << key)) == 0)
 			continue;
 
-		actionString += VkKeyToText(kExtraKeysToVkKeys.get_value(ExtraKeys(key))) + L" + ";
+		actionString += VkCodeToText(kExtraKeysTovkCodes.get_value(ExtraKeys(key))) + L" + ";
 	}
 
-	actionString += VkKeyToText(vkKey);
+	actionString += VkCodeToText(vkCode);
 
 	return actionString;
 }
 
-bool Bind::IsBindPressed(WORD _vkKey) const
+bool Bind::IsBindPressed(WORD _vkCode) const
 {
-	bool pressed = (vkKey == _vkKey);
+	bool pressed = (vkCode == _vkCode);
 
 	for (auto key = unsigned(ExtraKeys::FirstKey), last = unsigned(ExtraKeys::LastKey); key < last; ++key)
 	{
 		if (!pressed)
 			break;
 
-		bool keyMustbePressed = (extraKeys & (1u << key)) != 0;
-		pressed &= InputManager::GetKeyState(kExtraKeysToVkKeys.get_value(ExtraKeys(key))) == keyMustbePressed;
+		const bool keyMustbePressed = (extraKeys & (1u << key)) != 0;
+		if (keyMustbePressed)
+			pressed &= InputManager::GetKeyState(kExtraKeysTovkCodes.get_value(ExtraKeys(key)));
 	}
 
 	return pressed;
 }
 
-std::wstring MacrosAction::ToString() const
+Action::Action(WORD _vkCode, bool _down, unsigned _delay)
+	: vkCode(_vkCode), down(_down), delayInMilliseconds(_delay)
 {
-	return (down ? L"↓ " : L"↑ ") + VkKeyToText(vkKey);
+	switch (vkCode)
+	{
+	case VK_LBUTTON:
+	case VK_RBUTTON:
+	case VK_MBUTTON:
+	case VK_XBUTTON1:
+	case VK_XBUTTON2:
+	case InputManager::VK_MOUSE_WHEEL:
+	case InputManager::VK_MOUSE_HWHEEL:
+		{
+			type = Type::eMouseAction;
+			const auto position = InputManager::GetMousePosition();
+			mouseX = position.x;
+			mouseY = position.y;
+		}
+		break;
+	default:
+		type = Type::eKeyAction;
+		break;
+	}
+
+	EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << std::string_sprintf("New action: type %d, vkCode %hu, down %d, %hu ms delay, pos(%ld, %ld)",
+																 (int)type, vkCode, int(down), delayInMilliseconds, mouseX, mouseY);
 }
 
-void MacrosAction::ExecuteAction(float delayRandomize) const
+Action::Action(long mouseMovedToPointX, long mouseMovedToPointY)
+	: type(Type::eMouseMove)
+	, mouseX(mouseMovedToPointX)
+	, mouseY(mouseMovedToPointY)
+{
+	EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << std::string_sprintf("New mouse move action: type %d, pos(%ld, %ld)",
+																 (int)type, mouseX, mouseY);
+}
+
+std::wstring Action::ToString() const
+{
+	return (down ? L"↓ " : L"↑ ") + VkCodeToText(vkCode);
+}
+
+void Action::ExecuteAction(float delayRandomize, bool applyMousePos) const
 {
 	if (delayInMilliseconds != 0)
 	{
@@ -146,7 +185,16 @@ void MacrosAction::ExecuteAction(float delayRandomize) const
 		Sleep(DWORD(delayInMilliseconds * randomMultiply));
 	}
 
-	InputManager::SendKeyOrMouse(vkKey, down);
+	if (applyMousePos)
+	{
+		if (type != Type::eKeyAction)
+			InputManager::MouseMove(POINT{ mouseX , mouseY});
+	}
+	else
+		// We apply mouse pos in actions dialog, not in macroses where we don't have mouse move
+		EXT_ASSERT(type != Type::eMouseMove);
+
+	InputManager::SendKeyOrMouse(vkCode, down);
 }
 
 Settings::Settings()

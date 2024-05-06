@@ -39,10 +39,10 @@ protected:
 	afx_msg void OnCbnSelendokComboCrosshairSelection();
 	afx_msg void OnCbnSelendokComboCrosshairSize();
 	afx_msg void OnCbnSetfocusComboExeName();
-	afx_msg void OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult);
 
 private:
-	void AddNewMacros(const Bind& bind, Macros&& macros);
+	void AddNewActions(const Bind& bind, Actions&& actions);
 	void UpdateDemoCrosshair();
 	void InitCrosshairsList();
 
@@ -56,7 +56,7 @@ private: // controls
 	CStatic m_staticCrosshairInfo;
 	CComboBox m_comboboxCrosshairSize;
 	CMFCColorButton m_colorPickerCrosshairColor;
-	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listMacroses;
+	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listActions;
 	CStatic m_crosshairDemo;
 
 private:

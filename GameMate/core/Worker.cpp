@@ -152,10 +152,10 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
         m_crosshairWindow.AttachCrosshairToWindow(m_activeWindow, crossahair);
 }
 
-bool Worker::OnKeyOrMouseEvent(WORD vkKey, bool down)
+bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
 {
     // Check if program working mode switched
-    if (vkKey == VK_F9 && !down && InputManager::GetKeyState(VK_SHIFT))
+    if (vkCode == VK_F9 && !down && InputManager::GetKeyState(VK_SHIFT))
     {
         auto& settings = ext::get_singleton<Settings>();
         settings.programWorking = !settings.programWorking;
@@ -166,17 +166,17 @@ bool Worker::OnKeyOrMouseEvent(WORD vkKey, bool down)
 
     if (!!m_activeExeTabConfig)
     {
-        for (auto&& [bind, macro] : m_activeExeTabConfig->macrosByBind)
+        for (auto&& [bind, action] : m_activeExeTabConfig->actionsByBind)
         {
-            if (bind.IsBindPressed(vkKey))
+            if (bind.IsBindPressed(vkCode))
             {
                 // Execute macros on key down and ignore key up
                 if (down)
                 {
-                    m_macrosExecutor.add_task([actions = macro.actions, delayRandomize = macro.randomizeDelays]() {
+                    m_macrosExecutor.add_task([actions = action.actions, delayRandomize = action.randomizeDelays]() {
                         for (const auto& action : actions)
                         {
-                            action.ExecuteAction(delayRandomize);
+                            action.ExecuteAction(delayRandomize, false);
                         }
                     });
                 }
@@ -188,7 +188,7 @@ bool Worker::OnKeyOrMouseEvent(WORD vkKey, bool down)
         // Ignore Windows button press
         if (m_activeExeTabConfig->disableWinButton)
         {
-            switch (vkKey)
+            switch (vkCode)
             {
             case VK_LWIN:
             case VK_RWIN:

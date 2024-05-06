@@ -1,12 +1,12 @@
 #pragma once
 #include "afxdialogex.h"
 
-class CInputSimulatorInfo : public CDialogEx
+class CInputSimulatorInfoDlg: public CDialogEx
 {
-	DECLARE_DYNAMIC(CInputSimulatorInfo)
+	DECLARE_DYNAMIC(CInputSimulatorInfoDlg)
 
 public:
-	CInputSimulatorInfo(CWnd* pParent = nullptr);   // standard constructor
+	CInputSimulatorInfoDlg(CWnd* pParent = nullptr);   // standard constructor
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME

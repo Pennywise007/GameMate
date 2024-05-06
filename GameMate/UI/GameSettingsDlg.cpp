@@ -3,11 +3,12 @@
 #include <algorithm>
 #include <regex>
 
-#include "GameMate.h"
 #include "tlhelp32.h"
 #include "afxdialogex.h"
+#include "resource.h"
+
 #include "GameSettingsDlg.h"
-#include "MacrosEditDlg.h"
+#include "ActionsEditDlg.h"
 #include "BaseKeyEditDlg.h"
 
 #include "core/Crosshairs.h"
@@ -51,7 +52,7 @@ void CGameSettingsDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_CHECK_ENABLED, m_enabled);
 	DDX_Control(pDX, IDC_COMBO_EXE_NAME, m_exeName);
-	DDX_Control(pDX, IDC_LIST_MACROSES, m_listMacroses);
+	DDX_Control(pDX, IDC_LIST_ACTIONS, m_listActions);
 	DDX_Control(pDX, IDC_COMBO_CROSSHAIR_SELECTION, m_comboCrosshairs);
 	DDX_Control(pDX, IDC_CHECK_USE, m_checkboxShowCrosshair);
 	DDX_Control(pDX, IDC_COMBO_CROSSHAIR_SIZE, m_comboboxCrosshairSize);
@@ -65,7 +66,7 @@ BEGIN_MESSAGE_MAP(CGameSettingsDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_ADD, &CGameSettingsDlg::OnBnClickedButtonAdd)
 	ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CGameSettingsDlg::OnBnClickedButtonRemove)
 	ON_BN_CLICKED(IDC_CHECK_ENABLED, &CGameSettingsDlg::OnBnClickedCheckEnabled)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_MACROSES, &CGameSettingsDlg::OnLvnItemchangedListMacroses)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_ACTIONS, &CGameSettingsDlg::OnLvnItemchangedListActions)
 	ON_CBN_SELENDOK(IDC_COMBO_EXE_NAME, &CGameSettingsDlg::OnCbnSelendokComboExeName)
 	ON_BN_CLICKED(IDC_CHECK_USE, &CGameSettingsDlg::OnBnClickedCheckUse)
 	ON_BN_CLICKED(IDC_MFCCOLORBUTTON_CROSSHAIR_COLOR, &CGameSettingsDlg::OnBnClickedMfccolorbuttonCrosshairColor)
@@ -139,91 +140,91 @@ BOOL CGameSettingsDlg::OnInitDialog()
 	OnBnClickedCheckUse();
 
 	CRect rect;
-	m_listMacroses.GetClientRect(rect);
+	m_listActions.GetClientRect(rect);
 
 	constexpr int kKeybindColumnWidth = 150;
 	constexpr int kRandomizeDelayColumnWidth = 120;
-	m_listMacroses.InsertColumn(Columns::eKeybind, L"Keybind", LVCFMT_CENTER, kKeybindColumnWidth);
-	m_listMacroses.InsertColumn(Columns::eActions, L"Actions", LVCFMT_CENTER, rect.Width() - kKeybindColumnWidth - kRandomizeDelayColumnWidth);
-	m_listMacroses.InsertColumn(Columns::eRandomizeDelay, L"Randomize delay(%)", LVCFMT_CENTER, kRandomizeDelayColumnWidth);
+	m_listActions.InsertColumn(Columns::eKeybind, L"Keybind", LVCFMT_CENTER, kKeybindColumnWidth);
+	m_listActions.InsertColumn(Columns::eActions, L"actionsByBind", LVCFMT_CENTER, rect.Width() - kKeybindColumnWidth - kRandomizeDelayColumnWidth);
+	m_listActions.InsertColumn(Columns::eRandomizeDelay, L"Randomize delay(%)", LVCFMT_CENTER, kRandomizeDelayColumnWidth);
 
 	LVCOLUMN colInfo;
 	colInfo.mask = LVCF_FMT;
-	m_listMacroses.GetColumn(Columns::eKeybind, &colInfo);
+	m_listActions.GetColumn(Columns::eKeybind, &colInfo);
 	colInfo.fmt |= LVCFMT_FIXED_WIDTH | LVCFMT_CENTER;
-	m_listMacroses.SetColumn(Columns::eKeybind, &colInfo);
+	m_listActions.SetColumn(Columns::eKeybind, &colInfo);
 
-	m_listMacroses.SetProportionalResizingColumns({ Columns::eActions });
+	m_listActions.SetProportionalResizingColumns({ Columns::eActions });
 	
-	m_listMacroses.setSubItemEditorController(Columns::eKeybind,
+	m_listActions.setSubItemEditorController(Columns::eKeybind,
 		[&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
 		{
-			auto& macroses = m_configuration->macrosByBind;
+			auto& actionsByBind = m_configuration->actionsByBind;
 
-			ASSERT((int)macroses.size() > pParams->iItem);
-			auto editableMacrosIt = std::next(macroses.begin(), pParams->iItem);
+			ASSERT((int)actionsByBind.size() > pParams->iItem);
+			auto editableActionsIt = std::next(actionsByBind.begin(), pParams->iItem);
 
-			auto bind = CBindEditDlg::EditBind(parentWindow, editableMacrosIt->first);
+			auto bind = CBindEditDlg::EditBind(parentWindow, editableActionsIt->first);
 			if (!bind.has_value())
 				return nullptr;
 
-			if (auto sameBindIt = macroses.find(bind.value()); sameBindIt != macroses.end())
+			if (auto sameBindIt = actionsByBind.find(bind.value()); sameBindIt != actionsByBind.end())
 			{
 				if (MessageBox((L"Bind '" + bind->ToString() + L"' already exists, do you want to replace it?").c_str(),
 							   L"This bind already exist", MB_ICONWARNING | MB_OKCANCEL) == IDCANCEL)
 					return nullptr;
 
-				auto sameItem = (int)std::distance(macroses.begin(), sameBindIt);
-				auto macros = std::move(editableMacrosIt->second);
-				macroses.erase(editableMacrosIt);
-				macroses.erase(sameBindIt);
-				m_listMacroses.DeleteItem(std::max<int>(pParams->iItem, sameItem));
-				m_listMacroses.DeleteItem(std::min<int>(pParams->iItem, sameItem));
+				auto sameItem = (int)std::distance(actionsByBind.begin(), sameBindIt);
+				auto actions = std::move(editableActionsIt->second);
+				actionsByBind.erase(editableActionsIt);
+				actionsByBind.erase(sameBindIt);
+				m_listActions.DeleteItem(std::max<int>(pParams->iItem, sameItem));
+				m_listActions.DeleteItem(std::min<int>(pParams->iItem, sameItem));
 
-				AddNewMacros(std::move(bind.value()), std::move(macros));
+				AddNewActions(std::move(bind.value()), std::move(actions));
 			}
 			else
 			{
-				auto currentMacros = std::move(editableMacrosIt->second);
-				macroses.erase(editableMacrosIt);
-				m_listMacroses.DeleteItem(pParams->iItem);
-				AddNewMacros(std::move(bind.value()), std::move(currentMacros));
+				auto currentActions = std::move(editableActionsIt->second);
+				actionsByBind.erase(editableActionsIt);
+				m_listActions.DeleteItem(pParams->iItem);
+				AddNewActions(std::move(bind.value()), std::move(currentActions));
 			}
 
 			ext::send_event(&ISettingsChanged::OnSettingsChanged);
 
 			return nullptr;
 		});
-	const auto macrosEdit = [&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
+	const auto ActionsEdit = [&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
 		{
-			auto& macroses = m_configuration->macrosByBind;
+			auto& actionsByBind = m_configuration->actionsByBind;
 
-			ASSERT((int)macroses.size() > pParams->iItem);
-			auto editableMacrosIt = std::next(macroses.begin(), pParams->iItem);
+			ASSERT((int)actionsByBind.size() > pParams->iItem);
+			auto editableActionsIt = std::next(actionsByBind.begin(), pParams->iItem);
 
-			auto macros = CMacrosEditDlg(editableMacrosIt->second, this).ExecModal();
-			if (!macros.has_value())
+			auto actions = CActionsEditDlg::ExecModal(this, editableActionsIt->second);
+			if (!actions.has_value())
 				return nullptr;
 
-			auto bind = editableMacrosIt->first;
+			auto bind = editableActionsIt->first;
 
-			macroses.erase(editableMacrosIt);
-			m_listMacroses.DeleteItem(pParams->iItem);
+			actionsByBind.erase(editableActionsIt);
+			m_listActions.DeleteItem(pParams->iItem);
 
-			AddNewMacros(std::move(bind), std::move(macros.value()));
+			AddNewActions(std::move(bind), std::move(actions.value()));
 
 			ext::send_event(&ISettingsChanged::OnSettingsChanged);
 
 			return nullptr;
 		};
-	m_listMacroses.setSubItemEditorController(Columns::eActions, macrosEdit);
-	m_listMacroses.setSubItemEditorController(Columns::eRandomizeDelay, macrosEdit);
+	m_listActions.setSubItemEditorController(Columns::eActions, ActionsEdit);
+	m_listActions.setSubItemEditorController(Columns::eRandomizeDelay, ActionsEdit);
 
-	auto currentMacroses = std::move(m_configuration->macrosByBind);
-	m_configuration->macrosByBind.clear();
-	for (auto&& [bind, macros] : currentMacroses)
+	auto currentActions = std::move(m_configuration->actionsByBind);
+	m_configuration->actionsByBind.clear();
+	for (auto&& [bind, actionsByBind] : currentActions)
 	{
-		AddNewMacros(bind, std::move(macros));
+		AddNewActions(bind, std::move(actionsByBind));
 	}
 
 	return TRUE;
@@ -245,58 +246,58 @@ void CGameSettingsDlg::OnBnClickedButtonAdd()
 	if (!bind.has_value())
 		return;
 
-	const auto it = m_configuration->macrosByBind.find(bind.value());
-	const bool actionExists = it != m_configuration->macrosByBind.end();
+	const auto it = m_configuration->actionsByBind.find(bind.value());
+	const bool actionExists = it != m_configuration->actionsByBind.end();
 
-	Macros editableMacros;
+	Actions editableActions;
 	if (actionExists)
 	{
-		auto res = MessageBox((L"Do you want to edit action '" + bind->ToString() + L"'?").c_str(), L"Action already has macros", MB_OKCANCEL | MB_ICONWARNING);
+		auto res = MessageBox((L"Do you want to edit action '" + bind->ToString() + L"'?").c_str(), L"Action already has actionsByBind", MB_OKCANCEL | MB_ICONWARNING);
 		if (res == IDCANCEL)
 		{
-			m_listMacroses.ClearSelection();
-			m_listMacroses.SelectItem((int)std::distance(m_configuration->macrosByBind.begin(), it));
+			m_listActions.ClearSelection();
+			m_listActions.SelectItem((int)std::distance(m_configuration->actionsByBind.begin(), it));
 			return;
 		}
 
-		editableMacros = it->second;
+		editableActions = it->second;
 	}
 	else {
 		// Adding new item to the table to show user what we adding
-		auto item = m_listMacroses.InsertItem(m_listMacroses.GetItemCount(), bind->ToString().c_str());
-		m_listMacroses.SelectItem(item);
+		auto item = m_listActions.InsertItem(m_listActions.GetItemCount(), bind->ToString().c_str());
+		m_listActions.SelectItem(item);
 	}
 
-	auto newMacros = CMacrosEditDlg(editableMacros, this).ExecModal();
+	auto newActions = CActionsEditDlg::ExecModal(this, editableActions);
 
 	// removing previously added item with bind name
 	if (!actionExists)
-		m_listMacroses.DeleteItem(m_listMacroses.GetItemCount() - 1);
+		m_listActions.DeleteItem(m_listActions.GetItemCount() - 1);
 
-	if (!newMacros.has_value())
+	if (!newActions.has_value())
 		return;
 
-	// removing old copy of eddited macros
+	// removing old copy of eddited actionsByBind
 	if (actionExists)
 	{
-		auto sameItem = (int)std::distance(m_configuration->macrosByBind.begin(), it);
-		m_configuration->macrosByBind.erase(it);
-		m_listMacroses.DeleteItem(sameItem);
+		auto sameItem = (int)std::distance(m_configuration->actionsByBind.begin(), it);
+		m_configuration->actionsByBind.erase(it);
+		m_listActions.DeleteItem(sameItem);
 	}
 
-	AddNewMacros(bind.value(), std::move(newMacros.value()));
+	AddNewActions(bind.value(), std::move(newActions.value()));
 
 	ext::send_event(&ISettingsChanged::OnSettingsChanged);
 }
 
 void CGameSettingsDlg::OnBnClickedButtonRemove()
 {
-	std::vector<int> selectedActions = m_listMacroses.GetSelectedItems();
+	std::vector<int> selectedActions = m_listActions.GetSelectedItems();
 
 	for (auto it = selectedActions.rbegin(), end = selectedActions.rend(); it != end; ++it)
 	{
-		m_configuration->macrosByBind.erase(std::next(m_configuration->macrosByBind.begin(), *it));
-		m_listMacroses.DeleteItem(*it);
+		m_configuration->actionsByBind.erase(std::next(m_configuration->actionsByBind.begin(), *it));
+		m_listActions.DeleteItem(*it);
 	}
 
 	ext::send_event(&ISettingsChanged::OnSettingsChanged);
@@ -319,15 +320,15 @@ void CGameSettingsDlg::OnCbnSelendokComboExeName()
 	ext::send_event(&ISettingsChanged::OnSettingsChanged);
 }
 
-void CGameSettingsDlg::AddNewMacros(const Bind& keybind, Macros&& newMacros)
+void CGameSettingsDlg::AddNewActions(const Bind& keybind, Actions&& newActions)
 {
-	auto& macros = m_configuration->macrosByBind;
-	auto it = macros.try_emplace(keybind, std::move(newMacros));
+	auto& actionsByBind = m_configuration->actionsByBind;
+	auto it = actionsByBind.try_emplace(keybind, std::move(newActions));
 	ASSERT(it.second);
 
-	auto item = (int)std::distance(macros.begin(), it.first);
+	auto item = (int)std::distance(actionsByBind.begin(), it.first);
 
-	item = m_listMacroses.InsertItem(item, it.first->first.ToString().c_str());
+	item = m_listActions.InsertItem(item, it.first->first.ToString().c_str());
 	std::wstring actions;
 	for (const auto& action : it.first->second.actions) {
 		if (!actions.empty())
@@ -338,13 +339,13 @@ void CGameSettingsDlg::AddNewMacros(const Bind& keybind, Macros&& newMacros)
 
 		actions += action.ToString();
 	}
-	m_listMacroses.SetItemText(item, Columns::eActions, actions.c_str());
+	m_listActions.SetItemText(item, Columns::eActions, actions.c_str());
 
 	std::wostringstream str;
 	str << it.first->second.randomizeDelays;
-	m_listMacroses.SetItemText(item, Columns::eRandomizeDelay, str.str().c_str());
+	m_listActions.SetItemText(item, Columns::eRandomizeDelay, str.str().c_str());
 
-	m_listMacroses.SelectItem(item);
+	m_listActions.SelectItem(item);
 }
 
 void CGameSettingsDlg::UpdateDemoCrosshair()
@@ -501,9 +502,9 @@ void CGameSettingsDlg::InitCrosshairsList()
 	Layout::AnchorWindow(m_comboCrosshairs, *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
 }
 
-void CGameSettingsDlg::OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult)
+void CGameSettingsDlg::OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	GetDlgItem(IDC_BUTTON_REMOVE)->EnableWindow(m_listMacroses.GetSelectedCount() > 0);
+	GetDlgItem(IDC_BUTTON_REMOVE)->EnableWindow(m_listActions.GetSelectedCount() > 0);
 	*pResult = 0;
 }
 

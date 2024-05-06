@@ -11,14 +11,14 @@
 #include <Controls/Tables/List/ListGroupCtrl/ListGroupCtrl.h>
 #include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
 
-class CMacrosEditDlg : protected CDialogEx
+class CActionsEditDlg : protected CDialogEx
 {
-	DECLARE_DYNAMIC(CMacrosEditDlg)
+	DECLARE_DYNAMIC(CActionsEditDlg)
+
+	CActionsEditDlg(CWnd* pParent, Actions& macros);   // standard constructor
 
 public:
-	CMacrosEditDlg(const Macros& macros, CWnd* pParent = nullptr);   // standard constructor
-
-	[[nodiscard]] std::optional<Macros> ExecModal();
+	[[nodiscard]] static std::optional<Actions> ExecModal(CWnd* pParent, const Actions& macros);
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
@@ -38,13 +38,14 @@ protected:
 	afx_msg void OnBnClickedButtonRecord();
 	afx_msg void OnBnClickedButtonMoveUp();
 	afx_msg void OnBnClickedButtonMoveDown();
-	afx_msg void OnLvnItemchangedListMacroses(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult);
 
 private:
-	void addAction(MacrosAction&& action);
+	void addAction(Action&& action);
+	void updateButtonStates();
 
 private:
-	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listMacroses;
+	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listActions;
 	CIconButton m_buttonRecord;
 	CSpinEdit m_editRandomizeDelays;
 	CStatic m_staticDelayHelp;
@@ -53,6 +54,6 @@ private:
 
 private:
 	int m_keyPressedSubscriptionId = -1;
-	Macros m_macros;
+	Actions& m_macros;
 	std::optional<std::chrono::steady_clock::time_point> m_lastActionTime;
 };

@@ -8,8 +8,8 @@
 #define IDR_MENU_TRAY                   128
 #define IDD_TAB_GAME_SETTINGS           130
 #define IDD_DIALOG_ADDING_TAB           132
-#define IDD_DIALOG_MACROS_EDIT          134
-#define IDD_DIALOG_ACTION_EDIT          137
+#define IDD_DIALOG_ACTIONS_EDIT         134
+#define IDD_DIALOG_BIND_EDIT            137
 #define IDB_PNG_CROSSHAIR               143
 #define IDI_ICON1                       144
 #define IDB_PNG_CROSSHAIR_0_16          145
@@ -44,6 +44,8 @@
 #define IDB_PNG_ARROW_DOWN              174
 #define IDB_PNG_ARROW_UP                175
 #define IDD_DIALOG_INPUT_SIMULATOR      177
+#define IDD_DIALOG_ACTIONS_EXECUTOR     180
+#define IDB_PNG_SETTINGS                184
 #define IDC_TABCONTROL_GAMES            1000
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
@@ -67,6 +69,9 @@
 #define IDC_EDIT1                       1024
 #define IDC_EDIT_ACTION                 1024
 #define IDC_EDIT_RANDOMIZE_DELAYS       1024
+#define IDC_EDIT_INTERVAL_MIN           1024
+#define IDC_EDIT_INTERVAL_SEC           1025
+#define IDC_EDIT_INTERVAL_MILLISEC      1026
 #define IDC_BUTTON_DELAY_HELP           1028
 #define IDC_STATIC_DELAY_HELP           1029
 #define IDC_COMBO_EXE_NAME              1030
@@ -86,6 +91,8 @@
 #define IDC_CHECK_DISABLE_WIN           1040
 #define IDC_MFCBUTTON1                  1042
 #define IDC_MFCBUTTON_INPUT_DRIVER_INFO 1042
+#define IDC_MFCBUTTON_SETTINGS          1042
+#define IDC_MFCBUTTON_HOTKEY            1042
 #define IDC_BUTTON_MOVE_UP              1043
 #define IDC_BUTTON_MOVE_UP2             1044
 #define IDC_BUTTON_MOVE_DOWN            1044
@@ -103,6 +110,13 @@
 #define IDC_MFCLINK6                    1057
 #define IDC_MFCLINK_RAZER_7             1057
 #define IDC_MFCLINK2                    1058
+#define IDC_LIST_ACTIONS                1059
+#define IDC_RADIO_REPEAT_UNTIL_STOPPED  1061
+#define IDC_RADIO_REPEAT_TIMES          1062
+#define IDC_EDIT_REPEAT_TIMES           1063
+#define IDC_GROUP_REPEAT_INTERVAL       1067
+#define IDC_MFCMENUBUTTON_ENABLED       1068
+#define IDC_MFCMENUBUTTON2              1069
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -116,9 +130,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        180
+#define _APS_NEXT_RESOURCE_VALUE        185
 #define _APS_NEXT_COMMAND_VALUE         32779
-#define _APS_NEXT_CONTROL_VALUE         1059
+#define _APS_NEXT_CONTROL_VALUE         1072
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

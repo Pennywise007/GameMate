@@ -26,31 +26,32 @@ protected:
 
 protected:
 	virtual std::wstring GetActionText() const = 0;
-	virtual void OnVkKeyAction(WORD vkKey, bool down) = 0;
+	virtual void OnVkCodeAction(WORD vkCode, bool down) = 0;
 
 protected:
 	int m_keyPressedSubscriptionId = -1;
 	CEdit m_editAction;
 };
 
-class CMacrosActionEditDlg : protected CBaseKeyEditDlg
+class CActionEditDlg : protected CBaseKeyEditDlg
 {
 public:
-	[[nodiscard]] static std::optional<MacrosAction> EditMacros(CWnd* pParent, const std::optional<MacrosAction>& editMacros = std::nullopt);
+	[[nodiscard]] static std::optional<Action> EditAction(CWnd* pParent, const std::optional<Action>& action = std::nullopt);
 
 private:
-	DECLARE_DYNAMIC(CMacrosActionEditDlg)
+	DECLARE_DYNAMIC(CActionEditDlg)
 	DECLARE_MESSAGE_MAP()
 
-	CMacrosActionEditDlg(CWnd* pParent, std::optional<MacrosAction>& action);
+	CActionEditDlg(CWnd* pParent, std::optional<Action>& action);
+	virtual BOOL OnInitDialog() override;
 
 private: // CBaseEditDlg
 	std::wstring GetActionText() const override;
-	void OnVkKeyAction(WORD vkKey, bool down) override;
+	void OnVkCodeAction(WORD vkCode, bool down) override;
 	void OnOK() override;
 
 private:
-	std::optional<MacrosAction>& m_currentAction;
+	std::optional<Action>& m_currentAction;
 };
 
 class CBindEditDlg : protected CBaseKeyEditDlg
@@ -66,7 +67,7 @@ private:
 
 private: // CBaseEditDlg	
 	std::wstring GetActionText() const override;
-	void OnVkKeyAction(WORD vkKey, bool down) override;
+	void OnVkCodeAction(WORD vkCode, bool down) override;
 	void OnOK() override;
 
 private:

@@ -9,6 +9,8 @@
 #include <ext/core/tracer.h>
 #include <ext/constexpr/map.h>
 
+#define DONT_USE_HOOK
+
 namespace {
 
 // #define SEND_INPUT_ON_DRIVER_FAIL
@@ -152,8 +154,6 @@ std::optional<InputManager::Error> InputManager::SetInputSimulator(InputSimulato
         return errorText;
     }
 }
-
-// #define DONT_USE_HOOK
 
 InputManager::InputManager()
 #ifdef DONT_USE_HOOK
