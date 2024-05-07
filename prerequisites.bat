@@ -1,6 +1,13 @@
 :: Updating submodules
 git submodule init
 git submodule update --recursive
+
+:: Check if an error occurred
+if %errorlevel% neq 0 (
+    echo An error occurred. Press any key to exit...
+    pause >nul
+    exit /b %errorlevel%
+)
  
 :: Installing IbInputSimulator dependencies
 
@@ -13,6 +20,13 @@ set "InputSimulatorBuildDir=IbInputSimulator\build"
 :: Building x86
 .\vcpkg\vcpkg.exe install detours rapidjson --triplet=x86-windows-static
 
+:: Check if an error occurred
+if %errorlevel% neq 0 (
+    echo An error occurred. Press any key to exit...
+    pause >nul
+    exit /b %errorlevel%
+)
+
 rmdir /s /q "%InputSimulatorBuildDir%"
 mkdir %InputSimulatorBuildDir%
 pushd %InputSimulatorBuildDir%
@@ -20,6 +34,13 @@ cmake .. -DCMAKE_TOOLCHAIN_FILE="..\..\vcpkg\scripts\buildsystems\vcpkg.cmake" -
 cmake --build . --config Debug
 cmake --build . --config Release
 popd
+
+:: Check if an error occurred
+if %errorlevel% neq 0 (
+    echo An error occurred. Press any key to exit...
+    pause >nul
+    exit /b %errorlevel%
+)
 
 xcopy "%InputSimulatorBuildDir%\Simulator\Debug" "Debug" /s /e /i /Y
 xcopy "%InputSimulatorBuildDir%\Simulator\Release" "Release" /s /e /i /Y
@@ -35,5 +56,11 @@ cmake --build . --config Debug
 cmake --build . --config Release
 popd
 
+:: Check if an error occurred
+if %errorlevel% neq 0 (
+    echo An error occurred. Press any key to exit...
+    pause >nul
+    exit /b %errorlevel%
+)
 xcopy "%InputSimulatorBuildDir%\Simulator\Debug" "x64\Debug" /s /e /i /Y
 xcopy "%InputSimulatorBuildDir%\Simulator\Release" "x64\Release" /s /e /i /Y

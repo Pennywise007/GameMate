@@ -5,6 +5,14 @@
 #include "BaseKeyEditDlg.h"
 #include "InputManager.h"
 
+namespace {
+
+constexpr auto kTimerIdActionsSubscription = 1;
+constexpr auto kSubscribeToActionInMs = 300;
+constexpr auto kTimerIdKeyTextChage = 2;
+
+} // namespace
+
 IMPLEMENT_DYNAMIC(CBaseKeyEditDlg, CDialogEx)
 
 CBaseKeyEditDlg::CBaseKeyEditDlg(CWnd* pParent)
@@ -20,6 +28,7 @@ void CBaseKeyEditDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CBaseKeyEditDlg, CDialogEx)
 	ON_WM_DESTROY()
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 BOOL CBaseKeyEditDlg::OnInitDialog()
@@ -29,10 +38,22 @@ BOOL CBaseKeyEditDlg::OnInitDialog()
 	m_editAction.SetWindowTextW(GetActionText().c_str());
 	m_editAction.HideCaret();
 
-	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkCode, bool isDown) -> bool {
-		switch (vkCode)
-		{
-		case VK_LBUTTON:
+	SetTimer(kTimerIdActionsSubscription, kSubscribeToActionInMs, nullptr);
+
+	return TRUE;
+}
+
+void CBaseKeyEditDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	KillTimer(nIDEvent);
+
+	switch (nIDEvent)
+	{
+	case kTimerIdActionsSubscription:
+		m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkCode, bool isDown) -> bool {
+			switch (vkCode)
+			{
+			case VK_LBUTTON:
 			{
 				CPoint cursor;
 				::GetCursorPos(&cursor);
@@ -42,25 +63,38 @@ BOOL CBaseKeyEditDlg::OnInitDialog()
 				if (window != GetDlgItem(IDOK)->m_hWnd)
 				{
 					OnVkCodeAction(vkCode, isDown);
-					m_editAction.SetWindowTextW(GetActionText().c_str());
+
+					// Set timer to change displayed text because user might hit close button with mouse
+					// and if we change text immediatly the user will see Mouse down as a key text which wasn't his last input
+					KillTimer(kTimerIdKeyTextChage);
+					SetTimer(kTimerIdKeyTextChage, 50, nullptr);
 				}
 
 				m_editAction.HideCaret();
 				return false;
 			}
-		}
+			}
 
-		OnVkCodeAction(vkCode, isDown);
+			OnVkCodeAction(vkCode, isDown);
+			m_editAction.SetWindowTextW(GetActionText().c_str());
+
+			return true;
+		});
+		break;
+	case kTimerIdKeyTextChage:
 		m_editAction.SetWindowTextW(GetActionText().c_str());
+		break;
+	default:
+		ASSERT(FALSE);
+		break;
+	}
 
-		return true;
-	});
-
-	return TRUE;
+	CDialogEx::OnTimer(nIDEvent);
 }
 
 void CBaseKeyEditDlg::OnDestroy()
 {
+	KillTimer(kTimerIdActionsSubscription);
 	if (m_keyPressedSubscriptionId != -1)
 		InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
 	CDialogEx::OnDestroy();
