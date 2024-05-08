@@ -93,6 +93,7 @@ BOOL CMainDlg::OnInitDialog()
 		AddTab(tab);
 	}
 	m_tabControlGames.SetCurSel(settings.activeTab);
+	//m_tabControlGames.ResizeTabsToFitFullControlWidth(true);
 
 	if (settings.tracesEnabled)
 		ext::get_tracer().Enable();
@@ -203,7 +204,9 @@ BOOL CMainDlg::OnInitDialog()
 	// Don't allow to make our dialog smaller than it is in resource files.
 	CRect rect;
 	GetWindowRect(rect);
-	Layout::SetWindowMinimumSize(*this, rect.Width(), rect.Height());
+	Layout::SetWindowMinimumSize(*this, 600, rect.Height());
+	
+	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
 
 	return TRUE;
 }
@@ -256,8 +259,10 @@ void CMainDlg::OnBnClickedButtonAddTab()
 	if (newTab == nullptr)
 		return;
 
-	ext::get_singleton<Settings>().tabs.push_back(newTab);
+	auto& settings = ext::get_singleton<Settings>();
+	settings.tabs.push_back(newTab);
 	m_tabControlGames.SetCurSel(AddTab(newTab));
+	settings.activeTab = m_tabControlGames.GetCurSel();
 
 	OnGamesTabChanged();
 
@@ -308,6 +313,7 @@ void CMainDlg::OnBnClickedButtonDeleteTab()
 	if (curSel >= (int)tabs.size())
 		curSel = int(tabs.size()) - 1;
 	m_tabControlGames.SetCurSel(curSel);
+	ext::get_singleton<Settings>().activeTab = curSel;
 
 	OnGamesTabChanged();
 	
