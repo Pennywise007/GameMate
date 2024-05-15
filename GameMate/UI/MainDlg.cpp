@@ -5,14 +5,14 @@
 #include "resource.h"
 
 #include "MainDlg.h"
-#include "AddingTabDlg.h"
-#include "GameSettingsDlg.h"
+#include "ActiveProcessToolkitTab.h"
+#include "ActionsExecutorTab.h"
 #include "InputSimulatorInfoDlg.h"
-#include "ActionsExecutorDlg.h"
 
 #include "InputManager.h"
 
 #include <core/Worker.h>
+#include "core/Settings.h"
 
 #include <ext/core.h>
 #include <ext/core/check.h>
@@ -61,8 +61,7 @@ void CMainDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 
 	DDX_Control(pDX, IDC_TABCONTROL_GAMES, m_tabControlGames());
-	DDX_Control(pDX, IDC_CHECK_PROGRAM_WORKING, m_checkProgramWorking);
-	DDX_Control(pDX, IDC_COMBO_INPUT_DRIVER, m_inputDriver);
+	DDX_Control(pDX, IDC_COMBO_INPUT_DRIVER, m_inputSimulator);
 	DDX_Control(pDX, IDC_MFCBUTTON_INPUT_DRIVER_INFO, m_buttonInputDriverInfo);
 }
 
@@ -71,13 +70,9 @@ BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_WM_DESTROY()
 	ON_WM_SYSCOMMAND()
-	ON_NOTIFY(TCN_SELCHANGE, IDC_TABCONTROL_GAMES, &CMainDlg::OnTcnSelchangeTabcontrolGames)
 	ON_CBN_SELCHANGE(IDC_COMBO_INPUT_DRIVER, &CMainDlg::OnCbnSelchangeComboInputDriver)
-	ON_BN_CLICKED(IDC_BUTTON_ADD_TAB, &CMainDlg::OnBnClickedButtonAddTab)
-	ON_BN_CLICKED(IDC_BUTTON_RENAME_TAB, &CMainDlg::OnBnClickedButtonRenameTab)
-	ON_BN_CLICKED(IDC_BUTTON_DELETE_TAB, &CMainDlg::OnBnClickedButtonDeleteTab)
-	ON_BN_CLICKED(IDC_CHECK_PROGRAM_WORKING, &CMainDlg::OnBnClickedCheckProgramWorking)
-	ON_BN_CLICKED(IDC_MFCBUTTON_INPUT_DRIVER_INFO, &CMainDlg::OnBnClickedMfcbuttonInputDriverInfo)
+	ON_NOTIFY(TCN_SELCHANGE, IDC_TABCONTROL_GAMES, &CMainDlg::OnTcnSelchangeTabcontrolGames)
+	ON_BN_CLICKED(IDC_MFCBUTTON_INPUT_DRIVER_INFO, &CMainDlg::OnBnClickedMfcbuttonInputSimulatorInfo)
 END_MESSAGE_MAP()
 
 BOOL CMainDlg::OnInitDialog()
@@ -88,17 +83,17 @@ BOOL CMainDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	auto& settings = ext::get_singleton<Settings>();
-	for (const auto& tab : settings.tabs)
-	{
-		AddTab(tab);
-	}
-	m_tabControlGames.SetCurSel(settings.activeTab);
-	//m_tabControlGames.ResizeTabsToFitFullControlWidth(true);
-
 	if (settings.tracesEnabled)
 		ext::get_tracer().Enable();
 
-	OnGamesTabChanged();
+	m_tabControlGames.AddTab(L"Actions executor",
+							 std::make_shared<CActionsExecutorTab>(&m_tabControlGames()),
+							 CActionsExecutorTab::IDD);
+	m_tabControlGames.AddTab(L"Active process toolkit",
+							 std::make_shared<CActiveProcessToolkitTab>(&m_tabControlGames()),
+							 CActiveProcessToolkitTab::IDD);
+	m_tabControlGames.SetCurSel(int(settings.selectedMode));
+	m_tabControlGames.AutoResizeTabsToFitFullControlWidth();
 
 	CTrayHelper::Instance().addTrayIcon(
 		m_hIcon, L"Game mate",
@@ -107,10 +102,10 @@ BOOL CMainDlg::OnInitDialog()
 			HMENU hMenu = ::GetSubMenu(LoadMenu(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MENU_TRAY)), 0);
 			ENSURE(hMenu);
 								 
-			if (ext::get_singleton<Settings>().programWorking)
-				ENSURE(::DeleteMenu(hMenu, ID_MENU_ENABLE_PROGRAM, MF_BYCOMMAND));
+			if (ext::get_singleton<Settings>().process_toolkit.enabled)
+				ENSURE(::DeleteMenu(hMenu, ID_MENU_ENABLE_PROCESS_TOOLKIT, MF_BYCOMMAND));
 			else
-				ENSURE(::DeleteMenu(hMenu, ID_MENU_DISABLE_PROGRAM, MF_BYCOMMAND));
+				ENSURE(::DeleteMenu(hMenu, ID_MENU_DISABLE_PROCESS_TOOLKIT, MF_BYCOMMAND));
 
 			if (ext::get_tracer().CanTrace(ext::ITracer::Level::eDebug))
 				ENSURE(::DeleteMenu(hMenu, ID_MENU_ENABLE_TRACES, MF_BYCOMMAND));
@@ -128,25 +123,29 @@ BOOL CMainDlg::OnInitDialog()
 				ShowWindow(SW_RESTORE);
 				SetForegroundWindow();
 				break;
-			case ID_MENU_ENABLE_PROGRAM:
-			case ID_MENU_DISABLE_PROGRAM:
-				OnBnClickedCheckProgramWorking();
+			case ID_MENU_ENABLE_PROCESS_TOOLKIT:
+			case ID_MENU_DISABLE_PROCESS_TOOLKIT:
+				{
+					bool& enabled = ext::get_singleton<Settings>().process_toolkit.enabled;
+					enabled = !enabled;
+					ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+			}
 				break;
 			case ID_MENU_ENABLE_TRACES:
 				ext::get_singleton<Settings>().tracesEnabled = true;
 				ext::get_tracer().Enable();
-				ext::send_event(&ISettingsChanged::OnSettingsChanged);
+				ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eGeneralSettings);
 				break;
 			case ID_MENU_DISABLE_TRACES:
 				ext::get_singleton<Settings>().tracesEnabled = false;
 				ext::get_tracer().Reset();
-				ext::send_event(&ISettingsChanged::OnSettingsChanged);
+				ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eGeneralSettings);
 				break;
 			case ID_MENU_CLOSE:
 				EndDialog(IDCANCEL);
 				break;
 			default:
-				EXT_ASSERT(!"Не известный пункт меню!");
+				EXT_ASSERT(!"Unknown command!") << commandId;
 				break;
 			}
 		},
@@ -156,21 +155,20 @@ BOOL CMainDlg::OnInitDialog()
 			SetForegroundWindow();
 		});
 
-	// Starting worker
-	EXT_UNUSED(ext::get_singleton<Worker>());
-
 	try
 	{
-		InputManager::InputSimulator inputMode = InputManager::InputSimulator(std::max<int>(settings.driverInputMode, 0));
+		auto inputMode = settings.inputSimulator;
 		auto err = InputManager::SetInputSimulator(inputMode);
 		if (err.has_value())
 		{
+			EXT_ASSERT(inputMode != InputManager::InputSimulator::Auto);
+
 			inputMode = InputManager::InputSimulator::Auto;
 
 			EXT_EXPECT(!InputManager::SetInputSimulator(inputMode).has_value());
 			EXT_EXPECT(inputMode != InputManager::InputSimulator::Auto);
 			EXT_EXPECT(kDriverNames.contains_key(inputMode));
-			EXT_EXPECT(InputManager::InputSimulator(settings.driverInputMode) != inputMode);
+			EXT_EXPECT(settings.inputSimulator != inputMode);
 
 			MessageBox((L"Fail reason: " + std::wstring(err.value()) +
 					   L". Program will use " + kDriverNames.get_value(inputMode)).c_str(),
@@ -180,26 +178,27 @@ BOOL CMainDlg::OnInitDialog()
 
 		EXT_EXPECT(kDriverNames.contains_key(inputMode));
 		
-		if (settings.driverInputMode != int(inputMode))
+		if (settings.inputSimulator != inputMode)
 		{
-			settings.driverInputMode = int(inputMode);
-			ext::send_event(&ISettingsChanged::OnSettingsChanged);
+			settings.inputSimulator = inputMode;
+			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eInputSimulator);
 		}
 
-		m_inputDriver.InsertString(0, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(0)));
-		m_inputDriver.InsertString(1, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(1)));
-		m_inputDriver.InsertString(2, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(2)));
-		m_inputDriver.InsertString(3, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(3)));
-		m_inputDriver.InsertString(4, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(4)));
+		m_inputSimulator.InsertString(0, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(0)));
+		m_inputSimulator.InsertString(1, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(1)));
+		m_inputSimulator.InsertString(2, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(2)));
+		m_inputSimulator.InsertString(3, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(3)));
+		m_inputSimulator.InsertString(4, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(4)));
 
-		m_inputDriver.SetCurSel(kComboboxIndexesToInputModes.get_key(inputMode));
+		m_inputSimulator.SetCurSel(kComboboxIndexesToInputModes.get_key(inputMode));
 	}
 	catch (...)
 	{
 		MessageBox((L"Try to remove config file and restart app. Err:\n" + ext::ManageExceptionText(L"")).c_str(), L"Failed to init input simulator", MB_OK);
 	}
 
-	UpdateProgramWorkingButton();
+	// Starting worker
+	EXT_UNUSED(ext::get_singleton<Worker>());
 
 	// Don't allow to make our dialog smaller than it is in resource files.
 	CRect rect;
@@ -253,105 +252,9 @@ HCURSOR CMainDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-void CMainDlg::OnBnClickedButtonAddTab()
-{
-	const auto newTab = CAddingTabDlg(this).ExecModal();
-	if (newTab == nullptr)
-		return;
-
-	auto& settings = ext::get_singleton<Settings>();
-	settings.tabs.push_back(newTab);
-	m_tabControlGames.SetCurSel(AddTab(newTab));
-	settings.activeTab = m_tabControlGames.GetCurSel();
-
-	OnGamesTabChanged();
-
-	ext::send_event(&ISettingsChanged::OnSettingsChanged);
-}
-
-void CMainDlg::OnBnClickedButtonRenameTab()
-{
-	auto curSel = m_tabControlGames.GetCurSel();
-	if (curSel == -1)
-	{
-		EXT_ASSERT(false);
-		return;
-	}
-
-	auto& tabs = ext::get_singleton<Settings>().tabs;
-	EXT_ASSERT(curSel < (int)tabs.size());
-
-	auto tab = std::next(tabs.begin(), curSel)->get();
-	const auto edditedTab = CAddingTabDlg(this, tab).ExecModal();
-	if (edditedTab == nullptr)
-		return;
-	tab->tabName = edditedTab->tabName;
-
-	TCITEMW item;
-	item.mask = TCIF_TEXT;
-	item.pszText = tab->tabName.data();
-	item.cchTextMax = int(tab->tabName.size());
-	m_tabControlGames.SetItem(curSel, &item);
-	m_tabControlGames().Invalidate();
-
-	ext::send_event(&ISettingsChanged::OnSettingsChanged);
-}
-
-void CMainDlg::OnBnClickedButtonDeleteTab()
-{
-	auto curSel = m_tabControlGames.GetCurSel();
-	if (m_tabControlGames.DeleteTab(m_tabControlGames.GetCurSel()) != TRUE)
-	{
-		EXT_ASSERT(false);
-		return;
-	}
-
-	auto& tabs = ext::get_singleton<Settings>().tabs;
-	EXT_ASSERT(curSel < (int)tabs.size());
-	tabs.erase(std::next(tabs.begin(), curSel));
-
-	if (curSel >= (int)tabs.size())
-		curSel = int(tabs.size()) - 1;
-	m_tabControlGames.SetCurSel(curSel);
-	ext::get_singleton<Settings>().activeTab = curSel;
-
-	OnGamesTabChanged();
-	
-	ext::send_event(&ISettingsChanged::OnSettingsChanged);
-}
-
-int CMainDlg::AddTab(const std::shared_ptr<TabConfiguration>& tabSettings)
-{
-	EXT_ASSERT(tabSettings != nullptr);
-
-	GetDlgItem(IDC_BUTTON_DELETE_TAB)->EnableWindow(TRUE);
-
-	const auto settingsTab = std::make_shared<CGameSettingsDlg>(tabSettings, &m_tabControlGames());
-	return m_tabControlGames.InsertTab(m_tabControlGames.GetItemCount(), tabSettings->tabName.c_str(), settingsTab, CGameSettingsDlg::IDD);
-}
-
-void CMainDlg::OnGamesTabChanged()
-{
-	bool tabsExist = m_tabControlGames.GetItemCount() != 0;
-	GetDlgItem(IDC_BUTTON_DELETE_TAB)->EnableWindow(tabsExist);
-	GetDlgItem(IDC_BUTTON_RENAME_TAB)->EnableWindow(tabsExist);
-
-	GetDlgItem(IDC_STATIC_NO_TABS)->ShowWindow(tabsExist ? SW_HIDE : SW_SHOW);
-}
-
-void CMainDlg::UpdateProgramWorkingButton()
-{
-	auto& settings = ext::get_singleton<Settings>();
-
-	CString buttonText = settings.programWorking ? L"Disable program" : L"Enable program";
-	buttonText += L"(Shift+F9)";
-	m_checkProgramWorking.SetWindowTextW(buttonText);
-	m_checkProgramWorking.SetCheck(settings.programWorking ? BST_CHECKED : BST_UNCHECKED);
-}
-
 void CMainDlg::UpdateDriverInfoButton()
 {
-	bool showWarning = ext::get_singleton<Settings>().driverInputMode == int(InputManager::InputSimulator::SendInput);
+	bool showWarning = ext::get_singleton<Settings>().inputSimulator == InputManager::InputSimulator::SendInput;
 	// TODO
 
 }
@@ -391,7 +294,7 @@ void CMainDlg::OnSysCommand(UINT nID, LPARAM lParam)
 		if (settings.showMinimizedBubble)
 		{
 			settings.showMinimizedBubble = false;
-			ext::send_event(&ISettingsChanged::OnSettingsChanged);
+			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eGeneralSettings);
 
 			// notify user that he can open it through the tray
 			CTrayHelper::Instance().showBubble(
@@ -413,33 +316,21 @@ void CMainDlg::OnSysCommand(UINT nID, LPARAM lParam)
 void CMainDlg::OnTcnSelchangeTabcontrolGames(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	auto& settings = ext::get_singleton<Settings>();
-	settings.activeTab = m_tabControlGames.GetCurSel();
+	settings.selectedMode = Settings::ProgramMode(m_tabControlGames.GetCurSel());
 
-	ext::send_event(&ISettingsChanged::OnSettingsChanged);
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eGeneralSettings);
 
 	*pResult = 0;
 }
 
-void CMainDlg::OnSettingsChanged()
-{
-	UpdateProgramWorkingButton();
-}
-
-void CMainDlg::OnBnClickedCheckProgramWorking()
-{
-	auto& settings = ext::get_singleton<Settings>();
-	settings.programWorking = !settings.programWorking;
-	ext::send_event(&ISettingsChanged::OnSettingsChanged);
-}
-
 void CMainDlg::OnCbnSelchangeComboInputDriver()
 {
-	auto curSel = m_inputDriver.GetCurSel();
+	auto curSel = m_inputSimulator.GetCurSel();
 	EXT_ASSERT(curSel != -1);
 
-	auto selecetedInputMode = kComboboxIndexesToInputModes.get_value(curSel);
+	auto selecetedInputSimulator = kComboboxIndexesToInputModes.get_value(curSel);
 
-	auto err = InputManager::SetInputSimulator(selecetedInputMode);
+	auto err = InputManager::SetInputSimulator(selecetedInputSimulator);
 	if (err.has_value())
 	{
 		auto newInputMode = InputManager::InputSimulator::Auto;
@@ -447,32 +338,31 @@ void CMainDlg::OnCbnSelchangeComboInputDriver()
 
 		MessageBox((L"Fail reason: " + std::wstring(err.value()) +
 				   L". Program will use " + kDriverNames.get_value(newInputMode)).c_str(),
-				   (L"Can't use input simulator " + std::wstring(kDriverNames.get_value(selecetedInputMode))).c_str(),
+				   (L"Can't use input simulator " + std::wstring(kDriverNames.get_value(selecetedInputSimulator))).c_str(),
 				   MB_ICONEXCLAMATION);
 
-		selecetedInputMode = newInputMode;
-		m_inputDriver.SetCurSel(kComboboxIndexesToInputModes.get_key(selecetedInputMode));
+		selecetedInputSimulator = newInputMode;
+		m_inputSimulator.SetCurSel(kComboboxIndexesToInputModes.get_key(selecetedInputSimulator));
 	}
 
-	if (ext::get_singleton<Settings>().driverInputMode == int(selecetedInputMode))
+	if (ext::get_singleton<Settings>().inputSimulator == selecetedInputSimulator)
 		return;
 
-	if (selecetedInputMode == InputManager::InputSimulator::SendInput)
+	if (selecetedInputSimulator == InputManager::InputSimulator::SendInput)
 	{
 		if (MessageBox(L"Be aware that some game guards might detect input from standart windows input and may take some actions against it. "
 					   L"It is recommended to install some input driver to avoid such detections. Do you want to see extra information?",
 					   L"You will use standart windows API input", MB_YESNO) == IDYES)
 		{
-			OnBnClickedMfcbuttonInputDriverInfo();
+			OnBnClickedMfcbuttonInputSimulatorInfo();
 		}
 	}
 
-	ext::get_singleton<Settings>().driverInputMode = int(selecetedInputMode);
-	ext::send_event(&ISettingsChanged::OnSettingsChanged);
+	ext::get_singleton<Settings>().inputSimulator = selecetedInputSimulator;
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eInputSimulator);
 }
 
-void CMainDlg::OnBnClickedMfcbuttonInputDriverInfo()
+void CMainDlg::OnBnClickedMfcbuttonInputSimulatorInfo()
 {
-	// TODO CInputSimulatorInfoDlg(this).DoModal();
-	CActionsExecutorDlg(this).DoModal();
+	CInputSimulatorInfoDlg(this).DoModal();
 }

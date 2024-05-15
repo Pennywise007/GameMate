@@ -1,9 +1,12 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <string>
 #include <list>
 #include <optional>
+
+#include "InputManager.h"
 
 #include <ext/core/singleton.h>
 #include <ext/core/dispatcher.h>
@@ -76,6 +79,32 @@ struct Actions
     DECLARE_SERIALIZABLE_FIELD(float, randomizeDelays, 0.f);
 };
 
+namespace actions_executor {
+
+enum class RepeatMode {
+    eTimes,
+    eUntilStopped
+};
+
+struct Settings
+{
+    REGISTER_SERIALIZABLE_OBJECT();
+    bool enabled = false;
+
+    DECLARE_SERIALIZABLE_FIELD(Actions, actionsSettings);
+    DECLARE_SERIALIZABLE_FIELD(Bind, enableBind, Bind(VK_F6));
+    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalMinutes, 0);
+    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalSeconds, 0);
+    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalMilliseconds, 0);
+
+    DECLARE_SERIALIZABLE_FIELD(RepeatMode, repeatMode, RepeatMode::eTimes);
+    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatTimes, 0);
+};
+
+} // namespace actions_executor
+
+namespace process_toolkit {
+
 namespace crosshair {
 enum class Type
 {
@@ -109,40 +138,27 @@ struct Settings
 
 } // namespace crosshair
 
-struct TabConfiguration
+struct ProcessConfiguration
 {
     REGISTER_SERIALIZABLE_OBJECT();
+    DECLARE_SERIALIZABLE_FIELD(std::wstring, configurationName);
     DECLARE_SERIALIZABLE_FIELD(bool, enabled, true);
     DECLARE_SERIALIZABLE_FIELD(bool, disableWinButton, false);
-    DECLARE_SERIALIZABLE_FIELD(std::wstring, tabName);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, exeName);
     DECLARE_SERIALIZABLE_FIELD(crosshair::Settings, crosshairSettings);
     DECLARE_SERIALIZABLE_FIELD((std::map<Bind, Actions>), actionsByBind);
 };
 
-namespace actions_executor {
-
-enum class RepeatMode {
-    eTimes,
-    eUntilStopped
-};
-
 struct Settings
 {
     REGISTER_SERIALIZABLE_OBJECT();
-    bool enabled = false;
 
-    DECLARE_SERIALIZABLE_FIELD(Actions, actionsSettings);
-    DECLARE_SERIALIZABLE_FIELD(Bind, enableBind, Bind(VK_F6));
-    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalMinutes, 0);
-    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalSeconds, 0);
-    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalMilliseconds, 0);
-
-    DECLARE_SERIALIZABLE_FIELD(RepeatMode, repeatMode, RepeatMode::eTimes);
-    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatTimes, 0);
+    DECLARE_SERIALIZABLE_FIELD(bool, enabled, true);
+    DECLARE_SERIALIZABLE_FIELD(int, activeConfiguration, -1);
+    DECLARE_SERIALIZABLE_FIELD(std::list<std::shared_ptr<ProcessConfiguration>>, processConfigurations);
 };
 
-} // namespace actions_executor
+} // namespace process_toolkit
 
 class Settings
 {
@@ -151,19 +167,32 @@ class Settings
 public:
     void SaveSettings();
 
+    enum class ProgramMode {
+        eActionExecutor,
+        eActiveProcessToolkit
+    };
+
     REGISTER_SERIALIZABLE_OBJECT();
     DECLARE_SERIALIZABLE_FIELD(bool, showMinimizedBubble, true);
     DECLARE_SERIALIZABLE_FIELD(bool, tracesEnabled, true);
-    DECLARE_SERIALIZABLE_FIELD(bool, programWorking, true);
-    DECLARE_SERIALIZABLE_FIELD(int, driverInputMode, 0);
-    DECLARE_SERIALIZABLE_FIELD(int, activeTab, -1);
-    DECLARE_SERIALIZABLE_FIELD(std::list<std::shared_ptr<TabConfiguration>>, tabs);
+
+    DECLARE_SERIALIZABLE_FIELD(InputManager::InputSimulator, inputSimulator, InputManager::InputSimulator::Auto);
+
+    DECLARE_SERIALIZABLE_FIELD(ProgramMode, selectedMode, ProgramMode::eActionExecutor);
+    DECLARE_SERIALIZABLE_FIELD(process_toolkit::Settings, process_toolkit);
     DECLARE_SERIALIZABLE_FIELD(actions_executor::Settings, actions_executor);
 };
 
 // Notification about user changed any settings
 struct ISettingsChanged : ext::events::IBaseEvent
 {
+    enum class ChangedType
+    {
+        eGeneralSettings,   // General settings like traces/selected mode changed
+        eInputSimulator,    // Input simulator changed 
+        eProcessToolkit,    // Settings of the process toolkit changed
+        eActionsExecutor    // Settings og the actions executor changed
+    };
     virtual ~ISettingsChanged() = default;
-    virtual void OnSettingsChanged() = 0;
+    virtual void OnSettingsChanged(ChangedType changedMode) = 0;
 };

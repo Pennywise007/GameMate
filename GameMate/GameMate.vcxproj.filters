@@ -74,13 +74,13 @@
     <ClInclude Include="Controls\Layout\Layout.h">
       <Filter>Controls</Filter>
     </ClInclude>
-    <ClInclude Include="UI\AddingTabDlg.h">
+    <ClInclude Include="UI\AddingProcessToolkitDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="UI\BaseKeyEditDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="UI\GameSettingsDlg.h">
+    <ClInclude Include="UI\ActiveProcessToolkitTab.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="UI\ActionsEditDlg.h">
@@ -104,7 +104,7 @@
     <ClInclude Include="UI\InputSimulatorInfoDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="UI\ActionsExecutorDlg.h">
+    <ClInclude Include="UI\ActionsExecutorTab.h">
       <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -148,13 +148,13 @@
     <ClCompile Include="Controls\Layout\Layout.cpp">
       <Filter>Controls</Filter>
     </ClCompile>
-    <ClCompile Include="UI\AddingTabDlg.cpp">
+    <ClCompile Include="UI\AddingProcessToolkitDlg.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="UI\BaseKeyEditDlg.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="UI\GameSettingsDlg.cpp">
+    <ClCompile Include="UI\ActiveProcessToolkitTab.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="UI\ActionsEditDlg.cpp">
@@ -178,7 +178,7 @@
     <ClCompile Include="UI\InputSimulatorInfoDlg.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="UI\ActionsExecutorDlg.cpp">
+    <ClCompile Include="UI\ActionsExecutorTab.cpp">
       <Filter>UI</Filter>
     </ClCompile>
   </ItemGroup>

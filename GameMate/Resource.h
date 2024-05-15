@@ -7,7 +7,9 @@
 #define IDR_MAINFRAME                   128
 #define IDR_MENU_TRAY                   128
 #define IDD_TAB_GAME_SETTINGS           130
+#define IDD_TAB_ACTIVE_PROCESS_TOOLKIT  130
 #define IDD_DIALOG_ADDING_TAB           132
+#define IDD_DIALOG_ADD_PROCESS_TOOLKIT  132
 #define IDD_DIALOG_ACTIONS_EDIT         134
 #define IDD_DIALOG_BIND_EDIT            137
 #define IDB_PNG_CROSSHAIR               143
@@ -45,6 +47,7 @@
 #define IDB_PNG_ARROW_UP                175
 #define IDD_DIALOG_INPUT_SIMULATOR      177
 #define IDD_DIALOG_ACTIONS_EXECUTOR     180
+#define IDD_TAB_ACTIONS_EXECUTOR        180
 #define IDB_PNG_SETTINGS                184
 #define IDB_PNG_ADD                     185
 #define IDB_PNG2                        186
@@ -86,12 +89,15 @@
 #define IDC_COMBO2                      1033
 #define IDC_COMBO_CROSSHAIR_SIZE        1033
 #define IDC_COMBO3                      1034
+#define IDC_COMBO_CONFIGURATION         1034
 #define IDC_STATIC_CROSSHAIR_TEXT       1035
 #define IDC_MFCCOLORBUTTON_CROSSHAIR_COLOR 1036
 #define IDC_STATIC_CROSSHAIR_SIZE       1037
 #define IDC_CHECK_USE                   1038
+#define IDC_CHECK_SHOW_CROSSHAIR        1038
 #define IDC_STATIC_CROSSHAIR_INFO       1039
 #define IDC_CHECK_DISABLE_WIN           1040
+#define IDC_COMBO_CROSSHAIR_SELECTION2  1041
 #define IDC_MFCBUTTON1                  1042
 #define IDC_MFCBUTTON_INPUT_DRIVER_INFO 1042
 #define IDC_MFCBUTTON_SETTINGS          1042
@@ -104,8 +110,11 @@
 #define IDC_STATIC_INPUT_DRIVER         1047
 #define IDC_BUTTON1                     1048
 #define IDC_MFCLINK1                    1049
+#define IDC_BUTTON_RENAME_CONFIGURATION 1049
 #define IDC_STATIC_GROUP                1050
+#define IDC_BUTTON_ADD_CONFIGURATION    1050
 #define IDC_MFCLINK_RAZER               1051
+#define IDC_BUTTON_REMOVE_CONFIGURATION 1051
 #define IDC_MFCLINK_LOGITECH_8          1052
 #define IDC_MFCLINK3                    1053
 #define IDC_MFCLINK4                    1054
@@ -121,6 +130,12 @@
 #define IDC_MFCMENUBUTTON_ENABLED       1068
 #define IDC_MFCMENUBUTTON2              1069
 #define IDC_STATIC_ACTIONS              1072
+#define IDC_STATIC_CONFIGURATION        1073
+#define IDC_CHECK_ACTIVE_PROCESS_TOOLKIT_ENABLE 1075
+#define IDC_STATIC_NO_CONFIGURATION_EXIST 1076
+#define IDC_STATIC_NO_CONFIGURATION     1077
+#define IDC_BUTTON_ADD_MACROS           1078
+#define IDC_BUTTON_REMOVE_MACROS        1079
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -129,14 +144,16 @@
 #define ID_MENU_DISABLE_TRACES          32776
 #define ID_MENU_DISABLE_PROGRAM         32777
 #define ID_MENU_ENABLE_PROGRAM          32778
+#define ID_MENU_ENABLE_PROCESS_TOOLKIT  32779
+#define ID_MENU_DISABLE_PROCESS_TOOLKIT 32780
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        187
-#define _APS_NEXT_COMMAND_VALUE         32779
-#define _APS_NEXT_CONTROL_VALUE         1073
+#define _APS_NEXT_COMMAND_VALUE         32781
+#define _APS_NEXT_CONTROL_VALUE         1080
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

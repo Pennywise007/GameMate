@@ -8,18 +8,14 @@
 #include <Controls/Edit/SpinEdit/SpinEdit.h>
 #include <Controls/Button/IconButton/IconButton.h>
 
-class CActionsExecutorDlg : public CDialogEx, ext::events::ScopeSubscription<ISettingsChanged>
+class CActionsExecutorTab : public CDialogEx
 {
-	DECLARE_DYNAMIC(CActionsExecutorDlg)
+	DECLARE_DYNAMIC(CActionsExecutorTab)
 
 public:
-	CActionsExecutorDlg(CWnd* pParent = nullptr);   // standard constructor
+	CActionsExecutorTab(CWnd* pParent);   // standard constructor
 
-// Dialog Data
-#ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_DIALOG_ACTIONS_EXECUTOR };
-#endif
-
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	virtual BOOL OnInitDialog();
@@ -33,9 +29,6 @@ protected:
 	afx_msg void OnBnClickedMfcbuttonHotkey();
 
 	DECLARE_MESSAGE_MAP()
-
-private: // ISettingsChanged
-	void OnSettingsChanged() override;
 
 private:
 	void UpdateEnableButtonText();

@@ -10,7 +10,7 @@
 #include <ext/core/check.h>
 #include <ext/std/filesystem.h>
 
-namespace crosshair {
+namespace process_toolkit::crosshair {
 
 void LoadCrosshair(const Settings& crosshair, CBitmap& bitmap) EXT_THROWS(std::runtime_error)
 {

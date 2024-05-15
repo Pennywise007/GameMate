@@ -6,7 +6,7 @@
 
 #include "Settings.h"
 
-namespace crosshair {
+namespace process_toolkit::crosshair {
 
 void LoadCrosshair(const Settings& crosshair, CBitmap& bitmap) EXT_THROWS(std::runtime_error);
 void ChangeCrosshairColor(CBitmap& bitmap, COLORREF color);

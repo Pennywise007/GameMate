@@ -19,16 +19,17 @@ public:
     void OnForegroundChanged(HWND hWnd, const std::wstring& processName);
 
 private: // ISettingsChanged
-    void OnSettingsChanged() override;
+    void OnSettingsChanged(ISettingsChanged::ChangedType changedType) override;
 
 private:
     bool OnKeyOrMouseEvent(WORD mouseVkCode, bool down);
 
 private:
+    int m_keyMauseHandlerId = -1;
     // Active window changed hook
     HWINEVENTHOOK m_activeWindowHook = nullptr;
     // Transparent window to show top most crosshair
-    crosshair::CrosshairWindow m_crosshairWindow;
+    process_toolkit::crosshair::CrosshairWindow m_crosshairWindow;
     // we use 1 thread to put macroses in a single queue
     ext::thread_pool m_macrosExecutor = { 1 };
     // Current active window and process name, we store it just to avoid problems with getting
@@ -36,7 +37,7 @@ private:
     HWND m_activeWindow = nullptr;
     std::wstring m_activeProcessName;
     // Active window program configuration
-    std::shared_ptr<TabConfiguration> m_activeExeTabConfig;
+    std::shared_ptr<process_toolkit::ProcessConfiguration> m_activeExeConfig;
     // Task id of the saving settings task
     ext::TaskId m_saveSettingsTaskId;
     // Time point when we ignored Windows button for active process

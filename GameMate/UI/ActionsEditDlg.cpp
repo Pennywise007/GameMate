@@ -102,7 +102,6 @@ BOOL CActionsEditDlg::OnInitDialog()
 	m_listActions.SetColumn(Columns::eDelay, &colInfo);
 	
 	m_listActions.SetProportionalResizingColumns({ Columns::eAction });
-	// TODO CHECK LOSING FOCUS AFTER EDITTING PROBLEM
 	m_listActions.setSubItemEditorController(Columns::eDelay,
 		[](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
 		{

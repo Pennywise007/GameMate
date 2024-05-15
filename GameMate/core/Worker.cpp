@@ -90,8 +90,7 @@ Worker::Worker()
     try
     {
         using namespace std::placeholders;
-        const int id = InputManager::AddKeyOrMouseHandler(std::bind(&Worker::OnKeyOrMouseEvent, this, _1, _2));
-        EXT_ASSERT(id == 0) << EXT_TRACE_FUNCTION << "We should be the first subscriber, if not change call of the RemoveKeyOrMouseHandler";
+        m_keyMauseHandlerId = InputManager::AddKeyOrMouseHandler(std::bind(&Worker::OnKeyOrMouseEvent, this, _1, _2));
     }
     catch (...)
     {
@@ -113,7 +112,7 @@ Worker::~Worker()
     ASSERT(m_activeWindowHook);
     UnhookWinEvent(m_activeWindowHook);
 
-    InputManager::RemoveKeyOrMouseHandler(0);
+    InputManager::RemoveKeyOrMouseHandler(m_keyMauseHandlerId);
 }
 
 void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
@@ -121,33 +120,33 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
     m_activeWindow = hWnd;
     m_activeProcessName = processName;
 
-    if (m_activeExeTabConfig)
+    if (m_activeExeConfig)
     {
         m_crosshairWindow.RemoveCrosshairWindow();
-        m_activeExeTabConfig = nullptr;
+        m_activeExeConfig = nullptr;
     }
 
-    auto& settings = ext::get_singleton<Settings>();
-    if (!settings.programWorking)
+    auto& settings = ext::get_singleton<Settings>().process_toolkit;
+    if (!settings.enabled)
         return;
 
-    for (auto& tab : settings.tabs)
+    for (auto& program : settings.processConfigurations)
     {
-        if (tab->exeName == m_activeProcessName)
+        if (program->exeName == m_activeProcessName)
         {
-            if (tab->enabled)
-                m_activeExeTabConfig = tab;
+            if (program->enabled)
+                m_activeExeConfig = program;
             break;
         }
     }
 
     // add game mode detection
-    if (!m_activeExeTabConfig)
+    if (!m_activeExeConfig)
         return;
 
     m_lastWindowsIgnoreTimePoint.reset();
 
-    auto& crossahair = m_activeExeTabConfig->crosshairSettings;
+    auto& crossahair = m_activeExeConfig->crosshairSettings;
     if (crossahair.show)
         m_crosshairWindow.AttachCrosshairToWindow(m_activeWindow, crossahair);
 }
@@ -157,16 +156,17 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
     // Check if program working mode switched
     if (vkCode == VK_F9 && !down && InputManager::GetKeyState(VK_SHIFT))
     {
-        auto& settings = ext::get_singleton<Settings>();
-        settings.programWorking = !settings.programWorking;
-        ext::send_event(&ISettingsChanged::OnSettingsChanged);
+        auto& settings = ext::get_singleton<Settings>().process_toolkit;
+        settings.enabled = !settings.enabled;
+        ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
 
         return false;
     }
+    // TODO process executor bind
 
-    if (!!m_activeExeTabConfig)
+    if (!!m_activeExeConfig)
     {
-        for (auto&& [bind, action] : m_activeExeTabConfig->actionsByBind)
+        for (auto&& [bind, action] : m_activeExeConfig->actionsByBind)
         {
             if (bind.IsBindPressed(vkCode))
             {
@@ -186,7 +186,7 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
         }
 
         // Ignore Windows button press
-        if (m_activeExeTabConfig->disableWinButton)
+        if (m_activeExeConfig->disableWinButton)
         {
             switch (vkCode)
             {
@@ -211,9 +211,11 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
     return false;
 }
 
-void Worker::OnSettingsChanged()
+void Worker::OnSettingsChanged(ISettingsChanged::ChangedType changedType)
 {
-    // Force crosshairs and m_activeExeTabConfig to apply new changes
+    // TODO changedType
+ 
+    // Force crosshairs and m_activeExeConfig to apply new changes
     OnForegroundChanged(m_activeWindow, m_activeProcessName);
 
     // Save settings every 5 seconds after settings changed

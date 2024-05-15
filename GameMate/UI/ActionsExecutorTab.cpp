@@ -2,7 +2,7 @@
 #include "afxdialogex.h"
 #include "resource.h"
 
-#include "ActionsExecutorDlg.h"
+#include "ActionsExecutorTab.h"
 #include "BaseKeyEditDlg.h"
 
 #include "core/Settings.h"
@@ -18,17 +18,17 @@ enum Columns {
 
 } // namespace
 
-IMPLEMENT_DYNAMIC(CActionsExecutorDlg, CDialogEx)
+IMPLEMENT_DYNAMIC(CActionsExecutorTab, CDialogEx)
 
-CActionsExecutorDlg::CActionsExecutorDlg(CWnd* pParent /*=nullptr*/)
+CActionsExecutorTab::CActionsExecutorTab(CWnd* pParent)
 	: CDialogEx(IDD_DIALOG_ACTIONS_EXECUTOR, pParent)
 	, m_actionsEditView(static_cast<CWnd*>(&m_actionsGroup),
 						ext::get_singleton<Settings>().actions_executor.actionsSettings,
-						[]() { ext::send_event(&ISettingsChanged::OnSettingsChanged); })
+						[]() { ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor); })
 {
 }
 
-void CActionsExecutorDlg::DoDataExchange(CDataExchange* pDX)
+void CActionsExecutorTab::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_MFCBUTTON_HOTKEY, m_buttonHotkey);
@@ -42,18 +42,18 @@ void CActionsExecutorDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STATIC_ACTIONS, m_actionsGroup);
 }
 
-BEGIN_MESSAGE_MAP(CActionsExecutorDlg, CDialogEx)
-	ON_BN_CLICKED(IDC_RADIO_REPEAT_UNTIL_STOPPED, &CActionsExecutorDlg::OnBnClickedRadioRepeatUntilStopped)
-	ON_BN_CLICKED(IDC_RADIO_REPEAT_TIMES, &CActionsExecutorDlg::OnBnClickedRadioRepeatTimes)
-	ON_BN_CLICKED(IDC_CHECK_ENABLED, &CActionsExecutorDlg::OnBnClickedCheckEnabled)
-	ON_BN_CLICKED(IDC_MFCBUTTON_HOTKEY, &CActionsExecutorDlg::OnBnClickedMfcbuttonHotkey)
-	ON_EN_CHANGE(IDC_EDIT_INTERVAL_MIN, &CActionsExecutorDlg::OnEnChangeEditIntervalMin)
-	ON_EN_CHANGE(IDC_EDIT_INTERVAL_SEC, &CActionsExecutorDlg::OnEnChangeEditIntervalSec)
-	ON_EN_CHANGE(IDC_EDIT_INTERVAL_MILLISEC, &CActionsExecutorDlg::OnEnChangeEditIntervalMillisec)
-	ON_EN_CHANGE(IDC_EDIT_REPEAT_TIMES, &CActionsExecutorDlg::OnEnChangeEditRepeatTimes)
+BEGIN_MESSAGE_MAP(CActionsExecutorTab, CDialogEx)
+	ON_BN_CLICKED(IDC_RADIO_REPEAT_UNTIL_STOPPED, &CActionsExecutorTab::OnBnClickedRadioRepeatUntilStopped)
+	ON_BN_CLICKED(IDC_RADIO_REPEAT_TIMES, &CActionsExecutorTab::OnBnClickedRadioRepeatTimes)
+	ON_BN_CLICKED(IDC_CHECK_ENABLED, &CActionsExecutorTab::OnBnClickedCheckEnabled)
+	ON_BN_CLICKED(IDC_MFCBUTTON_HOTKEY, &CActionsExecutorTab::OnBnClickedMfcbuttonHotkey)
+	ON_EN_CHANGE(IDC_EDIT_INTERVAL_MIN, &CActionsExecutorTab::OnEnChangeEditIntervalMin)
+	ON_EN_CHANGE(IDC_EDIT_INTERVAL_SEC, &CActionsExecutorTab::OnEnChangeEditIntervalSec)
+	ON_EN_CHANGE(IDC_EDIT_INTERVAL_MILLISEC, &CActionsExecutorTab::OnEnChangeEditIntervalMillisec)
+	ON_EN_CHANGE(IDC_EDIT_REPEAT_TIMES, &CActionsExecutorTab::OnEnChangeEditRepeatTimes)
 END_MESSAGE_MAP()
 
-BOOL CActionsExecutorDlg::OnInitDialog()
+BOOL CActionsExecutorTab::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
@@ -97,53 +97,53 @@ BOOL CActionsExecutorDlg::OnInitDialog()
 	return TRUE;
 }
 
-void CActionsExecutorDlg::OnBnClickedRadioRepeatUntilStopped()
+void CActionsExecutorTab::OnBnClickedRadioRepeatUntilStopped()
 {
 	m_radioRepeatTimes.SetCheck(0);
 	ext::get_singleton<Settings>().actions_executor.repeatMode = actions_executor::RepeatMode::eUntilStopped;
-	ext::send_event(&ISettingsChanged::OnSettingsChanged);
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor);
 }
 
-void CActionsExecutorDlg::OnBnClickedRadioRepeatTimes()
+void CActionsExecutorTab::OnBnClickedRadioRepeatTimes()
 {
 	m_radioRepeatUntilStop.SetCheck(0);
 	ext::get_singleton<Settings>().actions_executor.repeatMode = actions_executor::RepeatMode::eTimes;
-	ext::send_event(&ISettingsChanged::OnSettingsChanged);
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor);
 }
 
-void CActionsExecutorDlg::OnEnChangeEditIntervalMin()
+void CActionsExecutorTab::OnEnChangeEditIntervalMin()
 {
 	UpdateSettingsFromControl(m_editIntervalMinutes,
 		ext::get_singleton<Settings>().actions_executor.repeatIntervalMinutes);
 }
 
-void CActionsExecutorDlg::OnEnChangeEditIntervalSec()
+void CActionsExecutorTab::OnEnChangeEditIntervalSec()
 {
 	UpdateSettingsFromControl(m_editIntervalSeconds,
 		ext::get_singleton<Settings>().actions_executor.repeatIntervalSeconds);
 }
 
-void CActionsExecutorDlg::OnEnChangeEditIntervalMillisec()
+void CActionsExecutorTab::OnEnChangeEditIntervalMillisec()
 {
 	UpdateSettingsFromControl(m_editIntervalMilliseconds,
 		ext::get_singleton<Settings>().actions_executor.repeatIntervalMilliseconds);
 }
 
-void CActionsExecutorDlg::OnEnChangeEditRepeatTimes()
+void CActionsExecutorTab::OnEnChangeEditRepeatTimes()
 {
 	UpdateSettingsFromControl(m_editRepeatTimes,
 		ext::get_singleton<Settings>().actions_executor.repeatTimes);
 }
 
-void CActionsExecutorDlg::OnBnClickedCheckEnabled()
+void CActionsExecutorTab::OnBnClickedCheckEnabled()
 {
 	auto& settings = ext::get_singleton<Settings>().actions_executor;
 	settings.enabled = !settings.enabled;
-
-	ext::send_event(&ISettingsChanged::OnSettingsChanged);
+	UpdateEnableButtonText();
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor);
 }
 
-void CActionsExecutorDlg::OnBnClickedMfcbuttonHotkey()
+void CActionsExecutorTab::OnBnClickedMfcbuttonHotkey()
 {
 	auto& currentBind = ext::get_singleton<Settings>().actions_executor.enableBind;
 	auto bind = CBindEditDlg::EditBind(this, currentBind);
@@ -151,15 +151,11 @@ void CActionsExecutorDlg::OnBnClickedMfcbuttonHotkey()
 		return;
 
 	currentBind = bind.value();
-	ext::send_event(&ISettingsChanged::OnSettingsChanged);
-}
-
-void CActionsExecutorDlg::OnSettingsChanged()
-{
 	UpdateEnableButtonText();
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor);
 }
 
-void CActionsExecutorDlg::UpdateEnableButtonText()
+void CActionsExecutorTab::UpdateEnableButtonText()
 {
 	const auto& settings = ext::get_singleton<Settings>().actions_executor;
 	const auto buttonName = std::string_swprintf(L"%s\n(%s)",
@@ -168,7 +164,7 @@ void CActionsExecutorDlg::UpdateEnableButtonText()
 	m_buttonEnable.SetWindowTextW(buttonName.c_str());
 }
 
-void CActionsExecutorDlg::UpdateSettingsFromControl(CSpinEdit& edit, unsigned& setting)
+void CActionsExecutorTab::UpdateSettingsFromControl(CSpinEdit& edit, unsigned& setting)
 {
 	CString controlText;
 	edit.GetWindowTextW(controlText);
@@ -176,10 +172,10 @@ void CActionsExecutorDlg::UpdateSettingsFromControl(CSpinEdit& edit, unsigned& s
 	std::wstringstream str(controlText.GetString());
 	str >> setting;
 
-	ext::send_event(&ISettingsChanged::OnSettingsChanged);
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor);
 }
 
-void CActionsExecutorDlg::EditActions()
+void CActionsExecutorTab::EditActions()
 {
 	auto& currentActions = ext::get_singleton<Settings>().actions_executor.actionsSettings;
 	auto updatedActions = CActionsEditDlg::ExecModal(this, currentActions);
@@ -187,5 +183,5 @@ void CActionsExecutorDlg::EditActions()
 		return;
 
 	currentActions = std::move(updatedActions.value());
-	ext::send_event(&ISettingsChanged::OnSettingsChanged);
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor);
 }
