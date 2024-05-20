@@ -2,6 +2,7 @@
 #pragma once
 
 #include <Controls/TabControl/TabControl.h>
+#include <Controls/TabControl/CustomDrawWidgets.h>
 
 class CMainDlg : public CDialogEx
 {
@@ -38,6 +39,6 @@ private:
 private:
 	HICON m_hIcon;
 	CComboBox m_inputSimulator;
-	CTabControl m_tabControlGames;
+	CButtonsTabCtrl<CTabControl> m_tabControlModes;
 	CMFCButton m_buttonInputDriverInfo;
 };

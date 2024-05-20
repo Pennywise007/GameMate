@@ -79,5 +79,4 @@ private:
 	std::shared_ptr<process_toolkit::ProcessConfiguration> m_configuration;
 	std::list<CBitmap> m_crosshairs;
 	HICON m_demoIcon = nullptr;
-public:
 };

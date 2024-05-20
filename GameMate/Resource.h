@@ -50,9 +50,8 @@
 #define IDD_TAB_ACTIONS_EXECUTOR        180
 #define IDB_PNG_SETTINGS                184
 #define IDB_PNG_ADD                     185
-#define IDB_PNG2                        186
 #define IDB_PNG_DELETE                  186
-#define IDC_TABCONTROL_GAMES            1000
+#define IDC_TABCONTROL_MODES            1000
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
 #define IDC_BUTTON_COPY_TAB             1003

@@ -46,7 +46,7 @@ private:
 	CActionEditDlg(CWnd* pParent, std::optional<Action>& action);
 	virtual BOOL OnInitDialog() override;
 
-private: // CBaseEditDlg
+private: // CBaseKeyEditDlg
 	std::wstring GetActionText() const override;
 	void OnVkCodeAction(WORD vkCode, bool down) override;
 	void OnOK() override;
@@ -66,7 +66,7 @@ private:
 
 	CBindEditDlg(CWnd* pParent, std::optional<Bind>& action);
 
-private: // CBaseEditDlg	
+private: // CBaseKeyEditDlg	
 	std::wstring GetActionText() const override;
 	void OnVkCodeAction(WORD vkCode, bool down) override;
 	void OnOK() override;

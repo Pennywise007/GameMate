@@ -60,7 +60,7 @@ void CMainDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 
-	DDX_Control(pDX, IDC_TABCONTROL_GAMES, m_tabControlGames());
+	DDX_Control(pDX, IDC_TABCONTROL_MODES, m_tabControlModes());
 	DDX_Control(pDX, IDC_COMBO_INPUT_DRIVER, m_inputSimulator);
 	DDX_Control(pDX, IDC_MFCBUTTON_INPUT_DRIVER_INFO, m_buttonInputDriverInfo);
 }
@@ -71,7 +71,7 @@ BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
 	ON_WM_DESTROY()
 	ON_WM_SYSCOMMAND()
 	ON_CBN_SELCHANGE(IDC_COMBO_INPUT_DRIVER, &CMainDlg::OnCbnSelchangeComboInputDriver)
-	ON_NOTIFY(TCN_SELCHANGE, IDC_TABCONTROL_GAMES, &CMainDlg::OnTcnSelchangeTabcontrolGames)
+	ON_NOTIFY(TCN_SELCHANGE, IDC_TABCONTROL_MODES, &CMainDlg::OnTcnSelchangeTabcontrolGames)
 	ON_BN_CLICKED(IDC_MFCBUTTON_INPUT_DRIVER_INFO, &CMainDlg::OnBnClickedMfcbuttonInputSimulatorInfo)
 END_MESSAGE_MAP()
 
@@ -86,14 +86,15 @@ BOOL CMainDlg::OnInitDialog()
 	if (settings.tracesEnabled)
 		ext::get_tracer().Enable();
 
-	m_tabControlGames.AddTab(L"Actions executor",
-							 std::make_shared<CActionsExecutorTab>(&m_tabControlGames()),
+	m_tabControlModes.SetDrawSelectedAsWindow();
+	m_tabControlModes.AddTab(L"Actions executor",
+							 std::make_shared<CActionsExecutorTab>(&m_tabControlModes()),
 							 CActionsExecutorTab::IDD);
-	m_tabControlGames.AddTab(L"Active process toolkit",
-							 std::make_shared<CActiveProcessToolkitTab>(&m_tabControlGames()),
+	m_tabControlModes.AddTab(L"Active process toolkit",
+							 std::make_shared<CActiveProcessToolkitTab>(&m_tabControlModes()),
 							 CActiveProcessToolkitTab::IDD);
-	m_tabControlGames.SetCurSel(int(settings.selectedMode));
-	m_tabControlGames.AutoResizeTabsToFitFullControlWidth();
+	m_tabControlModes.SetCurSel(int(settings.selectedMode));
+	m_tabControlModes.AutoResizeTabsToFitFullControlWidth();
 
 	CTrayHelper::Instance().addTrayIcon(
 		m_hIcon, L"Game mate",
@@ -316,7 +317,7 @@ void CMainDlg::OnSysCommand(UINT nID, LPARAM lParam)
 void CMainDlg::OnTcnSelchangeTabcontrolGames(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	auto& settings = ext::get_singleton<Settings>();
-	settings.selectedMode = Settings::ProgramMode(m_tabControlGames.GetCurSel());
+	settings.selectedMode = Settings::ProgramMode(m_tabControlModes.GetCurSel());
 
 	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eGeneralSettings);
 

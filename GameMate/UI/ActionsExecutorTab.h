@@ -16,6 +16,7 @@ public:
 	CActionsExecutorTab(CWnd* pParent);   // standard constructor
 
 	enum { IDD = IDD_DIALOG_ACTIONS_EXECUTOR };
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	virtual BOOL OnInitDialog();
