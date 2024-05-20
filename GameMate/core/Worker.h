@@ -32,6 +32,7 @@ private:
     process_toolkit::crosshair::CrosshairWindow m_crosshairWindow;
     // we use 1 thread to put macroses in a single queue
     ext::thread_pool m_macrosExecutor = { 1 };
+    ext::thread_pool m_actionExecutor = { 1 };
     // Current active window and process name, we store it just to avoid problems with getting
     // process name from GetForegroundWindow and with protected processes
     HWND m_activeWindow = nullptr;

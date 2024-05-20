@@ -24,6 +24,8 @@ public:
 
 protected:
 	virtual void OnSettingsChanged();
+	virtual void PrepareToOpenDlg() {}
+	virtual void AfterClosingDlg() {}
 
 	DECLARE_MESSAGE_MAP()
 
@@ -63,20 +65,22 @@ private:
 // The same as CActionsEditDlg but allows to insert it to another dlg
 class CActionsEditView : public CActionsEditDlg
 {
-	DECLARE_DYNAMIC(CActionsEditView)
-
 public:
 	using OnSettingsChangedCallback = std::function<void()>;
 	CActionsEditView(CWnd* pParent, Actions& actions, OnSettingsChangedCallback callback);
 
-	enum { IDD = IDD_DIALOG_ACTIONS_EDIT };
 protected:
-	DECLARE_MESSAGE_MAP()
-
 	BOOL OnInitDialog() override;
 	void PreSubclassWindow() override;
+
+protected: // CActionsEditDlg
 	void OnSettingsChanged() override;
+	void PrepareToOpenDlg() override;
+	void AfterClosingDlg() override;
 
 private:
 	const OnSettingsChangedCallback m_onSettingsChangedCallback;
+
+private:
+	HWND m_realFocusBeforeOpeeningDlg = nullptr;
 };

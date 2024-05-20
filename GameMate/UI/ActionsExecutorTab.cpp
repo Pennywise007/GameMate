@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "afxdialogex.h"
 #include "resource.h"
 
@@ -97,6 +97,16 @@ BOOL CActionsExecutorTab::OnInitDialog()
 	return TRUE;
 }
 
+void CActionsExecutorTab::OnOK()
+{
+	// CDialogEx::OnOK();
+}
+
+void CActionsExecutorTab::OnCancel()
+{
+	// CDialogEx::OnCancel();
+}
+
 void CActionsExecutorTab::OnBnClickedRadioRepeatUntilStopped()
 {
 	m_radioRepeatTimes.SetCheck(0);
@@ -139,8 +149,7 @@ void CActionsExecutorTab::OnBnClickedCheckEnabled()
 {
 	auto& settings = ext::get_singleton<Settings>().actions_executor;
 	settings.enabled = !settings.enabled;
-	UpdateEnableButtonText();
-	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor);
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
 }
 
 void CActionsExecutorTab::OnBnClickedMfcbuttonHotkey()
@@ -153,6 +162,36 @@ void CActionsExecutorTab::OnBnClickedMfcbuttonHotkey()
 	currentBind = bind.value();
 	UpdateEnableButtonText();
 	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor);
+}
+
+void CActionsExecutorTab::OnSettingsChanged(ISettingsChanged::ChangedType changedType)
+{
+	if (changedType != ISettingsChanged::ChangedType::eActionsExecutorEnableChanged)
+		return;
+
+	UpdateEnableButtonText();
+
+	struct Data
+	{
+		bool enable;
+		std::set<CWnd*> excludedControls;
+	};
+
+	const Data data { 
+		.enable = !ext::get_singleton<Settings>().actions_executor.enabled,
+		.excludedControls = { &m_buttonEnable, &m_buttonHotkey }
+	};
+
+	EnumChildWindows(m_hWnd, [](HWND hWnd, LPARAM lParam)
+		{
+			const auto* data = reinterpret_cast<Data*>(lParam);
+
+			CWnd* pWnd = CWnd::FromHandle(hWnd);
+			if (data->excludedControls.find(pWnd) == data->excludedControls.end())
+				pWnd->EnableWindow(data->enable);
+
+			return TRUE;
+		}, LPARAM(&data));
 }
 
 void CActionsExecutorTab::UpdateEnableButtonText()

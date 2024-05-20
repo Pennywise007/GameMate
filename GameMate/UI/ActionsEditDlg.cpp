@@ -138,16 +138,16 @@ BOOL CActionsEditDlg::OnInitDialog()
 	m_listActions.setSubItemEditorController(Columns::eAction,
 		[&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
 		{
-			auto* list = dynamic_cast<CListGroupCtrl*>(pList);
-			ASSERT(list);
+			Action* action = (Action*)m_listActions.GetItemDataPtr(pParams->iItem);
 
-			Action* action = (Action*)list->GetItemDataPtr(pParams->iItem);
-
+			PrepareToOpenDlg();
 			auto newAction = CActionEditDlg::EditAction(this, *action);
+			AfterClosingDlg();
+
 			if (newAction.has_value())
 			{
-                *action = std::move(*newAction);
-                m_listActions.SetItemText(pParams->iItem, Columns::eAction, action->ToString().c_str());
+				*action = std::move(*newAction);
+				m_listActions.SetItemText(pParams->iItem, Columns::eAction, action->ToString().c_str());
 				OnSettingsChanged();
 			}
 
@@ -298,7 +298,10 @@ void CActionsEditDlg::updateButtonStates()
 
 void CActionsEditDlg::OnBnClickedButtonAdd()
 {
+	PrepareToOpenDlg();
 	std::optional<Action> action = CActionEditDlg::EditAction(this);
+	AfterClosingDlg();
+
 	if (!action.has_value())
 		return;
 
@@ -395,11 +398,6 @@ void CActionsEditDlg::OnEnChangeEditRandomizeDelays()
 	OnSettingsChanged();
 }
 
-IMPLEMENT_DYNAMIC(CActionsEditView, CActionsEditDlg)
-
-BEGIN_MESSAGE_MAP(CActionsEditView, CActionsEditDlg)
-END_MESSAGE_MAP()
-
 CActionsEditView::CActionsEditView(CWnd* pParent, Actions& actions, OnSettingsChangedCallback callback)
 	: CActionsEditDlg(pParent, actions)
 	, m_onSettingsChangedCallback(std::move(callback))
@@ -454,4 +452,23 @@ void CActionsEditView::OnSettingsChanged()
 
 	if (m_onSettingsChangedCallback)
 		m_onSettingsChangedCallback();
+}
+
+void CActionsEditView::PrepareToOpenDlg()
+{
+	// If some control is focused and we open any dialog, even message box,
+	// creation of the dlg will be dead locked on focus restoration logic in MFC
+	// to avoid it we will change focus to our parent and restore it back after closing the dialog
+	// TODO: try to rework to CView instead of CDialogEx
+	m_realFocusBeforeOpeeningDlg = ::GetFocus();
+
+	// To avoid flickering of the dialog controls we stop redraw on focus change
+	SetRedraw(FALSE);
+	GetParent()->SetFocus();
+}
+
+void CActionsEditView::AfterClosingDlg()
+{
+	::SetFocus(m_realFocusBeforeOpeeningDlg);
+	SetRedraw(TRUE);
 }

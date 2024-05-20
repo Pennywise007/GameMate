@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <string>
@@ -77,6 +78,8 @@ struct Actions
     REGISTER_SERIALIZABLE_OBJECT();
     DECLARE_SERIALIZABLE_FIELD(std::list<Action>, actions);
     DECLARE_SERIALIZABLE_FIELD(float, randomizeDelays, 0.f);
+
+    void Execute() const;
 };
 
 namespace actions_executor {
@@ -99,6 +102,8 @@ struct Settings
 
     DECLARE_SERIALIZABLE_FIELD(RepeatMode, repeatMode, RepeatMode::eTimes);
     DECLARE_SERIALIZABLE_FIELD(unsigned, repeatTimes, 0);
+
+    void Execute() const;
 };
 
 } // namespace actions_executor
@@ -188,10 +193,11 @@ struct ISettingsChanged : ext::events::IBaseEvent
 {
     enum class ChangedType
     {
-        eGeneralSettings,   // General settings like traces/selected mode changed
-        eInputSimulator,    // Input simulator changed 
-        eProcessToolkit,    // Settings of the process toolkit changed
-        eActionsExecutor    // Settings og the actions executor changed
+        eGeneralSettings,               // General settings like traces/selected mode changed
+        eInputSimulator,                // Input simulator changed 
+        eProcessToolkit,                // Settings of the process toolkit changed
+        eActionsExecutor,               // Settings of the actions executor changed
+        eActionsExecutorEnableChanged   // Actions executor enabled state changed
     };
     virtual ~ISettingsChanged() = default;
     virtual void OnSettingsChanged(ChangedType changedMode) = 0;

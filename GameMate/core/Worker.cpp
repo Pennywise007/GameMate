@@ -158,27 +158,31 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
     {
         auto& settings = ext::get_singleton<Settings>().process_toolkit;
         settings.enabled = !settings.enabled;
-        ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+        ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
 
         return false;
     }
-    // TODO process executor bind
+
+    if (!down)
+    {
+        if (auto& settings = ext::get_singleton<Settings>().actions_executor; settings.enableBind.IsBindPressed(vkCode))
+        {
+            settings.enabled = !settings.enabled;
+            ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
+            return false;
+        }
+    }
 
     if (!!m_activeExeConfig)
     {
-        for (auto&& [bind, action] : m_activeExeConfig->actionsByBind)
+        for (auto&& [bind, actions] : m_activeExeConfig->actionsByBind)
         {
             if (bind.IsBindPressed(vkCode))
             {
                 // Execute macros on key down and ignore key up
                 if (down)
                 {
-                    m_macrosExecutor.add_task([actions = action.actions, delayRandomize = action.randomizeDelays]() {
-                        for (const auto& action : actions)
-                        {
-                            action.ExecuteAction(delayRandomize, false);
-                        }
-                    });
+                    m_macrosExecutor.add_task([](Actions actions) { actions.Execute(); }, actions);
                 }
 
                 return true;
@@ -213,19 +217,45 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
 
 void Worker::OnSettingsChanged(ISettingsChanged::ChangedType changedType)
 {
-    // TODO changedType
- 
-    // Force crosshairs and m_activeExeConfig to apply new changes
-    OnForegroundChanged(m_activeWindow, m_activeProcessName);
-
     // Save settings every 5 seconds after settings changed
     auto& scheduller = ext::Scheduler::GlobalInstance();
     if (m_saveSettingsTaskId != ext::kInvalidId)
         scheduller.RemoveTask(m_saveSettingsTaskId);
     m_saveSettingsTaskId = scheduller.SubscribeTaskAtTime([]()
+        {
+            ext::InvokeMethodAsync([]() {
+                ext::get_singleton<Settings>().SaveSettings();
+            });
+        }, std::chrono::system_clock::now() + std::chrono::seconds(5));
+
+    switch (changedType)
     {
-        ext::InvokeMethodAsync([]() {
-            ext::get_singleton<Settings>().SaveSettings();
-        });
-    }, std::chrono::system_clock::now() + std::chrono::seconds(5));
+    case ISettingsChanged::ChangedType::eProcessToolkit:
+        // Force crosshairs and m_activeExeConfig to apply new changes
+        OnForegroundChanged(m_activeWindow, m_activeProcessName);
+        break;
+    case ISettingsChanged::ChangedType::eActionsExecutorEnableChanged:
+        {
+            auto& settings = ext::get_singleton<Settings>().actions_executor;
+            if (settings.enabled)
+            {
+                EXT_ASSERT(m_actionExecutor.running_tasks_count() == 0);
+                m_actionExecutor.add_task([](actions_executor::Settings actionsExecutor) -> void {
+                    actionsExecutor.Execute();
+
+                    bool s = ext::this_thread::interruption_requested();
+                    if (!s)
+                        ext::InvokeMethodAsync([]() {
+                            ext::get_singleton<Settings>().actions_executor.enabled = false;
+                            ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
+                        });
+                }, settings);
+            }
+            else
+            {
+                m_actionExecutor.interrupt_and_remove_all_tasks();
+            }
+        }
+        break;
+    }
 }

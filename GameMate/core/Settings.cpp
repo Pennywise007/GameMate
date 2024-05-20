@@ -182,7 +182,7 @@ void Action::ExecuteAction(float delayRandomize, bool applyMousePos) const
 		auto randomMultiply = 1.;
 		if (delayRandomize)
 			randomMultiply = (100. - delayRandomize + double(rand() % int(delayRandomize * 2. * 1000.)) / 1000.) / 100.;
-		Sleep(DWORD(delayInMilliseconds * randomMultiply));
+		ext::this_thread::interruptible_sleep_for(std::chrono::milliseconds(long long(delayInMilliseconds * randomMultiply)));
 	}
 
 	if (applyMousePos)
@@ -195,6 +195,66 @@ void Action::ExecuteAction(float delayRandomize, bool applyMousePos) const
 		EXT_ASSERT(type != Type::eMouseMove);
 
 	InputManager::SendKeyOrMouse(vkCode, down);
+}
+
+void Actions::Execute() const
+{
+	auto stopToken = ext::this_thread::get_stop_token();
+	try
+	{
+		for (const auto& action : actions)
+		{
+			if (stopToken.stop_requested())
+				return;
+
+			action.ExecuteAction(randomizeDelays, false);
+		}
+	}
+	catch (const ext::thread::thread_interrupted&)
+	{
+	}
+}
+
+void actions_executor::Settings::Execute() const
+{
+	unsigned executions = 0;
+	const auto stopToken = ext::this_thread::get_stop_token();
+	const auto sleepTime =
+		std::chrono::minutes(repeatIntervalMinutes) +
+		std::chrono::seconds(repeatIntervalSeconds) +
+		std::chrono::milliseconds(repeatIntervalMilliseconds);
+
+	while (!stopToken.stop_requested())
+	{
+		actionsSettings.Execute();
+
+		if (stopToken.stop_requested())
+			return;
+
+		switch (repeatMode)
+		{
+		case RepeatMode::eTimes:
+			++executions;
+			if (++executions >= repeatTimes)
+				return;
+
+			break;
+		case RepeatMode::eUntilStopped:
+			break;
+		default:
+			EXT_ASSERT(false) << "Unknown repeat mode " << int(repeatMode);
+			break;
+		}
+
+		try
+		{
+			ext::this_thread::interruptible_sleep_for(sleepTime);
+		}
+		catch (const ext::thread::thread_interrupted&)
+		{
+			return;
+		}
+	}
 }
 
 Settings::Settings()

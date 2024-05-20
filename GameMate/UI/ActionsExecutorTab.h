@@ -8,7 +8,7 @@
 #include <Controls/Edit/SpinEdit/SpinEdit.h>
 #include <Controls/Button/IconButton/IconButton.h>
 
-class CActionsExecutorTab : public CDialogEx
+class CActionsExecutorTab : public CDialogEx, ext::events::ScopeSubscription<ISettingsChanged>
 {
 	DECLARE_DYNAMIC(CActionsExecutorTab)
 
@@ -19,6 +19,8 @@ public:
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual void OnOK();
+	virtual void OnCancel();
 	virtual BOOL OnInitDialog();
 	afx_msg void OnEnChangeEditIntervalMin();
 	afx_msg void OnEnChangeEditIntervalSec();
@@ -30,6 +32,9 @@ protected:
 	afx_msg void OnBnClickedMfcbuttonHotkey();
 
 	DECLARE_MESSAGE_MAP()
+
+private: // ISettingsChanged
+	void OnSettingsChanged(ISettingsChanged::ChangedType changedType) override;
 
 private:
 	void UpdateEnableButtonText();
