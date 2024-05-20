@@ -3,7 +3,7 @@
 
 #include "core/Settings.h"
 
-#include "ActionsEditDlg.h"
+#include "ActionsEdit.h"
 
 #include <Controls/Edit/SpinEdit/SpinEdit.h>
 #include <Controls/Button/IconButton/IconButton.h>
@@ -43,7 +43,7 @@ private:
 
 private: // Controls
 	CStatic m_actionsGroup;
-	CActionsEditView m_actionsEditView;
+	CActionsEditView* m_actionsEditView;
 
 	CSpinEdit m_editIntervalMinutes;
 	CSpinEdit m_editIntervalSeconds;

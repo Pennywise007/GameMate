@@ -1,54 +1,21 @@
-﻿#include "pch.h"
-#include "afxdialogex.h"
-#include "resource.h"
+#pragma once
 
-#include "ActionsEditDlg.h"
+#include "ActionsEdit.h"
 #include "BaseKeyEditDlg.h"
-#include "InputManager.h"
 
-#include <Controls/Layout/Layout.h>
-#include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
 #include <Controls/Tooltip/ToolTip.h>
 
-#include <ext/core/check.h>
-
-using namespace controls::list::widgets;
-
-namespace {
-
-enum Columns {
-	eDelay = 0,
-	eAction
-};
-
-constexpr UINT kTimerInterval1Sec = 1000;
-
-constexpr UINT kRecordingTimer0Id = 0;
-constexpr UINT kRecordingTimer1Id = 1;
-constexpr UINT kRecordingTimer2Id = 2;
-
-} // namespace
-
-IMPLEMENT_DYNAMIC(CActionsEditDlg, CDialogEx)
-
-CActionsEditDlg::CActionsEditDlg(CWnd* pParent, Actions& macros)
-	: CDialogEx(IDD_DIALOG_ACTIONS_EDIT, pParent)
-	, m_macros(macros)
+template <class CBaseWindow>
+template <typename... Args>
+CActionsEditBase<CBaseWindow>::CActionsEditBase(Args&&... args)
+	: CBaseWindow(std::forward<Args>(args)...)
 {
 }
 
-std::optional<Actions> CActionsEditDlg::ExecModal(CWnd* pParent, const Actions& currentActions)
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::DoDataExchange(CDataExchange* pDX)
 {
-	Actions actions = currentActions;
-	if (CActionsEditDlg(pParent, actions).DoModal() != IDOK)
-		return std::nullopt;
-
-	return actions;
-}
-
-void CActionsEditDlg::DoDataExchange(CDataExchange* pDX)
-{
-	CDialogEx::DoDataExchange(pDX);
+	CBaseWindow::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LIST_MACROSES, m_listActions);
 	DDX_Control(pDX, IDC_BUTTON_RECORD, m_buttonRecord);
 	DDX_Control(pDX, IDC_EDIT_RANDOMIZE_DELAYS, m_editRandomizeDelays);
@@ -59,22 +26,21 @@ void CActionsEditDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_REMOVE, m_buttonDelete);
 }
 
-BEGIN_MESSAGE_MAP(CActionsEditDlg, CDialogEx)
+BEGIN_TEMPLATE_MESSAGE_MAP(CActionsEditBase, CBaseWindow, CBaseWindow)
 	ON_WM_TIMER()
 	ON_WM_DESTROY()
-	ON_BN_CLICKED(IDC_BUTTON_ADD, &CActionsEditDlg::OnBnClickedButtonAdd)
-	ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CActionsEditDlg::OnBnClickedButtonRemove)
-	ON_BN_CLICKED(IDC_BUTTON_RECORD, &CActionsEditDlg::OnBnClickedButtonRecord)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_MACROSES, &CActionsEditDlg::OnLvnItemchangedListActions)
-	ON_BN_CLICKED(IDC_BUTTON_MOVE_UP, &CActionsEditDlg::OnBnClickedButtonMoveUp)
-	ON_BN_CLICKED(IDC_BUTTON_MOVE_DOWN, &CActionsEditDlg::OnBnClickedButtonMoveDown)
-	ON_EN_CHANGE(IDC_EDIT_RANDOMIZE_DELAYS, &CActionsEditDlg::OnEnChangeEditRandomizeDelays)
+	ON_BN_CLICKED(IDC_BUTTON_ADD, &CActionsEditBase::OnBnClickedButtonAdd)
+	ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CActionsEditBase::OnBnClickedButtonRemove)
+	ON_BN_CLICKED(IDC_BUTTON_RECORD, &CActionsEditBase::OnBnClickedButtonRecord)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_MACROSES, &CActionsEditBase::OnLvnItemchangedListActions)
+	ON_BN_CLICKED(IDC_BUTTON_MOVE_UP, &CActionsEditBase::OnBnClickedButtonMoveUp)
+	ON_BN_CLICKED(IDC_BUTTON_MOVE_DOWN, &CActionsEditBase::OnBnClickedButtonMoveDown)
+	ON_EN_CHANGE(IDC_EDIT_RANDOMIZE_DELAYS, &CActionsEditBase::OnEnChangeEditRandomizeDelays)
 END_MESSAGE_MAP()
 
-BOOL CActionsEditDlg::OnInitDialog()
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::OnInit()
 {
-	CDialogEx::OnInitDialog();
-
 	CRect rect;
 	m_staticDelayHelp.GetClientRect(rect);
 
@@ -87,27 +53,29 @@ BOOL CActionsEditDlg::OnInitDialog()
 
 	controls::SetTooltip(m_staticDelayHelp, L"Some game guards may check if you press buttons with the same delay and can ban you.\n"
 		L"To avoid this you can set a percentage of the delay which will be applied to te ation delay randomly.\n"
-		L"Formula: delay ± random(percentage)\n");
+		L"Formula: delay � random(percentage)\n");
 
 	m_listActions.GetClientRect(rect);
 
 	constexpr int kDelayColumnWidth = 70;
 	m_listActions.InsertColumn(Columns::eDelay, L"Delay(ms)", LVCFMT_CENTER, kDelayColumnWidth);
 	m_listActions.InsertColumn(Columns::eAction, L"Action", LVCFMT_LEFT, rect.Width() - kDelayColumnWidth);
-	
+
 	LVCOLUMN colInfo;
 	colInfo.mask = LVCF_FMT;
 	m_listActions.GetColumn(Columns::eDelay, &colInfo);
 	colInfo.fmt |= LVCFMT_FIXED_WIDTH | LVCFMT_CENTER;
 	m_listActions.SetColumn(Columns::eDelay, &colInfo);
-	
+
 	m_listActions.SetProportionalResizingColumns({ Columns::eAction });
+
+	using namespace controls::list::widgets;
 	m_listActions.setSubItemEditorController(Columns::eDelay,
 		[](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
 		{
 			auto edit = std::make_shared<CEditBase>();
 
-			edit->Create(SubItemEditorControllerBase::getStandartEditorWndStyle() | 
+			edit->Create(SubItemEditorControllerBase::getStandartEditorWndStyle() |
 				ES_CENTER | CBS_AUTOHSCROLL,
 				CRect(), parentWindow, 0);
 			edit->UsePositiveDigitsOnly();
@@ -140,10 +108,7 @@ BOOL CActionsEditDlg::OnInitDialog()
 		{
 			Action* action = (Action*)m_listActions.GetItemDataPtr(pParams->iItem);
 
-			PrepareToOpenDlg();
 			auto newAction = CActionEditDlg::EditAction(this, *action);
-			AfterClosingDlg();
-
 			if (newAction.has_value())
 			{
 				*action = std::move(*newAction);
@@ -157,13 +122,13 @@ BOOL CActionsEditDlg::OnInitDialog()
 	m_editRandomizeDelays.UsePositiveDigitsOnly();
 	m_editRandomizeDelays.SetMinMaxLimits(0, 100);
 
-	for (const auto& action : m_macros.actions)
+	for (const auto& action : m_actions->actions)
 	{
 		addAction(action);
 	}
 
 	std::wostringstream str;
-	str << m_macros.randomizeDelays;
+	str << m_actions->randomizeDelays;
 	m_editRandomizeDelays.SetWindowTextW(str.str().c_str());
 
 	// TODO find better icons, maybe https://www.iconfinder.com/icons/22947/red_stop_icon?coming-from=related-results
@@ -193,55 +158,61 @@ BOOL CActionsEditDlg::OnInitDialog()
 		switch (vkCode)
 		{
 		case VK_LBUTTON:
+		{
+			CPoint cursor;
+			::GetCursorPos(&cursor);
+
+			// Process stop recording and OK click
+			auto window = ::WindowFromPoint(cursor);
+			if (window == m_buttonRecord.m_hWnd || window == CBaseWindow::GetDlgItem(IDOK)->m_hWnd)
 			{
-				CPoint cursor;
-				::GetCursorPos(&cursor);
-
-				// Process stop recording and OK click
-				auto window = ::WindowFromPoint(cursor);
-				if (window == m_buttonRecord.m_hWnd || window == GetDlgItem(IDOK)->m_hWnd)
-				{
-					OnSettingsChanged();
-					return false;
-				}
-
-				[[fallthrough]];
+				OnSettingsChanged();
+				return false;
 			}
-		default:
-			{
-				auto curTime = std::chrono::steady_clock::now();
-				auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
 
-				addAction(Action(vkCode, isDown, int(delay)));
-				m_lastActionTime = std::move(curTime);
-				return true;
-			}
+			[[fallthrough]];
 		}
-	});
+		default:
+		{
+			auto curTime = std::chrono::steady_clock::now();
+			auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
+
+			addAction(Action(vkCode, isDown, int(delay)));
+			m_lastActionTime = std::move(curTime);
+			return true;
+		}
+		}
+		});
 
 
 	updateButtonStates();
-
-	return TRUE;
 }
 
-void CActionsEditDlg::OnSettingsChanged()
+template<class CBaseWindow>
+inline void CActionsEditBase<CBaseWindow>::SetActions(Actions& macros)
+{
+	m_actions = &macros;
+}
+
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::OnSettingsChanged()
 {
 	const auto size = m_listActions.GetItemCount();
 
-	m_macros.actions.resize(size);
-	auto it = m_macros.actions.begin();
+	m_actions->actions.resize(size);
+	auto it = m_actions->actions.begin();
 	for (auto item = 0; item < size; ++item, ++it)
 	{
 		*it = *(Action*)m_listActions.GetItemDataPtr(item);
 	}
 }
 
-void CActionsEditDlg::OnDestroy()
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::OnDestroy()
 {
 	InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
 
-	CDialogEx::OnDestroy();
+	CBaseWindow::OnDestroy();
 
 	// Free memory
 	for (auto item = 0, size = m_listActions.GetItemCount(); item < size; ++item)
@@ -250,7 +221,8 @@ void CActionsEditDlg::OnDestroy()
 	}
 }
 
-BOOL CActionsEditDlg::PreTranslateMessage(MSG* pMsg)
+template <class CBaseWindow>
+BOOL CActionsEditBase<CBaseWindow>::PreTranslateMessage(MSG* pMsg)
 {
 	switch (pMsg->message)
 	{
@@ -267,10 +239,11 @@ BOOL CActionsEditDlg::PreTranslateMessage(MSG* pMsg)
 	}
 	}
 
-	return CDialogEx::PreTranslateMessage(pMsg);
+	return CBaseWindow::PreTranslateMessage(pMsg);
 }
 
-void CActionsEditDlg::addAction(Action action)
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::addAction(Action action)
 {
 	std::vector<int> selectedActions = m_listActions.GetSelectedItems();
 
@@ -288,7 +261,8 @@ void CActionsEditDlg::addAction(Action action)
 	m_listActions.SetItemDataPtr(item, actionPtr.release());
 }
 
-void CActionsEditDlg::updateButtonStates()
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::updateButtonStates()
 {
 	auto selectionExist = m_listActions.GetSelectedCount() > 0;
 	m_buttonDelete.EnableWindow(selectionExist);
@@ -296,12 +270,10 @@ void CActionsEditDlg::updateButtonStates()
 	m_buttonMoveDown.EnableWindow(selectionExist);
 }
 
-void CActionsEditDlg::OnBnClickedButtonAdd()
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::OnBnClickedButtonAdd()
 {
-	PrepareToOpenDlg();
 	std::optional<Action> action = CActionEditDlg::EditAction(this);
-	AfterClosingDlg();
-
 	if (!action.has_value())
 		return;
 
@@ -310,7 +282,8 @@ void CActionsEditDlg::OnBnClickedButtonAdd()
 	OnSettingsChanged();
 }
 
-void CActionsEditDlg::OnBnClickedButtonRemove()
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::OnBnClickedButtonRemove()
 {
 	std::vector<int> selectedActions = m_listActions.GetSelectedItems();
 
@@ -323,15 +296,16 @@ void CActionsEditDlg::OnBnClickedButtonRemove()
 	OnSettingsChanged();
 }
 
-void CActionsEditDlg::OnBnClickedButtonRecord()
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::OnBnClickedButtonRecord()
 {
-	KillTimer(kRecordingTimer0Id);
-	KillTimer(kRecordingTimer1Id);
-	KillTimer(kRecordingTimer2Id);
+	CBaseWindow::KillTimer(kRecordingTimer0Id);
+	CBaseWindow::KillTimer(kRecordingTimer1Id);
+	CBaseWindow::KillTimer(kRecordingTimer2Id);
 
 	if (m_buttonRecord.GetCheck() == BST_CHECKED)
 	{
-		SetTimer(kRecordingTimer0Id, kTimerInterval1Sec, nullptr);
+		CBaseWindow::SetTimer(kRecordingTimer0Id, kTimerInterval1Sec, nullptr);
 		m_buttonRecord.SetWindowTextW(L"Recording starts in 3...");
 		m_buttonRecord.SetIcon(IDI_ICON_STOP_RECORDING, Alignment::LeftCenter);
 	}
@@ -344,18 +318,19 @@ void CActionsEditDlg::OnBnClickedButtonRecord()
 	}
 }
 
-void CActionsEditDlg::OnTimer(UINT_PTR nIDEvent)
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::OnTimer(UINT_PTR nIDEvent)
 {
-	KillTimer(nIDEvent);
+	CBaseWindow::KillTimer(nIDEvent);
 
 	switch (nIDEvent)
 	{
 	case kRecordingTimer0Id:
-		SetTimer(kRecordingTimer1Id, kTimerInterval1Sec, nullptr);
+		CBaseWindow::SetTimer(kRecordingTimer1Id, kTimerInterval1Sec, nullptr);
 		m_buttonRecord.SetWindowTextW(L"Recording starts in 2...");
 		break;
 	case kRecordingTimer1Id:
-		SetTimer(kRecordingTimer2Id, kTimerInterval1Sec, nullptr);
+		CBaseWindow::SetTimer(kRecordingTimer2Id, kTimerInterval1Sec, nullptr);
 		m_buttonRecord.SetWindowTextW(L"Recording starts in 1...");
 		break;
 	case kRecordingTimer2Id:
@@ -367,108 +342,37 @@ void CActionsEditDlg::OnTimer(UINT_PTR nIDEvent)
 		break;
 	}
 
-	CDialogEx::OnTimer(nIDEvent);
+	CBaseWindow::OnTimer(nIDEvent);
 }
 
-void CActionsEditDlg::OnBnClickedButtonMoveUp()
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::OnBnClickedButtonMoveUp()
 {
 	m_listActions.MoveSelectedItems(true);
 	OnSettingsChanged();
 }
 
-void CActionsEditDlg::OnBnClickedButtonMoveDown()
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::OnBnClickedButtonMoveDown()
 {
 	m_listActions.MoveSelectedItems(false);
 	OnSettingsChanged();
 }
 
-void CActionsEditDlg::OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult)
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult)
 {
 	updateButtonStates();
 	*pResult = 0;
 }
 
-void CActionsEditDlg::OnEnChangeEditRandomizeDelays()
+template <class CBaseWindow>
+void CActionsEditBase<CBaseWindow>::OnEnChangeEditRandomizeDelays()
 {
 	CString text;
 	m_editRandomizeDelays.GetWindowTextW(text);
 	std::wistringstream str(text.GetString());
-	str >> m_macros.randomizeDelays;
+	str >> m_actions->randomizeDelays;
 
 	OnSettingsChanged();
-}
-
-CActionsEditView::CActionsEditView(CWnd* pParent, Actions& actions, OnSettingsChangedCallback callback)
-	: CActionsEditDlg(pParent, actions)
-	, m_onSettingsChangedCallback(std::move(callback))
-{
-}
-
-BOOL CActionsEditView::OnInitDialog()
-{
-	auto res = CActionsEditDlg::OnInitDialog();
-
-	// We need to hide OK button and remove extra offset from the sides
-	GetDlgItem(IDOK)->ShowWindow(SW_HIDE);
-
-	auto parent = GetParent();
-	ASSERT(parent);
-
-	CRect rect;
-	parent->GetClientRect(rect);
-	rect.InflateRect(5, 5);
-
-	MoveWindow(rect);
-	ShowWindow(SW_SHOW);
-
-	Layout::AnchorWindow(*this, *parent, { AnchorSide::eLeft }, AnchorSide::eLeft, 100);
-	Layout::AnchorWindow(*this, *parent, { AnchorSide::eTop }, AnchorSide::eTop, 100);
-	Layout::AnchorWindow(*this, *parent, { AnchorSide::eRight }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(*this, *parent, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
-
-	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
-
-	return res;
-}
-
-void CActionsEditView::PreSubclassWindow()
-{
-	// Changing dlg to view
-	LONG lStyle = GetWindowLong(m_hWnd, GWL_STYLE);
-	lStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU | WS_POPUP | DS_MODALFRAME);
-	lStyle |= WS_CHILDWINDOW;
-	SetWindowLong(m_hWnd, GWL_STYLE, lStyle);
-
-	LONG lExStyle = GetWindowLong(m_hWnd, GWL_EXSTYLE);
-	lExStyle &= ~(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
-	SetWindowLong(m_hWnd, GWL_EXSTYLE, lExStyle);
-
-	CActionsEditDlg::PreSubclassWindow();
-}
-
-void CActionsEditView::OnSettingsChanged()
-{
-	CActionsEditDlg::OnSettingsChanged();
-
-	if (m_onSettingsChangedCallback)
-		m_onSettingsChangedCallback();
-}
-
-void CActionsEditView::PrepareToOpenDlg()
-{
-	// If some control is focused and we open any dialog, even message box,
-	// creation of the dlg will be dead locked on focus restoration logic in MFC
-	// to avoid it we will change focus to our parent and restore it back after closing the dialog
-	// TODO: try to rework to CView instead of CDialogEx
-	m_realFocusBeforeOpeeningDlg = ::GetFocus();
-
-	// To avoid flickering of the dialog controls we stop redraw on focus change
-	SetRedraw(FALSE);
-	GetParent()->SetFocus();
-}
-
-void CActionsEditView::AfterClosingDlg()
-{
-	::SetFocus(m_realFocusBeforeOpeeningDlg);
-	SetRedraw(TRUE);
 }

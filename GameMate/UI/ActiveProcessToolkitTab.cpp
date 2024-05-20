@@ -8,7 +8,7 @@
 #include "resource.h"
 
 #include "ActiveProcessToolkitTab.h"
-#include "ActionsEditDlg.h"
+#include "ActionsEdit.h"
 #include "BaseKeyEditDlg.h"
 #include "AddingProcessToolkitDlg.h"
 

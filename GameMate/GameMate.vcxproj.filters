@@ -83,7 +83,7 @@
     <ClInclude Include="UI\ActiveProcessToolkitTab.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="UI\ActionsEditDlg.h">
+    <ClInclude Include="UI\ActionsEdit.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="UI\MainDlg.h">
@@ -105,6 +105,9 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="UI\ActionsExecutorTab.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ActionsEditBase.hpp">
       <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>
@@ -157,7 +160,7 @@
     <ClCompile Include="UI\ActiveProcessToolkitTab.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="UI\ActionsEditDlg.cpp">
+    <ClCompile Include="UI\ActionsEdit.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="UI\MainDlg.cpp">

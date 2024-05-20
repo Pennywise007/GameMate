@@ -22,9 +22,6 @@ IMPLEMENT_DYNAMIC(CActionsExecutorTab, CDialogEx)
 
 CActionsExecutorTab::CActionsExecutorTab(CWnd* pParent)
 	: CDialogEx(IDD_DIALOG_ACTIONS_EXECUTOR, pParent)
-	, m_actionsEditView(static_cast<CWnd*>(&m_actionsGroup),
-						ext::get_singleton<Settings>().actions_executor.actionsSettings,
-						[]() { ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor); })
 {
 }
 
@@ -90,7 +87,26 @@ BOOL CActionsExecutorTab::OnInitDialog()
 
 	m_buttonHotkey.SetBitmap(IDB_PNG_SETTINGS, Alignment::CenterCenter);
 
-	m_actionsEditView.Create(CActionsEditDlg::IDD, static_cast<CWnd*>(&m_actionsGroup));
+	CCreateContext  ctx;
+	// memebers we do not use, so set them to null
+	ctx.m_pNewViewClass = RUNTIME_CLASS(CActionsEditView);
+	ctx.m_pNewDocTemplate = NULL;
+	ctx.m_pLastView = NULL;
+	ctx.m_pCurrentFrame = NULL;
+
+	CFrameWnd* pFrameWnd = (CFrameWnd*)&m_actionsGroup;
+	CFormView* pView = (CFormView*)pFrameWnd->CreateView(&ctx);
+	EXT_EXPECT(pView && pView->GetSafeHwnd() != NULL) << "Failed to create";
+	pView->OnInitialUpdate();
+
+	m_actionsEditView = dynamic_cast<CActionsEditView*>(pView);
+	EXT_EXPECT(m_actionsEditView) << "Failed to create";
+
+	m_actionsEditView->Init(
+		ext::get_singleton<Settings>().actions_executor.actionsSettings,
+		[]() { ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor); });
+
+	pView->ShowWindow(SW_NORMAL);
 
 	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
 

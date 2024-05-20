@@ -12,26 +12,36 @@
 #include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
 
 // Dialog to edit actions
-class CActionsEditDlg : public CDialogEx
+template <class CBaseWindow = CWnd>
+class CActionsEditBase : public CBaseWindow
 {
-	DECLARE_DYNAMIC(CActionsEditDlg)
-	CActionsEditDlg(CWnd* pParent, Actions& macros);   // standard constructor
+	enum Columns {
+		eDelay = 0,
+		eAction
+	};
+
+	static inline constexpr UINT kTimerInterval1Sec = 1000;
+
+	static inline constexpr UINT kRecordingTimer0Id = 0;
+	static inline constexpr UINT kRecordingTimer1Id = 1;
+	static inline constexpr UINT kRecordingTimer2Id = 2;
 
 public:
-	[[nodiscard]] static std::optional<Actions> ExecModal(CWnd* pParent, const Actions& macros);
+	//CActionsEditBase(Actions a = {});
+	template <typename... Args>
+	CActionsEditBase(Args&&... args);
+
+	void SetActions(Actions& actions);
 
 	enum { IDD = IDD_DIALOG_ACTIONS_EDIT };
 
 protected:
 	virtual void OnSettingsChanged();
-	virtual void PrepareToOpenDlg() {}
-	virtual void AfterClosingDlg() {}
 
 	DECLARE_MESSAGE_MAP()
 
 	virtual void DoDataExchange(CDataExchange* pDX) override;    // DDX/DDV support
 	virtual BOOL PreTranslateMessage(MSG* pMsg) override;
-	virtual BOOL OnInitDialog() override;
 	afx_msg void OnDestroy();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnBnClickedButtonAdd();
@@ -41,6 +51,9 @@ protected:
 	afx_msg void OnBnClickedButtonMoveDown();
 	afx_msg void OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnEnChangeEditRandomizeDelays();
+
+protected:
+	void OnInit();
 
 private:
 	void addAction(Action action);
@@ -58,29 +71,45 @@ protected:
 
 private:
 	int m_keyPressedSubscriptionId = -1;
-	Actions& m_macros;
+	Actions* m_actions;
 	std::optional<std::chrono::steady_clock::time_point> m_lastActionTime;
 };
 
-// The same as CActionsEditDlg but allows to insert it to another dlg
-class CActionsEditView : public CActionsEditDlg
+// Dialog to edit actions
+class CActionsEditDlg : public CActionsEditBase<CDialogEx>
 {
+	DECLARE_DYNAMIC(CActionsEditDlg)
+	CActionsEditDlg(CWnd* pParent, Actions& macros);
+
 public:
-	using OnSettingsChangedCallback = std::function<void()>;
-	CActionsEditView(CWnd* pParent, Actions& actions, OnSettingsChangedCallback callback);
+	[[nodiscard]] static std::optional<Actions> ExecModal(CWnd* pParent, const Actions& macros);
 
 protected:
-	BOOL OnInitDialog() override;
+	DECLARE_MESSAGE_MAP()
+	virtual BOOL OnInitDialog() override;
 	void PreSubclassWindow() override;
+};
+
+// The same as CActionsEditDlg but allows to insert it to another dlg
+class CActionsEditView : public CActionsEditBase<CFormView>
+{
+	DECLARE_DYNCREATE(CActionsEditView)
+
+public:
+	CActionsEditView();
+
+	using OnSettingsChangedCallback = std::function<void()>;
+	void Init(Actions& actions, OnSettingsChangedCallback callback);
+
+protected:
+	DECLARE_MESSAGE_MAP()
+	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 
 protected: // CActionsEditDlg
 	void OnSettingsChanged() override;
-	void PrepareToOpenDlg() override;
-	void AfterClosingDlg() override;
 
 private:
-	const OnSettingsChangedCallback m_onSettingsChangedCallback;
-
-private:
-	HWND m_realFocusBeforeOpeeningDlg = nullptr;
+	OnSettingsChangedCallback m_onSettingsChangedCallback;
 };
+
+#include "ActionsEditBase.hpp"

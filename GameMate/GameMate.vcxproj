@@ -207,6 +207,7 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ActionsEditBase.hpp" />
     <ClInclude Include="Controls\Button\IconButton\IconButton.h" />
     <ClInclude Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.h" />
     <ClInclude Include="Controls\ComboBox\CIconComboBox\IconComboBox.h" />
@@ -233,7 +234,7 @@
     <ClInclude Include="UI\BaseKeyEditDlg.h" />
     <ClInclude Include="UI\InputSimulatorInfoDlg.h" />
     <ClInclude Include="UI\ActiveProcessToolkitTab.h" />
-    <ClInclude Include="UI\ActionsEditDlg.h" />
+    <ClInclude Include="UI\ActionsEdit.h" />
     <ClInclude Include="UI\MainDlg.h" />
   </ItemGroup>
   <ItemGroup>
@@ -324,7 +325,7 @@
     <ClCompile Include="UI\BaseKeyEditDlg.cpp" />
     <ClCompile Include="UI\InputSimulatorInfoDlg.cpp" />
     <ClCompile Include="UI\ActiveProcessToolkitTab.cpp" />
-    <ClCompile Include="UI\ActionsEditDlg.cpp" />
+    <ClCompile Include="UI\ActionsEdit.cpp" />
     <ClCompile Include="UI\MainDlg.cpp" />
   </ItemGroup>
   <ItemGroup>
