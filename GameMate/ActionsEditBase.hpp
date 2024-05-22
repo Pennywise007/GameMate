@@ -32,15 +32,18 @@ BEGIN_TEMPLATE_MESSAGE_MAP(CActionsEditBase, CBaseWindow, CBaseWindow)
 	ON_BN_CLICKED(IDC_BUTTON_ADD, &CActionsEditBase::OnBnClickedButtonAdd)
 	ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CActionsEditBase::OnBnClickedButtonRemove)
 	ON_BN_CLICKED(IDC_BUTTON_RECORD, &CActionsEditBase::OnBnClickedButtonRecord)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_MACROSES, &CActionsEditBase::OnLvnItemchangedListActions)
 	ON_BN_CLICKED(IDC_BUTTON_MOVE_UP, &CActionsEditBase::OnBnClickedButtonMoveUp)
 	ON_BN_CLICKED(IDC_BUTTON_MOVE_DOWN, &CActionsEditBase::OnBnClickedButtonMoveDown)
 	ON_EN_CHANGE(IDC_EDIT_RANDOMIZE_DELAYS, &CActionsEditBase::OnEnChangeEditRandomizeDelays)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_MACROSES, &CActionsEditBase::OnLvnItemchangedListActions)
 END_MESSAGE_MAP()
 
 template <class CBaseWindow>
-void CActionsEditBase<CBaseWindow>::OnInit()
+void CActionsEditBase<CBaseWindow>::OnInit(Actions& actions, bool captureMousePositions)
 {
+	m_actions = &actions;
+	m_captureMousePositions = captureMousePositions;
+
 	CRect rect;
 	m_staticDelayHelp.GetClientRect(rect);
 
@@ -151,47 +154,7 @@ void CActionsEditBase<CBaseWindow>::OnInit()
 	controls::SetTooltip(m_buttonMoveUp, L"Move selected up");
 	controls::SetTooltip(m_buttonMoveDown, L"Move selected up");
 
-	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkCode, bool isDown) -> bool {
-		if (!m_lastActionTime.has_value())
-			return false;
-
-		switch (vkCode)
-		{
-		case VK_LBUTTON:
-		{
-			CPoint cursor;
-			::GetCursorPos(&cursor);
-
-			// Process stop recording and OK click
-			auto window = ::WindowFromPoint(cursor);
-			if (window == m_buttonRecord.m_hWnd || window == CBaseWindow::GetDlgItem(IDOK)->m_hWnd)
-			{
-				OnSettingsChanged();
-				return false;
-			}
-
-			[[fallthrough]];
-		}
-		default:
-		{
-			auto curTime = std::chrono::steady_clock::now();
-			auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
-
-			addAction(Action(vkCode, isDown, int(delay)));
-			m_lastActionTime = std::move(curTime);
-			return true;
-		}
-		}
-		});
-
-
 	updateButtonStates();
-}
-
-template<class CBaseWindow>
-inline void CActionsEditBase<CBaseWindow>::SetActions(Actions& macros)
-{
-	m_actions = &macros;
 }
 
 template <class CBaseWindow>
@@ -210,7 +173,7 @@ void CActionsEditBase<CBaseWindow>::OnSettingsChanged()
 template <class CBaseWindow>
 void CActionsEditBase<CBaseWindow>::OnDestroy()
 {
-	InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
+	unsubscribeFromInputEvents();
 
 	CBaseWindow::OnDestroy();
 
@@ -242,6 +205,66 @@ BOOL CActionsEditBase<CBaseWindow>::PreTranslateMessage(MSG* pMsg)
 	return CBaseWindow::PreTranslateMessage(pMsg);
 }
 
+template<class CBaseWindow>
+inline void CActionsEditBase<CBaseWindow>::subscribeOnInputEvents()
+{
+	EXT_ASSERT(m_mouseMoveSubscriptionId == -1 && m_keyPressedSubscriptionId == -1);
+
+	if (m_captureMousePositions)
+	{
+		m_mouseMoveSubscriptionId = InputManager::AddMouseMoveHandler([&](const POINT& position, const POINT& delta) {
+			EXT_ASSERT(m_lastActionTime.has_value());
+
+			auto curTime = std::chrono::steady_clock::now();
+			auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
+
+			addAction(Action(position.x, position.y, int(delay)));
+			m_lastActionTime = std::move(curTime);
+		});
+	}
+	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkCode, bool isDown) -> bool {
+		EXT_ASSERT(m_lastActionTime.has_value());
+
+		switch (vkCode)
+		{
+		case VK_LBUTTON:
+		{
+			CPoint cursor;
+			::GetCursorPos(&cursor);
+
+			// Process stop recording and OK click
+			auto window = ::WindowFromPoint(cursor);
+			if (window == m_buttonRecord.m_hWnd || window == CBaseWindow::GetDlgItem(IDOK)->m_hWnd)
+			{
+				OnSettingsChanged();
+				return false;
+			}
+
+			[[fallthrough]];
+		}
+		default:
+		{
+			auto curTime = std::chrono::steady_clock::now();
+			auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
+
+			addAction(Action(vkCode, isDown, int(delay)));
+			m_lastActionTime = std::move(curTime);
+			return true;
+		}
+		}
+	});
+}
+
+template<class CBaseWindow>
+inline void CActionsEditBase<CBaseWindow>::unsubscribeFromInputEvents()
+{
+	if (m_keyPressedSubscriptionId != -1)
+		InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
+	if (m_mouseMoveSubscriptionId != -1)
+		InputManager::RemoveMouseMoveHandler(m_mouseMoveSubscriptionId);
+	m_keyPressedSubscriptionId = m_mouseMoveSubscriptionId = -1;
+}
+
 template <class CBaseWindow>
 void CActionsEditBase<CBaseWindow>::addAction(Action action)
 {
@@ -254,7 +277,10 @@ void CActionsEditBase<CBaseWindow>::addAction(Action action)
 		item = selectedActions.back() + 1;
 
 	item = m_listActions.InsertItem(item, std::to_wstring(action.delayInMilliseconds).c_str());
-	m_listActions.SetItemText(item, Columns::eAction, action.ToString().c_str());
+	auto text = action.ToString();
+	if (m_captureMousePositions && action.type != Action::Type::eKeyAction)
+		text += std::string_swprintf(L"(%d,%d)", action.mouseX, action.mouseY);
+	m_listActions.SetItemText(item, Columns::eAction, text.c_str());
 	m_listActions.SelectItem(item);
 
 	std::unique_ptr<Action> actionPtr = std::make_unique<Action>(std::move(action));
@@ -311,6 +337,7 @@ void CActionsEditBase<CBaseWindow>::OnBnClickedButtonRecord()
 	}
 	else
 	{
+		unsubscribeFromInputEvents();
 		m_buttonRecord.SetWindowTextW(L"Record actions");
 		m_buttonRecord.SetIcon(IDI_ICON_START_RECORDING, Alignment::LeftCenter);
 		m_lastActionTime.reset();
@@ -335,6 +362,7 @@ void CActionsEditBase<CBaseWindow>::OnTimer(UINT_PTR nIDEvent)
 		break;
 	case kRecordingTimer2Id:
 		m_buttonRecord.SetWindowTextW(L"Cancel recording");
+		subscribeOnInputEvents();
 		m_lastActionTime = std::chrono::steady_clock::now();
 		break;
 	default:

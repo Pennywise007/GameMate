@@ -3,6 +3,7 @@
 #include "afxdialogex.h"
 #include <memory>
 
+#include "core/events.h"
 #include "core/Settings.h"
 
 #include <Controls/Button/IconButton/IconButton.h>

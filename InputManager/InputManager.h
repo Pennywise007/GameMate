@@ -23,6 +23,7 @@ public:
         Auto,
         SendInput,
         Logitech,
+        LogitechGHubNew,
         Razer,
         DD,
         MouClassInputInjection

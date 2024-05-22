@@ -16,15 +16,15 @@ END_MESSAGE_MAP()
 
 CActionsEditDlg::CActionsEditDlg(CWnd* pParent, Actions& actions)
 	: CActionsEditBase(IDD, pParent)
+	, m_actions(actions)
 {
-	SetActions(actions);
 }
 
 BOOL CActionsEditDlg::OnInitDialog()
 {
 	CActionsEditBase::OnInitDialog();
 
-	OnInit();
+	OnInit(m_actions, false);
 
 	return TRUE;
 }
@@ -61,10 +61,9 @@ CActionsEditView::CActionsEditView()
 
 void CActionsEditView::Init(Actions& actions, OnSettingsChangedCallback callback)
 {
-	SetActions(actions);
 	m_onSettingsChangedCallback = std::move(callback);
 
-	OnInit();
+	OnInit(actions, true);
 
 	// We need to hide OK button and remove extra offset from the sides
 	GetDlgItem(IDOK)->ShowWindow(SW_HIDE);

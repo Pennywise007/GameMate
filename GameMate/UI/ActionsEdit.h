@@ -31,8 +31,6 @@ public:
 	template <typename... Args>
 	CActionsEditBase(Args&&... args);
 
-	void SetActions(Actions& actions);
-
 	enum { IDD = IDD_DIALOG_ACTIONS_EDIT };
 
 protected:
@@ -53,9 +51,11 @@ protected:
 	afx_msg void OnEnChangeEditRandomizeDelays();
 
 protected:
-	void OnInit();
+	void OnInit(Actions& actions, bool captureMousePositions);
 
 private:
+	void subscribeOnInputEvents();
+	void unsubscribeFromInputEvents();
 	void addAction(Action action);
 	void updateButtonStates();
 
@@ -71,7 +71,9 @@ protected:
 
 private:
 	int m_keyPressedSubscriptionId = -1;
-	Actions* m_actions;
+	int m_mouseMoveSubscriptionId = -1;
+	Actions* m_actions = nullptr;
+	bool m_captureMousePositions = false;
 	std::optional<std::chrono::steady_clock::time_point> m_lastActionTime;
 };
 
@@ -88,6 +90,9 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	virtual BOOL OnInitDialog() override;
 	void PreSubclassWindow() override;
+
+private:
+	Actions& m_actions;
 };
 
 // The same as CActionsEditDlg but allows to insert it to another dlg

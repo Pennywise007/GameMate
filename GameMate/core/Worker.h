@@ -3,13 +3,14 @@
 #include <chrono>
 #include <optional>
 
+#include "events.h"
 #include "Crosshairs.h"
 #include "Settings.h"
 
 #include <ext/thread/thread_pool.h>
 #include <ext/thread/scheduler.h>
 
-class Worker : ext::events::ScopeSubscription<ISettingsChanged>
+class Worker : ext::events::ScopeSubscription<ISettingsChanged, IKeyHandlerBlocker>
 {
     friend ext::Singleton<Worker>;
 
@@ -20,11 +21,16 @@ public:
 
 private: // ISettingsChanged
     void OnSettingsChanged(ISettingsChanged::ChangedType changedType) override;
+    
+private: // IKeyHandlerBlocker
+    void OnBlockHandler() override;
+    void OnUnblockHandler() override;
 
 private:
     bool OnKeyOrMouseEvent(WORD mouseVkCode, bool down);
 
 private:
+    bool m_keyHandlingBlocked = false;
     int m_keyMauseHandlerId = -1;
     // Active window changed hook
     HWINEVENTHOOK m_activeWindowHook = nullptr;

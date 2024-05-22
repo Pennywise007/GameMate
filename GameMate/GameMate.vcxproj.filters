@@ -110,6 +110,9 @@
     <ClInclude Include="ActionsEditBase.hpp">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="core\events.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\TabControl\TabControl.cpp">

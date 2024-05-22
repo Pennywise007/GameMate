@@ -1,6 +1,7 @@
 #pragma once
 #include "afxdialogex.h"
 
+#include "core/events.h"
 #include "core/Settings.h"
 
 #include "ActionsEdit.h"

@@ -221,6 +221,7 @@
     <ClInclude Include="Controls\TrayHelper\TrayHelper.h" />
     <ClInclude Include="Controls\TabControl\TabControl.h" />
     <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h" />
+    <ClInclude Include="core\events.h" />
     <ClInclude Include="core\Crosshairs.h" />
     <ClInclude Include="core\Settings.h" />
     <ClInclude Include="core\Worker.h" />

@@ -2,6 +2,7 @@
 #include "afxdialogex.h"
 #include "resource.h"
 
+#include "core/events.h"
 #include "BaseKeyEditDlg.h"
 #include "InputManager.h"
 
@@ -39,6 +40,8 @@ BOOL CBaseKeyEditDlg::OnInitDialog()
 	m_editAction.HideCaret();
 
 	SetTimer(kTimerIdActionsSubscription, kSubscribeToActionInMs, nullptr);
+
+	ext::send_event(&IKeyHandlerBlocker::OnBlockHandler);
 
 	return TRUE;
 }
@@ -98,6 +101,8 @@ void CBaseKeyEditDlg::OnDestroy()
 	if (m_keyPressedSubscriptionId != -1)
 		InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
 	CDialogEx::OnDestroy();
+
+	ext::send_event(&IKeyHandlerBlocker::OnUnblockHandler);
 }
 
 IMPLEMENT_DYNAMIC(CActionEditDlg, CBaseKeyEditDlg)

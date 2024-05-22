@@ -7,6 +7,7 @@
 #include <ext/constexpr/map.h>
 #include <ext/scope/defer.h>
 #include <ext/std/string.h>
+#include <ext/thread/thread.h>
 
 using namespace ext::serializer;
 
@@ -145,7 +146,7 @@ Action::Action(WORD _vkCode, bool _down, unsigned _delay)
 	case VK_XBUTTON2:
 	case InputManager::VK_MOUSE_WHEEL:
 	case InputManager::VK_MOUSE_HWHEEL:
-		{
+		{ 
 			type = Type::eMouseAction;
 			const auto position = InputManager::GetMousePosition();
 			mouseX = position.x;
@@ -161,17 +162,20 @@ Action::Action(WORD _vkCode, bool _down, unsigned _delay)
 																 (int)type, vkCode, int(down), delayInMilliseconds, mouseX, mouseY);
 }
 
-Action::Action(long mouseMovedToPointX, long mouseMovedToPointY)
+Action::Action(long mouseMovedToPointX, long mouseMovedToPointY, unsigned _delay)
 	: type(Type::eMouseMove)
 	, mouseX(mouseMovedToPointX)
 	, mouseY(mouseMovedToPointY)
+	, delayInMilliseconds(_delay)
 {
-	EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << std::string_sprintf("New mouse move action: type %d, pos(%ld, %ld)",
-																 (int)type, mouseX, mouseY);
+	EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << std::string_sprintf("New mouse move action: type %d, pos(%ld, %ld), %hu ms delay",
+																 (int)type, mouseX, mouseY, delayInMilliseconds);
 }
 
 std::wstring Action::ToString() const
 {
+	if (type == Type::eMouseMove)
+		return std::string_swprintf(L"Mouse move");
 	return (down ? L"↓ " : L"↑ ") + VkCodeToText(vkCode);
 }
 
@@ -187,8 +191,10 @@ void Action::ExecuteAction(float delayRandomize, bool applyMousePos) const
 
 	if (applyMousePos)
 	{
-		if (type != Type::eKeyAction)
+		if (type != Type::eKeyAction && !down)
 			InputManager::MouseMove(POINT{ mouseX , mouseY});
+		if (type == Type::eMouseMove)
+			return;
 	}
 	else
 		// We apply mouse pos in actions dialog, not in macroses where we don't have mouse move
@@ -197,7 +203,7 @@ void Action::ExecuteAction(float delayRandomize, bool applyMousePos) const
 	InputManager::SendKeyOrMouse(vkCode, down);
 }
 
-void Actions::Execute() const
+void Actions::Execute(bool applyMousePosition) const
 {
 	auto stopToken = ext::this_thread::get_stop_token();
 	try
@@ -207,7 +213,7 @@ void Actions::Execute() const
 			if (stopToken.stop_requested())
 				return;
 
-			action.ExecuteAction(randomizeDelays, false);
+			action.ExecuteAction(randomizeDelays, applyMousePosition);
 		}
 	}
 	catch (const ext::thread::thread_interrupted&)
@@ -226,7 +232,7 @@ void actions_executor::Settings::Execute() const
 
 	while (!stopToken.stop_requested())
 	{
-		actionsSettings.Execute();
+		actionsSettings.Execute(true);
 
 		if (stopToken.stop_requested())
 			return;

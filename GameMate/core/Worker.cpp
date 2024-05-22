@@ -153,6 +153,9 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
 
 bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
 {
+    if (m_keyHandlingBlocked)
+        return false;
+
     // Check if program working mode switched
     if (vkCode == VK_F9 && !down && InputManager::GetKeyState(VK_SHIFT))
     {
@@ -182,7 +185,7 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
                 // Execute macros on key down and ignore key up
                 if (down)
                 {
-                    m_macrosExecutor.add_task([](Actions actions) { actions.Execute(); }, actions);
+                    m_macrosExecutor.add_task([](Actions actions) { actions.Execute(false); }, actions);
                 }
 
                 return true;
@@ -258,4 +261,14 @@ void Worker::OnSettingsChanged(ISettingsChanged::ChangedType changedType)
         }
         break;
     }
+}
+
+void Worker::OnBlockHandler()
+{
+    m_keyHandlingBlocked = true;
+}
+
+void Worker::OnUnblockHandler()
+{
+    m_keyHandlingBlocked = false;
 }

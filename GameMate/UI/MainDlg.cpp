@@ -29,16 +29,18 @@ namespace {
 
 constexpr ext::constexpr_map kComboboxIndexesToInputModes=  {
 	std::pair{0, InputManager::InputSimulator::Razer},
-	std::pair{1, InputManager::InputSimulator::Logitech},
-	std::pair{2, InputManager::InputSimulator::DD},
-	std::pair{3, InputManager::InputSimulator::MouClassInputInjection},
-	std::pair{4, InputManager::InputSimulator::SendInput},
+	std::pair{1, InputManager::InputSimulator::LogitechGHubNew},
+	std::pair{2, InputManager::InputSimulator::Logitech},
+	std::pair{3, InputManager::InputSimulator::DD},
+	std::pair{4, InputManager::InputSimulator::MouClassInputInjection},
+	std::pair{5, InputManager::InputSimulator::SendInput},
 };
 
 constexpr ext::constexpr_map kDriverNames =
 {
 	std::pair{ InputManager::InputSimulator::Razer, L"Razer driver" },
-	std::pair{ InputManager::InputSimulator::Logitech, L"Logitech driver" },
+	std::pair{ InputManager::InputSimulator::LogitechGHubNew, L"Logitech G Hub" },
+	std::pair{ InputManager::InputSimulator::Logitech, L"Logitech old driver" },
 	std::pair{ InputManager::InputSimulator::DD, L"DD driver" },
 	std::pair{ InputManager::InputSimulator::MouClassInputInjection, L"Mou driver" },
 	std::pair{ InputManager::InputSimulator::SendInput, L"Don't use simulator" },
@@ -185,12 +187,10 @@ BOOL CMainDlg::OnInitDialog()
 			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eInputSimulator);
 		}
 
-		m_inputSimulator.InsertString(0, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(0)));
-		m_inputSimulator.InsertString(1, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(1)));
-		m_inputSimulator.InsertString(2, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(2)));
-		m_inputSimulator.InsertString(3, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(3)));
-		m_inputSimulator.InsertString(4, kDriverNames.get_value(kComboboxIndexesToInputModes.get_value(4)));
-
+		for (auto&& [i, mode] : kComboboxIndexesToInputModes)
+		{
+			m_inputSimulator.InsertString(i, kDriverNames.get_value(mode));
+		}
 		m_inputSimulator.SetCurSel(kComboboxIndexesToInputModes.get_key(inputMode));
 	}
 	catch (...)

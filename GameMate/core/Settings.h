@@ -10,7 +10,6 @@
 #include "InputManager.h"
 
 #include <ext/core/singleton.h>
-#include <ext/core/dispatcher.h>
 #include <ext/serialization/iserializable.h>
 
 struct Bind
@@ -49,8 +48,7 @@ struct Action
 {
     Action() = default;
     Action(WORD _vkCode, bool _down, unsigned _delay);
-    Action(long mouseMovedToPointX, long mouseMovedToPointY);
-
+    Action(long mouseMovedToPointX, long mouseMovedToPointY, unsigned _delay);
 
     // Get action text
     [[nodiscard]] std::wstring ToString() const;
@@ -79,7 +77,7 @@ struct Actions
     DECLARE_SERIALIZABLE_FIELD(std::list<Action>, actions);
     DECLARE_SERIALIZABLE_FIELD(float, randomizeDelays, 0.f);
 
-    void Execute() const;
+    void Execute(bool applyMousePosition) const;
 };
 
 namespace actions_executor {
@@ -186,19 +184,4 @@ public:
     DECLARE_SERIALIZABLE_FIELD(ProgramMode, selectedMode, ProgramMode::eActionExecutor);
     DECLARE_SERIALIZABLE_FIELD(process_toolkit::Settings, process_toolkit);
     DECLARE_SERIALIZABLE_FIELD(actions_executor::Settings, actions_executor);
-};
-
-// Notification about user changed any settings
-struct ISettingsChanged : ext::events::IBaseEvent
-{
-    enum class ChangedType
-    {
-        eGeneralSettings,               // General settings like traces/selected mode changed
-        eInputSimulator,                // Input simulator changed 
-        eProcessToolkit,                // Settings of the process toolkit changed
-        eActionsExecutor,               // Settings of the actions executor changed
-        eActionsExecutorEnableChanged   // Actions executor enabled state changed
-    };
-    virtual ~ISettingsChanged() = default;
-    virtual void OnSettingsChanged(ChangedType changedMode) = 0;
 };
