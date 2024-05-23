@@ -44,7 +44,7 @@ public:
 
     static void MouseSendDown(DWORD mouseVkCode);
     static void MouseSendUp(DWORD mouseVkCode);
-    static void MouseMove(const POINT& position);
+    static void MouseMove(POINT position);
     static void KeyboardSendDown(WORD vkCode);
     static void KeyboardSendUp(WORD vkCode);
 private:

@@ -57,29 +57,13 @@ INPUT CreateMouseInput(unsigned short vkCode, bool down)
 
 INPUT CreateMouseMoveInput(const POINT& position)
 {
-    static const auto screenWidth = static_cast<float>(GetSystemMetrics(SM_CXSCREEN));
-    static const auto screenHeight = static_cast<float>(GetSystemMetrics(SM_CYSCREEN));
     INPUT input;
     ZeroMemory(&input, sizeof(INPUT));
 
     input.type = INPUT_MOUSE;
-    input.mi.dx = static_cast<int>(float(position.x * 65535) / screenWidth);
-    input.mi.dy = static_cast<int>(float(position.y * 65535) / screenHeight);
-    input.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
-    return input;
-}
-
-INPUT CreateMouseMoveInput(const POINT& position)
-{
-    static const auto screenWidth = static_cast<float>(GetSystemMetrics(SM_CXSCREEN));
-    static const auto screenHeight = static_cast<float>(GetSystemMetrics(SM_CYSCREEN));
-    INPUT input;
-    ZeroMemory(&input, sizeof(INPUT));
-
-    input.type = INPUT_MOUSE;
-    input.mi.dx = static_cast<int>(float(position.x * 65535) / screenWidth);
-    input.mi.dy = static_cast<int>(float(position.y * 65535) / screenHeight);
-    input.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE;
+    input.mi.dx = position.x;
+    input.mi.dy = position.y;
+    input.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK;
     return input;
 }
 
@@ -109,7 +93,7 @@ std::optional<InputManager::Error> InputManager::SetInputSimulator(InputSimulato
     {
         std::array driversPriority = {
             Send::SendType::Razer,
-            Send::SendType::Logitech,
+            Send::SendType::LogitechGHubNew,
             Send::SendType::DD,
             Send::SendType::MouClassInputInjection,
             Send::SendType::SendInput
@@ -531,8 +515,14 @@ void InputManager::MouseSendUp(DWORD mouseVkCode)
     }
 }
 
-void InputManager::MouseMove(const POINT& position)
+void InputManager::MouseMove(POINT position)
 {
+    static const auto screenWidth = static_cast<float>(GetSystemMetrics(SM_CXVIRTUALSCREEN));
+    static const auto screenHeight = static_cast<float>(GetSystemMetrics(SM_CYVIRTUALSCREEN));
+
+    position.x = (int)roundf(float(position.x * 65536) / screenWidth);
+    position.y = (int)roundf(float(position.y * 65536) / screenHeight);
+
     if (!IbSendMouseMove(position.x, position.y, Send::MoveMode::Absolute))
     {
         EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse move";
