@@ -11,6 +11,7 @@
 
 #include "InputManager.h"
 
+#include <core/events.h>
 #include <core/Worker.h>
 #include "core/Settings.h"
 
@@ -97,6 +98,7 @@ BOOL CMainDlg::OnInitDialog()
 							 CActiveProcessToolkitTab::IDD);
 	m_tabControlModes.SetCurSel(int(settings.selectedMode));
 	m_tabControlModes.AutoResizeTabsToFitFullControlWidth();
+	UpdateDriverInfoButton();
 
 	CTrayHelper::Instance().addTrayIcon(
 		m_hIcon, L"Game mate",
@@ -132,7 +134,7 @@ BOOL CMainDlg::OnInitDialog()
 					bool& enabled = ext::get_singleton<Settings>().process_toolkit.enabled;
 					enabled = !enabled;
 					ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
-			}
+				}
 				break;
 			case ID_MENU_ENABLE_TRACES:
 				ext::get_singleton<Settings>().tracesEnabled = true;
@@ -255,9 +257,34 @@ HCURSOR CMainDlg::OnQueryDragIcon()
 
 void CMainDlg::UpdateDriverInfoButton()
 {
-	bool showWarning = ext::get_singleton<Settings>().inputSimulator == InputManager::InputSimulator::SendInput;
-	// TODO
+	CString warning;
+	switch (ext::get_singleton<Settings>().inputSimulator)
+	{
+	case InputManager::InputSimulator::SendInput:
+		// TODO Warning about cheats detection
+		// warning +=
+		break;
+	case InputManager::InputSimulator::Razer:
+		break;
+	default:
+	{
+		int IntArr[3];
+		SystemParametersInfoA(SPI_GETMOUSE, 0, &IntArr, 0);
+		int speed;
+		SystemParametersInfoA(SPI_GETMOUSESPEED, 0, &speed, 0);
 
+		bool enchancePointerPrecisionIsOff = IntArr[2] == 0;
+		bool normalSpeed = speed == 10;
+		if (enchancePointerPrecisionIsOff && normalSpeed)
+			break;
+
+		// TODO warn about mouse move problems and ask to change windows mouse speed and disable enchancePointerPrecision
+		// warning +=
+		break;
+	}
+	}
+
+	// TODO if (warning.IsEmpty())...
 }
 
 BOOL CMainDlg::PreTranslateMessage(MSG* pMsg)
@@ -361,6 +388,8 @@ void CMainDlg::OnCbnSelchangeComboInputDriver()
 
 	ext::get_singleton<Settings>().inputSimulator = selecetedInputSimulator;
 	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eInputSimulator);
+
+	UpdateDriverInfoButton();
 }
 
 void CMainDlg::OnBnClickedMfcbuttonInputSimulatorInfo()

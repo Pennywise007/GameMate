@@ -243,10 +243,10 @@ LRESULT CALLBACK InputManager::LowLevelMouseProc(const int nCode, const WPARAM w
                 absorbEvent = instance.OnKeyOrMouseEvent(VK_XBUTTON2, false);
             break;
         case WM_MOUSEWHEEL:
-            absorbEvent = instance.OnKeyOrMouseEvent(VK_MOUSE_WHEEL, GET_WHEEL_DELTA_WPARAM(wParam) < 0);
+            absorbEvent = instance.OnKeyOrMouseEvent(VK_MOUSE_WHEEL, GET_WHEEL_DELTA_WPARAM(pMouse->mouseData) < 0);
             break;
         case WM_MOUSEHWHEEL:
-            absorbEvent = instance.OnKeyOrMouseEvent(VK_MOUSE_HWHEEL, GET_WHEEL_DELTA_WPARAM(wParam) < 0);
+            absorbEvent = instance.OnKeyOrMouseEvent(VK_MOUSE_HWHEEL, GET_WHEEL_DELTA_WPARAM(pMouse->mouseData) < 0);
             break;
         case WM_MOUSEMOVE:
             instance.UpdateMousePosition(pMouse->pt.x, pMouse->pt.y);
@@ -284,16 +284,15 @@ bool InputManager::OnKeyOrMouseEvent(WORD vkCode, bool isPressed)
 
 void InputManager::UpdateMousePosition(LONG x, LONG y)
 {
-    const auto position = POINT(x, y);
-    const auto previousPosition = m_mousePosition;
     const POINT delta = {
-        position.x - previousPosition.x,
-        position.y - previousPosition.y
+        x - m_mousePosition.x,
+        y - m_mousePosition.y
     };
+    m_mousePosition = POINT(x, y);
 
     for (auto&& [_, callback] : m_onMouseMoveEvents)
     {
-        callback(position, delta);
+        callback(m_mousePosition, delta);
     }
 }
 
@@ -308,7 +307,13 @@ bool InputManager::GetKeyState(DWORD vkCode)
 
 POINT InputManager::GetMousePosition()
 {
+#ifdef DONT_USE_HOOK
+    POINT point;
+    GetCursorPos(&point);
+    return point;
+#else
     return ext::get_singleton<InputManager>().m_mousePosition;
+#endif
 }
 
 unsigned InputManager::AddKeyOrMouseHandler(OnKeyOrMouseCallback handler)
@@ -387,7 +392,7 @@ void InputManager::MouseSendDown(DWORD mouseVkCode)
         break;
     case VK_MOUSE_WHEEL:
         {
-            if (!IbSendMouseWheel(WHEEL_DELTA))
+            if (!IbSendMouseWheel(-WHEEL_DELTA))
             {
                 EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse wheel down";
 

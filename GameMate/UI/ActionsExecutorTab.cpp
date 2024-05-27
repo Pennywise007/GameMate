@@ -3,7 +3,7 @@
 #include "resource.h"
 
 #include "ActionsExecutorTab.h"
-#include "BaseKeyEditDlg.h"
+#include "EditBindDlg.h"
 
 #include "core/Settings.h"
 
@@ -88,8 +88,7 @@ BOOL CActionsExecutorTab::OnInitDialog()
 	m_buttonHotkey.SetBitmap(IDB_PNG_SETTINGS, Alignment::CenterCenter);
 
 	CCreateContext  ctx;
-	// memebers we do not use, so set them to null
-	ctx.m_pNewViewClass = RUNTIME_CLASS(CActionsEditView);
+	ctx.m_pNewViewClass = RUNTIME_CLASS(CActionsEditorView);
 	ctx.m_pNewDocTemplate = NULL;
 	ctx.m_pLastView = NULL;
 	ctx.m_pCurrentFrame = NULL;
@@ -99,12 +98,22 @@ BOOL CActionsExecutorTab::OnInitDialog()
 	EXT_EXPECT(pView && pView->GetSafeHwnd() != NULL) << "Failed to create";
 	pView->OnInitialUpdate();
 
-	m_actionsEditView = dynamic_cast<CActionsEditView*>(pView);
+	m_actionsEditView = dynamic_cast<CActionsEditorView*>(pView);
 	EXT_EXPECT(m_actionsEditView) << "Failed to create";
+
+	CRect rect;
+	m_actionsGroup.GetClientRect(rect);
+	m_actionsEditView->MoveWindow(rect);
+
+	Layout::AnchorWindow(*m_actionsEditView, m_actionsGroup, { AnchorSide::eLeft }, AnchorSide::eLeft, 100);
+	Layout::AnchorWindow(*m_actionsEditView, m_actionsGroup, { AnchorSide::eTop }, AnchorSide::eTop, 100);
+	Layout::AnchorWindow(*m_actionsEditView, m_actionsGroup, { AnchorSide::eRight }, AnchorSide::eRight, 100);
+	Layout::AnchorWindow(*m_actionsEditView, m_actionsGroup, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
 
 	m_actionsEditView->Init(
 		ext::get_singleton<Settings>().actions_executor.actionsSettings,
-		[]() { ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor); });
+		[]() { ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor); },
+		true);
 
 	pView->ShowWindow(SW_NORMAL);
 
@@ -171,7 +180,7 @@ void CActionsExecutorTab::OnBnClickedCheckEnabled()
 void CActionsExecutorTab::OnBnClickedMfcbuttonHotkey()
 {
 	auto& currentBind = ext::get_singleton<Settings>().actions_executor.enableBind;
-	auto bind = CBindEditDlg::EditBind(this, currentBind);
+	auto bind = CEditBindDlg::EditBind(this, currentBind);
 	if (!bind.has_value() || currentBind.ToString() == bind->ToString())
 		return;
 

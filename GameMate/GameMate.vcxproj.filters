@@ -21,6 +21,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="UI\ActionEditors">
+      <UniqueIdentifier>{a996d105-5af1-40ae-909b-5fd56029e287}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controls\TabControl\TabControl.h">
@@ -77,13 +80,13 @@
     <ClInclude Include="UI\AddingProcessToolkitDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="UI\BaseKeyEditDlg.h">
+    <ClInclude Include="UI\EditBindDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="UI\ActiveProcessToolkitTab.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="UI\ActionsEdit.h">
+    <ClInclude Include="UI\EditActions.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="UI\MainDlg.h">
@@ -107,11 +110,29 @@
     <ClInclude Include="UI\ActionsExecutorTab.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="ActionsEditBase.hpp">
-      <Filter>UI</Filter>
-    </ClInclude>
     <ClInclude Include="core\events.h">
       <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\AddActionDlg.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\ActionEditors\InputEditorView.h">
+      <Filter>UI\ActionEditors</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\ActionsEditor.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\ActionEditors\CursorPositionEditorView.h">
+      <Filter>UI\ActionEditors</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\ActionEditors\ScriptEditorView.h">
+      <Filter>UI\ActionEditors</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\MFC\CMFCEditBrowseCtrlEx.h">
+      <Filter>Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\ToolWindow\ToolWindow.h">
+      <Filter>Controls</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -157,13 +178,13 @@
     <ClCompile Include="UI\AddingProcessToolkitDlg.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="UI\BaseKeyEditDlg.cpp">
+    <ClCompile Include="UI\EditBindDlg.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="UI\ActiveProcessToolkitTab.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="UI\ActionsEdit.cpp">
+    <ClCompile Include="UI\EditActions.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="UI\MainDlg.cpp">
@@ -186,6 +207,27 @@
     </ClCompile>
     <ClCompile Include="UI\ActionsExecutorTab.cpp">
       <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\AddActionDlg.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\ActionEditors\InputEditorView.cpp">
+      <Filter>UI\ActionEditors</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\ActionsEditor.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\ActionEditors\CursorPositionEditorView.cpp">
+      <Filter>UI\ActionEditors</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\ActionEditors\ScriptEditorView.cpp">
+      <Filter>UI\ActionEditors</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\MFC\CMFCEditBrowseCtrlEx.cpp">
+      <Filter>Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\ToolWindow\ToolWindow.cpp">
+      <Filter>Controls</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

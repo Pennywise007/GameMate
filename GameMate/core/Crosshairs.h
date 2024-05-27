@@ -20,8 +20,14 @@ public:
     CrosshairWindow();
     ~CrosshairWindow();
 
-    void AttachCrosshairToWindow(HWND hWndOfActiveWindow, const Settings& crosshair);
+    using CWnd::m_hWnd;
+    using CWnd::SetWindowPos;
+
+    void InitCrosshairWindow(const Settings& crosshair);
+    void AttachCrosshairToWindow(HWND hWndOfActiveWindow);
     void RemoveCrosshairWindow();
+
+    CRect GetWindowRect() const;
 
     void OnWindowPosChanged(HWND hwnd);
 

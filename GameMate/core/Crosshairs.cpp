@@ -104,7 +104,8 @@ END_MESSAGE_MAP()
 
 CrosshairWindow::CrosshairWindow()
 {
-    g_crosshairWindow = this;
+    if (g_crosshairWindow == nullptr)
+        g_crosshairWindow = this;
 
     HINSTANCE instance = AfxGetInstanceHandle();
     const CString className(typeid(*this).name());
@@ -128,7 +129,7 @@ CrosshairWindow::~CrosshairWindow()
     RemoveCrosshairWindow();
 }
 
-void CrosshairWindow::AttachCrosshairToWindow(HWND hWndOfActiveWindow, const Settings& crosshair)
+void CrosshairWindow::InitCrosshairWindow(const Settings& crosshair)
 {
     // TODO try to fix paint problems and don't destroy window
     
@@ -155,7 +156,10 @@ void CrosshairWindow::AttachCrosshairToWindow(HWND hWndOfActiveWindow, const Set
     CreateEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT, CString(typeid(*this).name()), NULL, WS_POPUP, CRect(0, 0, bm.bmWidth, bm.bmHeight), NULL, NULL);
     SetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE, GetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE) | WS_EX_LAYERED);
     SetLayeredWindowAttributes(RGB(255, 255, 255), 0, LWA_COLORKEY);
+}
 
+void CrosshairWindow::AttachCrosshairToWindow(HWND hWndOfActiveWindow)
+{
     m_attachedWindowHwnd = hWndOfActiveWindow;
     OnWindowPosChanged(m_attachedWindowHwnd);
 
@@ -175,6 +179,13 @@ void CrosshairWindow::RemoveCrosshairWindow()
 
     if (IsWindow(*this))
         DestroyWindow();
+}
+
+CRect CrosshairWindow::GetWindowRect() const
+{
+    CRect rect;
+    CWnd::GetWindowRect(rect);
+    return rect;
 }
 
 void CrosshairWindow::OnWindowPosChanged(HWND hwnd)

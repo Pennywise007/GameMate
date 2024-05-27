@@ -207,17 +207,18 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ActionsEditBase.hpp" />
     <ClInclude Include="Controls\Button\IconButton\IconButton.h" />
     <ClInclude Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.h" />
     <ClInclude Include="Controls\ComboBox\CIconComboBox\IconComboBox.h" />
     <ClInclude Include="Controls\Edit\CEditBase\CEditBase.h" />
     <ClInclude Include="Controls\Edit\SpinEdit\SpinEdit.h" />
     <ClInclude Include="Controls\Layout\Layout.h" />
+    <ClInclude Include="Controls\MFC\CMFCEditBrowseCtrlEx.h" />
     <ClInclude Include="Controls\SpinButton\SpinButton.h" />
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.h" />
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditorImpl.h" />
     <ClInclude Include="Controls\Tooltip\ToolTip.h" />
+    <ClInclude Include="Controls\ToolWindow\ToolWindow.h" />
     <ClInclude Include="Controls\TrayHelper\TrayHelper.h" />
     <ClInclude Include="Controls\TabControl\TabControl.h" />
     <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h" />
@@ -230,12 +231,17 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="UI\ActionEditors\CursorPositionEditorView.h" />
+    <ClInclude Include="UI\ActionEditors\ScriptEditorView.h" />
+    <ClInclude Include="UI\ActionsEditor.h" />
+    <ClInclude Include="UI\ActionEditors\InputEditorView.h" />
     <ClInclude Include="UI\ActionsExecutorTab.h" />
+    <ClInclude Include="UI\AddActionDlg.h" />
     <ClInclude Include="UI\AddingProcessToolkitDlg.h" />
-    <ClInclude Include="UI\BaseKeyEditDlg.h" />
+    <ClInclude Include="UI\EditBindDlg.h" />
     <ClInclude Include="UI\InputSimulatorInfoDlg.h" />
     <ClInclude Include="UI\ActiveProcessToolkitTab.h" />
-    <ClInclude Include="UI\ActionsEdit.h" />
+    <ClInclude Include="UI\EditActions.h" />
     <ClInclude Include="UI\MainDlg.h" />
   </ItemGroup>
   <ItemGroup>
@@ -275,6 +281,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Controls\MFC\CMFCEditBrowseCtrlEx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Controls\SpinButton\SpinButton.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -288,6 +300,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Controls\Tooltip\ToolTip.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Controls\ToolWindow\ToolWindow.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -321,12 +339,17 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="UI\ActionEditors\CursorPositionEditorView.cpp" />
+    <ClCompile Include="UI\ActionEditors\ScriptEditorView.cpp" />
+    <ClCompile Include="UI\ActionsEditor.cpp" />
+    <ClCompile Include="UI\ActionEditors\InputEditorView.cpp" />
     <ClCompile Include="UI\ActionsExecutorTab.cpp" />
+    <ClCompile Include="UI\AddActionDlg.cpp" />
     <ClCompile Include="UI\AddingProcessToolkitDlg.cpp" />
-    <ClCompile Include="UI\BaseKeyEditDlg.cpp" />
+    <ClCompile Include="UI\EditBindDlg.cpp" />
     <ClCompile Include="UI\InputSimulatorInfoDlg.cpp" />
     <ClCompile Include="UI\ActiveProcessToolkitTab.cpp" />
-    <ClCompile Include="UI\ActionsEdit.cpp" />
+    <ClCompile Include="UI\EditActions.cpp" />
     <ClCompile Include="UI\MainDlg.cpp" />
   </ItemGroup>
   <ItemGroup>

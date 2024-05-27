@@ -12,23 +12,26 @@
 #include <ext/core/singleton.h>
 #include <ext/serialization/iserializable.h>
 
+constexpr int kNotSetVkCode = -1;
+
 struct Bind
 {
     Bind() = default;
-    Bind(WORD _vkCode);
+    Bind(WORD vkCode);
 
     // Comparision operator for map
     int operator<(const Bind& other) const { return ToString() < other.ToString(); }
 
     // Get text
     [[nodiscard]] std::wstring ToString() const;
+    void UpdateBind(WORD vkCode, bool down);
     // Check if bind was pressed
-    bool IsBindPressed(WORD vkCode) const;
+    bool IsBindPressed(WORD vkCode, bool down) const;
 
     enum class ExtraKeys
     {
-        FirstKey,
-        LCtrl = FirstKey,
+        FirstModifierKey,
+        LCtrl = FirstModifierKey,
         RCtrl,
         LShift,
         RShift,
@@ -36,24 +39,29 @@ struct Bind
         RAlt,
         LWin,
         RWin,
-        LastKey
+        LastModifierKey,
+        eScrollUp   // for mouse (h)wheel up
     };
 
     REGISTER_SERIALIZABLE_OBJECT();
-    DECLARE_SERIALIZABLE_FIELD(unsigned, extraKeys);
-    DECLARE_SERIALIZABLE_FIELD(WORD, vkCode);
+    DECLARE_SERIALIZABLE_FIELD(unsigned, extraKeys, 0);
+    DECLARE_SERIALIZABLE_FIELD(int, vkCode, kNotSetVkCode);
+
+    static_assert(size_t(ExtraKeys::eScrollUp) < CHAR_BIT * sizeof(decltype(extraKeys)),
+        "Bind::extraKeys type too small to use enum ExtraKeys as flags");
 };
 
 struct Action
 {
     Action() = default;
-    Action(WORD _vkCode, bool _down, unsigned _delay);
-    Action(long mouseMovedToPointX, long mouseMovedToPointY, unsigned _delay);
+    static Action NewAction(WORD vkCode, bool down, unsigned delay);
+    static Action NewMouseMove(long mouseMovedToPointX, long mouseMovedToPointY, unsigned delay);
+    static Action NewRunScript(const std::wstring& scriptPath, unsigned delay);
 
     // Get action text
     [[nodiscard]] std::wstring ToString() const;
     // Execution action
-    void ExecuteAction(float delayRandomize, bool applyMousePos) const;
+    void ExecuteAction(float delayRandomize) const;
 
     REGISTER_SERIALIZABLE_OBJECT();
 
@@ -61,14 +69,18 @@ struct Action
     {
         eMouseAction,
         eKeyAction,
-        eMouseMove
+        eMouseMove,
+        eRunScript
     };
     DECLARE_SERIALIZABLE_FIELD(Type, type, Type::eKeyAction);
-    DECLARE_SERIALIZABLE_FIELD(WORD, vkCode, 0);
+    DECLARE_SERIALIZABLE_FIELD(int, vkCode, kNotSetVkCode);
     DECLARE_SERIALIZABLE_FIELD(bool, down, false);
     DECLARE_SERIALIZABLE_FIELD(unsigned, delayInMilliseconds, 0);
+    // eMouseMove
     DECLARE_SERIALIZABLE_FIELD(long, mouseX, 0);
     DECLARE_SERIALIZABLE_FIELD(long, mouseY, 0);
+    // eRunScript
+    DECLARE_SERIALIZABLE_FIELD(std::wstring, scriptPath);
 };
 
 struct Actions
@@ -77,7 +89,7 @@ struct Actions
     DECLARE_SERIALIZABLE_FIELD(std::list<Action>, actions);
     DECLARE_SERIALIZABLE_FIELD(float, randomizeDelays, 0.f);
 
-    void Execute(bool applyMousePosition) const;
+    void Execute() const;
 };
 
 namespace actions_executor {

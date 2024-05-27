@@ -148,7 +148,10 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
 
     auto& crossahair = m_activeExeConfig->crosshairSettings;
     if (crossahair.show)
-        m_crosshairWindow.AttachCrosshairToWindow(m_activeWindow, crossahair);
+    {
+        m_crosshairWindow.InitCrosshairWindow(crossahair);
+        m_crosshairWindow.AttachCrosshairToWindow(m_activeWindow);
+    }
 }
 
 bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
@@ -166,28 +169,20 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
         return false;
     }
 
-    if (!down)
+    if (auto& settings = ext::get_singleton<Settings>().actions_executor; settings.enableBind.IsBindPressed(vkCode, down))
     {
-        if (auto& settings = ext::get_singleton<Settings>().actions_executor; settings.enableBind.IsBindPressed(vkCode))
-        {
-            settings.enabled = !settings.enabled;
-            ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
-            return false;
-        }
+        settings.enabled = !settings.enabled;
+        ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
+        return false;
     }
 
     if (!!m_activeExeConfig)
     {
         for (auto&& [bind, actions] : m_activeExeConfig->actionsByBind)
         {
-            if (bind.IsBindPressed(vkCode))
+            if (bind.IsBindPressed(vkCode, down))
             {
-                // Execute macros on key down and ignore key up
-                if (down)
-                {
-                    m_macrosExecutor.add_task([](Actions actions) { actions.Execute(false); }, actions);
-                }
-
+                m_macrosExecutor.add_task([](Actions actions) { actions.Execute(); }, actions);
                 return true;
             }
         }

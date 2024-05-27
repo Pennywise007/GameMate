@@ -4,7 +4,7 @@
 #include "core/events.h"
 #include "core/Settings.h"
 
-#include "ActionsEdit.h"
+#include "EditActions.h"
 
 #include <Controls/Edit/SpinEdit/SpinEdit.h>
 #include <Controls/Button/IconButton/IconButton.h>
@@ -44,7 +44,7 @@ private:
 
 private: // Controls
 	CStatic m_actionsGroup;
-	CActionsEditView* m_actionsEditView;
+	CActionsEditorView* m_actionsEditView = nullptr;
 
 	CSpinEdit m_editIntervalMinutes;
 	CSpinEdit m_editIntervalSeconds;

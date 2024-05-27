@@ -8,8 +8,8 @@
 #include "resource.h"
 
 #include "ActiveProcessToolkitTab.h"
-#include "ActionsEdit.h"
-#include "BaseKeyEditDlg.h"
+#include "EditActions.h"
+#include "EditBindDlg.h"
 #include "AddingProcessToolkitDlg.h"
 
 #include "core/Crosshairs.h"
@@ -147,7 +147,7 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 			ASSERT((int)actionsByBind.size() > pParams->iItem);
 			auto editableActionsIt = std::next(actionsByBind.begin(), pParams->iItem);
 
-			auto bind = CBindEditDlg::EditBind(parentWindow, editableActionsIt->first);
+			auto bind = CEditBindDlg::EditBind(parentWindow, editableActionsIt->first);
 			if (!bind.has_value())
 				return nullptr;
 
@@ -675,7 +675,7 @@ void CActiveProcessToolkitTab::OnBnClickedCheckDisableWin()
 
 void CActiveProcessToolkitTab::OnBnClickedButtonAddMacros()
 {
-	auto bind = CBindEditDlg::EditBind(this);
+	auto bind = CEditBindDlg::EditBind(this);
 	if (!bind.has_value())
 		return;
 

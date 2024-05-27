@@ -11,7 +11,9 @@
 #define IDD_DIALOG_ADDING_TAB           132
 #define IDD_DIALOG_ADD_PROCESS_TOOLKIT  132
 #define IDD_DIALOG_ACTIONS_EDIT         134
+#define IDD_DIALOG_EDIT_ACTIONS         134
 #define IDD_DIALOG_BIND_EDIT            137
+#define IDD_DIALOG_EDIT_BIND            137
 #define IDB_PNG_CROSSHAIR               143
 #define IDI_ICON1                       144
 #define IDB_PNG_CROSSHAIR_0_16          145
@@ -48,8 +50,16 @@
 #define IDD_DIALOG_INPUT_SIMULATOR      177
 #define IDD_DIALOG_ACTIONS_EXECUTOR     180
 #define IDD_TAB_ACTIONS_EXECUTOR        180
+#define IDD_DIALOG_EDIT_MOUSE_MOVE      181
+#define IDD_VIEW_EDIT_MOUSE_MOVE        181
+#define IDD_DIALOG_EDIT_SCRIPT_PATH     182
+#define IDD_VIEW_EDIT_SCRIPT_PATH       182
+#define IDD_DIALOG_ADD_ACTION           183
 #define IDB_PNG_SETTINGS                184
+#define IDD_DIALOG_EDIT_INPUT           184
+#define IDD_VIEW_EDIT_INPUT             184
 #define IDB_PNG_ADD                     185
+#define IDD_VIEW_ACTIONS_EDITOR         185
 #define IDB_PNG_DELETE                  186
 #define IDC_TABCONTROL_MODES            1000
 #define IDC_BUTTON_ADD_TAB              1001
@@ -85,6 +95,8 @@
 #define IDC_COMBO1                      1032
 #define IDC_COMBO_CROSSHAIR_SELECTION   1032
 #define IDC_COMBO_INPUT_DRIVER          1032
+#define IDC_COMBO_TYPE                  1032
+#define IDC_COMBO_SCRIPT                1032
 #define IDC_COMBO2                      1033
 #define IDC_COMBO_CROSSHAIR_SIZE        1033
 #define IDC_COMBO3                      1034
@@ -108,6 +120,7 @@
 #define IDC_STATIC_NO_TABS              1046
 #define IDC_STATIC_INPUT_DRIVER         1047
 #define IDC_BUTTON1                     1048
+#define IDC_BUTTON_MOUSE_POSITION_SELECT 1048
 #define IDC_MFCLINK1                    1049
 #define IDC_BUTTON_RENAME_CONFIGURATION 1049
 #define IDC_STATIC_GROUP                1050
@@ -135,6 +148,19 @@
 #define IDC_STATIC_NO_CONFIGURATION     1077
 #define IDC_BUTTON_ADD_MACROS           1078
 #define IDC_BUTTON_REMOVE_MACROS        1079
+#define IDC_MFCLINK7                    1080
+#define IDC_MFCLINK_LOGITECH_OLD_MORE_INFO 1081
+#define IDC_EDIT_MOUSE_POSITION_X       1083
+#define IDC_EDIT_MOUSE_POSITION_Y       1084
+#define IDC_STATIC_MOUSE_POSITION_X     1087
+#define IDC_STATIC_MOUSE_POSITION_Y     1088
+#define IDC_STATIC_SCRIPT_PATH          1089
+#define IDC_STATIC_                     1090
+#define IDC_STATIC_EDITOR               1090
+#define IDC_MFCEDITBROWSE               1091
+#define IDC_STATIC_BIND_EDITOR_PLACEHOLDER 1092
+#define IDC_STATIC_DESCRIPTION          1093
+#define IDC_STATIC_ACTIONS_EDITOR_PLACEHOLDER 1094
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -150,9 +176,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        187
+#define _APS_NEXT_RESOURCE_VALUE        188
 #define _APS_NEXT_COMMAND_VALUE         32781
-#define _APS_NEXT_CONTROL_VALUE         1080
+#define _APS_NEXT_CONTROL_VALUE         1095
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

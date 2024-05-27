@@ -26,6 +26,7 @@ constexpr ext::constexpr_map kExtraKeysTovkCodes = {
 	std::pair{Bind::ExtraKeys::LWin,	VK_LWIN},
 	std::pair{Bind::ExtraKeys::RWin,	VK_RWIN},
 };
+static_assert(kExtraKeysTovkCodes.size() == size_t(Bind::ExtraKeys::LastModifierKey), "Not all extra keys set");
 
 std::wstring VkCodeToText(WORD vkCode)
 {
@@ -63,7 +64,6 @@ std::wstring VkCodeToText(WORD vkCode)
 	case VK_RWIN:
 	case VK_APPS:
 	case VK_RCONTROL:
-	case VK_SNAPSHOT: // TODO CHECK
 	case VK_RMENU:
 		extFlag = 1;
 		break;
@@ -85,46 +85,140 @@ std::wstring VkCodeToText(WORD vkCode)
 	return actionString;
 }
 
+bool runScriptSilently(const std::wstring& scriptPath) {
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	ZeroMemory(&si, sizeof(si));
+	si.cb = sizeof(si);
+	si.dwFlags = STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_HIDE; // Hide the window
+
+	ZeroMemory(&pi, sizeof(pi));
+
+	// Create a wide string command line
+	std::wstring command = L"cmd.exe /C \"" + scriptPath + L"\"";
+
+	// Create the process
+	BOOL result = CreateProcess(
+		NULL,                   // No module name (use command line)
+		&command[0],            // Command line
+		NULL,                   // Process handle not inheritable
+		NULL,                   // Thread handle not inheritable
+		FALSE,                  // Set handle inheritance to FALSE
+		0,                      // No creation flags
+		NULL,                   // Use parent's environment block
+		NULL,                   // Use parent's starting directory 
+		&si,                    // Pointer to STARTUPINFO structure
+		&pi                     // Pointer to PROCESS_INFORMATION structure
+	);
+
+	// Check if the process creation succeeded
+	if (!result) {
+		// Handle error
+		return false;
+	}
+
+	// Wait until child process exits
+	WaitForSingleObject(pi.hProcess, INFINITE);
+
+	// Close process and thread handles
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+
+	return true;
+}
+
 } // namespace
 
-Bind::Bind(WORD _vkCode)
-	: vkCode(_vkCode)
+Bind::Bind(WORD vkCode)
 {
-	for (auto key = unsigned(ExtraKeys::FirstKey), last = unsigned(ExtraKeys::LastKey); key < last; ++key)
-	{
-		WORD extravkCode = kExtraKeysTovkCodes.get_value(ExtraKeys(key));
-		if (vkCode == extravkCode || !InputManager::GetKeyState(extravkCode))
-			continue;
-
-		extraKeys |= (1u << key);
-	}
+	UpdateBind(vkCode, true);
 }
 
 [[nodiscard]] std::wstring Bind::ToString() const
 {
 	std::wstring actionString;
 
-	for (auto key = unsigned(ExtraKeys::FirstKey), last = unsigned(ExtraKeys::LastKey); key < last; ++key)
+	for (auto key = unsigned(ExtraKeys::FirstModifierKey), last = unsigned(ExtraKeys::LastModifierKey); key < last; ++key)
 	{
 		if ((extraKeys & (1u << key)) == 0)
 			continue;
 
-		actionString += VkCodeToText(kExtraKeysTovkCodes.get_value(ExtraKeys(key))) + L" + ";
+		auto vkCodeKey = kExtraKeysTovkCodes.get_value(ExtraKeys(key));
+		if (vkCodeKey == vkCode)
+			continue;
+
+		actionString += VkCodeToText(vkCodeKey) + L" + ";
 	}
 
-	actionString += VkCodeToText(vkCode);
+	auto vkCodeText = VkCodeToText(vkCode);
+	switch (vkCode)
+	{
+	case InputManager::VK_MOUSE_WHEEL:
+	case InputManager::VK_MOUSE_HWHEEL:
+		vkCodeText = ((extraKeys & (1u << (int)ExtraKeys::eScrollUp)) ? L"↑ " : L"↓ ") + vkCodeText;
+		break;
+	default:
+		break;
+	}
+
+	actionString += vkCodeText;
 
 	return actionString;
 }
 
-bool Bind::IsBindPressed(WORD _vkCode) const
+void Bind::UpdateBind(WORD _vkCode, bool down)
 {
+	unsigned modifiers = 0;
+
+	switch (_vkCode)
+	{
+	case InputManager::VK_MOUSE_WHEEL:
+	case InputManager::VK_MOUSE_HWHEEL:
+		if (!down)
+			modifiers = (1u << (int)ExtraKeys::eScrollUp);
+		break;
+	default:
+		if (!down)
+			return;
+		break;
+	}
+
+	for (auto key = unsigned(ExtraKeys::FirstModifierKey), last = unsigned(ExtraKeys::LastModifierKey); key < last; ++key)
+	{
+		WORD extravkCode = kExtraKeysTovkCodes.get_value(ExtraKeys(key));
+		if (_vkCode == extravkCode || !InputManager::GetKeyState(extravkCode))
+			continue;
+
+		modifiers |= (1u << key);
+	}
+
+	vkCode = _vkCode;
+	extraKeys = modifiers;
+}
+
+bool Bind::IsBindPressed(WORD _vkCode, bool down) const
+{
+	switch (vkCode)
+	{
+	case InputManager::VK_MOUSE_WHEEL:
+	case InputManager::VK_MOUSE_HWHEEL:
+		if (down == ((extraKeys & (1u << (int)ExtraKeys::eScrollUp)) == 0))
+			return false;
+		break;
+	default:
+		// Execute macros on key down and ignore key up
+		if (!down)
+			return false;
+		break;
+	}
+
 	bool pressed = (vkCode == _vkCode);
 
-	for (auto key = unsigned(ExtraKeys::FirstKey), last = unsigned(ExtraKeys::LastKey); key < last; ++key)
+	for (auto key = unsigned(ExtraKeys::FirstModifierKey), last = unsigned(ExtraKeys::LastModifierKey); key < last; ++key)
 	{
 		if (!pressed)
-			break;
+			return false;
 
 		const bool keyMustbePressed = (extraKeys & (1u << key)) != 0;
 		if (keyMustbePressed)
@@ -134,9 +228,13 @@ bool Bind::IsBindPressed(WORD _vkCode) const
 	return pressed;
 }
 
-Action::Action(WORD _vkCode, bool _down, unsigned _delay)
-	: vkCode(_vkCode), down(_down), delayInMilliseconds(_delay)
+Action Action::NewAction(WORD vkCode, bool down, unsigned delay)
 {
+	Action res;
+	res.vkCode = vkCode;
+	res.down = down;
+	res.delayInMilliseconds = delay;
+
 	switch (vkCode)
 	{
 	case VK_LBUTTON:
@@ -146,40 +244,60 @@ Action::Action(WORD _vkCode, bool _down, unsigned _delay)
 	case VK_XBUTTON2:
 	case InputManager::VK_MOUSE_WHEEL:
 	case InputManager::VK_MOUSE_HWHEEL:
-		{ 
-			type = Type::eMouseAction;
-			const auto position = InputManager::GetMousePosition();
-			mouseX = position.x;
-			mouseY = position.y;
-		}
+		res.type = Type::eMouseAction;
 		break;
 	default:
-		type = Type::eKeyAction;
+		res.type = Type::eKeyAction;
 		break;
 	}
 
-	EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << std::string_sprintf("New action: type %d, vkCode %hu, down %d, %hu ms delay, pos(%ld, %ld)",
-																 (int)type, vkCode, int(down), delayInMilliseconds, mouseX, mouseY);
+	EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << std::string_sprintf("New action: type %d, vkCode %hu, down %d, %hu ms delay",
+		(int)res.type, res.vkCode, int(res.down), res.delayInMilliseconds);
+	return res;
 }
 
-Action::Action(long mouseMovedToPointX, long mouseMovedToPointY, unsigned _delay)
-	: type(Type::eMouseMove)
-	, mouseX(mouseMovedToPointX)
-	, mouseY(mouseMovedToPointY)
-	, delayInMilliseconds(_delay)
+Action Action::NewMouseMove(long mouseMovedToPointX, long mouseMovedToPointY, unsigned delay)
 {
-	EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << std::string_sprintf("New mouse move action: type %d, pos(%ld, %ld), %hu ms delay",
-																 (int)type, mouseX, mouseY, delayInMilliseconds);
+	Action res;
+	res.type = Type::eMouseMove;
+	res.mouseX = mouseMovedToPointX;
+	res.mouseY = mouseMovedToPointY;
+	res.delayInMilliseconds = delay;
+
+	EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << std::string_sprintf("type %d, pos(%ld, %ld), %hu ms delay",
+		(int)res.type, res.mouseX, res.mouseY, res.delayInMilliseconds);
+	return res;
+}
+
+Action Action::NewRunScript(const std::wstring& scriptPath, unsigned delay)
+{
+	Action res;
+	res.type = Type::eRunScript;
+	res.scriptPath = scriptPath;
+	res.delayInMilliseconds = delay;
+
+	EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << std::string_swprintf(L"type %d, path %s, %hu ms delay",
+		(int)res.type, res.scriptPath.c_str(), res.delayInMilliseconds);
+	return res;
 }
 
 std::wstring Action::ToString() const
 {
-	if (type == Type::eMouseMove)
-		return std::string_swprintf(L"Mouse move");
-	return (down ? L"↓ " : L"↑ ") + VkCodeToText(vkCode);
+	switch (type)
+	{
+	case Type::eMouseAction:
+	case Type::eKeyAction:
+		return (down ? L"↓ " : L"↑ ") + VkCodeToText(vkCode);
+	case Type::eMouseMove:
+		return std::string_swprintf(L"Mouse move(%ld,%ld)", mouseX, mouseY);
+	case Type::eRunScript:
+		return L"Run script: " + scriptPath;
+	default:
+		EXT_UNREACHABLE();
+	}
 }
 
-void Action::ExecuteAction(float delayRandomize, bool applyMousePos) const
+void Action::ExecuteAction(float delayRandomize) const
 {
 	if (delayInMilliseconds != 0)
 	{
@@ -189,21 +307,32 @@ void Action::ExecuteAction(float delayRandomize, bool applyMousePos) const
 		ext::this_thread::interruptible_sleep_for(std::chrono::milliseconds(long long(delayInMilliseconds * randomMultiply)));
 	}
 
-	if (applyMousePos)
+	switch (type)
 	{
-		if (type != Type::eKeyAction && !down)
-			InputManager::MouseMove(POINT{ mouseX , mouseY});
-		if (type == Type::eMouseMove)
-			return;
+	case Type::eMouseAction:
+	case Type::eKeyAction:
+		InputManager::SendKeyOrMouse(vkCode, down);
+		break;
+	case Type::eMouseMove:
+		InputManager::MouseMove(POINT{ mouseX, mouseY });
+		break;
+	case Type::eRunScript:
+		{
+			auto script = scriptPath;
+			auto path = std::filesystem::get_exe_directory() / scriptPath;
+			if (std::filesystem::exists(path))
+				script = path;
+		
+			if (!runScriptSilently(script))
+				EXT_TRACE_ERR() << EXT_TRACE_FUNCTION << "Failed to run script, last err: " << GetLastError();
+		}
+		break;
+	default:
+		EXT_UNREACHABLE();
 	}
-	else
-		// We apply mouse pos in actions dialog, not in macroses where we don't have mouse move
-		EXT_ASSERT(type != Type::eMouseMove);
-
-	InputManager::SendKeyOrMouse(vkCode, down);
 }
 
-void Actions::Execute(bool applyMousePosition) const
+void Actions::Execute() const
 {
 	auto stopToken = ext::this_thread::get_stop_token();
 	try
@@ -213,7 +342,7 @@ void Actions::Execute(bool applyMousePosition) const
 			if (stopToken.stop_requested())
 				return;
 
-			action.ExecuteAction(randomizeDelays, applyMousePosition);
+			action.ExecuteAction(randomizeDelays);
 		}
 	}
 	catch (const ext::thread::thread_interrupted&)
@@ -232,7 +361,7 @@ void actions_executor::Settings::Execute() const
 
 	while (!stopToken.stop_requested())
 	{
-		actionsSettings.Execute(true);
+		actionsSettings.Execute();
 
 		if (stopToken.stop_requested())
 			return;
