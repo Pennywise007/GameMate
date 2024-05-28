@@ -12,32 +12,57 @@ void LoadCrosshair(const Settings& crosshair, CBitmap& bitmap) EXT_THROWS(std::r
 void ChangeCrosshairColor(CBitmap& bitmap, COLORREF color);
 void ResizeCrosshair(CBitmap& bitmap, const CSize& size);
 
-// Layered non clickable topmost window to show crosshair in games
-class CrosshairWindow : protected CWnd
+// Transparent window with drowable bitmap
+class TransparentWindowWithBitmap : protected CWnd
 {
     DECLARE_MESSAGE_MAP()
 public:
-    CrosshairWindow();
-    ~CrosshairWindow();
+    TransparentWindowWithBitmap();
+    virtual ~TransparentWindowWithBitmap();
 
-    using CWnd::m_hWnd;
-    using CWnd::SetWindowPos;
-
-    void InitCrosshairWindow(const Settings& crosshair);
-    void AttachCrosshairToWindow(HWND hWndOfActiveWindow);
-    void RemoveCrosshairWindow();
-
-    CRect GetWindowRect() const;
-
-    void OnWindowPosChanged(HWND hwnd);
+    void Create(CBitmap&& bitmap, UINT extraExFlags);
 
 private:
     afx_msg void OnPaint();
 
 private:
+    CBitmap m_crosshair;
+    const CString m_className;
+};
+
+// Layered non clickable topmost window to show crosshair in games
+class AttachableCrosshairWindow : protected TransparentWindowWithBitmap
+{
+public:
+    AttachableCrosshairWindow();
+    ~AttachableCrosshairWindow();
+
+    void AttachCrosshairToWindow(const Settings& settings, HWND hWndOfActiveWindow);
+    void RemoveCrosshairWindow();
+
+    void OnWindowPosChanged(HWND hwnd);
+private:
     HWINEVENTHOOK m_windowPosChangedHook = nullptr;
     HWND m_attachedWindowHwnd = nullptr;
-    CBitmap m_crosshair;
+};
+
+// Transparent window with cursor image which suppose to replace crosshair
+class CursorReplacingWindow : protected TransparentWindowWithBitmap
+{
+    DECLARE_MESSAGE_MAP()
+public:
+    CursorReplacingWindow() = default;
+
+    void Create(CBitmap&& cursorImage);
+    
+    using TransparentWindowWithBitmap::DestroyWindow;
+    using TransparentWindowWithBitmap::m_hWnd;
+
+    CRect GetWindowRect() const;
+    using TransparentWindowWithBitmap::SetWindowPos;
+
+private:
+    afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
 };
 
 } // namespace crosshair

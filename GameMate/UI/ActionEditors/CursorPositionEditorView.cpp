@@ -1,7 +1,10 @@
 #include "pch.h"
 #include "resource.h"
+#include <afxtoolbarimages.h>
 #include <vector>
 #include <string>
+
+#include <ext/thread/invoker.h>
 
 #include "CursorPositionEditorView.h"
 
@@ -36,15 +39,22 @@ void CCursorPositionEditorView::OnInitialUpdate()
 
 	updateMousePositionControlsStates();
 
-	namespace crosshair = process_toolkit::crosshair;
-	crosshair::Settings settings = {
-		.show = true,
-		.size = crosshair::Size::eLarge,
-		.type = crosshair::Type::eCross,
-		.color = RGB(0, 0, 0),
-	};
-	m_crosshairWindow.InitCrosshairWindow(settings);
-	m_toolWindow.Create(m_crosshairWindow.m_hWnd, true);
+	CBitmap bitmap;
+	try
+	{
+		CPngImage pngImage;
+		EXT_CHECK(pngImage.Load(IDB_PNG_CURSOR_POSITION_SELECTION, AfxGetResourceHandle()))
+			<< "Failed to load cursor position image";
+		EXT_CHECK(bitmap.Attach(pngImage.Detach())) << "Failed to load resouce";
+	}
+	catch (...)
+	{
+		MessageBox(ext::ManageExceptionText(L"").c_str(), L"Failed to load image", MB_ICONERROR);
+	}
+
+	m_cursorReplacingWindow.Create(std::move(bitmap));
+
+	m_toolWindow.Create(m_cursorReplacingWindow.m_hWnd, true);
 	m_toolWindow.SetLabel(L"Click to select point or ESC to exit");
 }
 
@@ -53,12 +63,18 @@ void CCursorPositionEditorView::OnDestroy()
 	ActionsEditor::OnDestroy();
 
 	ASSERT(m_keyPressedSubscriptionId == -1 && m_mouseMoveSubscriptionId == -1);
-	m_crosshairWindow.RemoveCrosshairWindow();
+	m_cursorReplacingWindow.DestroyWindow();
 }
 
 void CCursorPositionEditorView::OnBnClickedButtonMousePositionSelect()
 {
-	AfxGetMainWnd()->ShowWindow(SW_HIDE);
+	CWnd* wnd = this;
+	wnd->ShowWindow(SW_HIDE);
+	do
+	{
+		wnd = wnd->GetParent();
+		wnd->ShowWindow(SW_HIDE);
+	} while (wnd != AfxGetMainWnd());
 
 	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkCode, bool isDown) -> bool {
 		switch (vkCode)
@@ -72,20 +88,29 @@ void CCursorPositionEditorView::OnBnClickedButtonMousePositionSelect()
 		}
 		case VK_ESCAPE:
 		{
-			InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
-			m_keyPressedSubscriptionId = -1;
-			InputManager::RemoveMouseMoveHandler(m_mouseMoveSubscriptionId);
-			m_mouseMoveSubscriptionId = -1;
+			ext::InvokeMethodAsync([&]() {
+				InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
+				m_keyPressedSubscriptionId = -1;
+				InputManager::RemoveMouseMoveHandler(m_mouseMoveSubscriptionId);
+				m_mouseMoveSubscriptionId = -1;
 
-			m_crosshairWindow.SetWindowPos(nullptr, 0, 0, 0, 0,
-				SWP_NOACTIVATE | SWP_NOZORDER | SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOREDRAW | SWP_NOREPOSITION);
-			m_toolWindow.ShowWindow(SW_HIDE);
-			AfxGetMainWnd()->ShowWindow(SW_SHOW);
-			break;
+				m_cursorReplacingWindow.SetWindowPos(nullptr, 0, 0, 0, 0,
+					SWP_NOACTIVATE | SWP_NOZORDER | SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOREDRAW | SWP_NOREPOSITION);
+				m_toolWindow.ShowWindow(SW_HIDE);
+
+				CWnd* wnd = this;
+				wnd->ShowWindow(SW_SHOW);
+				do
+				{
+					wnd = wnd->GetParent();
+					wnd->ShowWindow(SW_SHOW);
+				} while (wnd != AfxGetMainWnd());
+			});
+			return true;
 		}
 		}
 
-		return true;
+		return false;
 	});
 	m_mouseMoveSubscriptionId = InputManager::AddMouseMoveHandler([&](const POINT& position, const POINT&) {
 		syncCrosshairWindowWithCursor();
@@ -96,6 +121,7 @@ void CCursorPositionEditorView::OnBnClickedButtonMousePositionSelect()
 
 bool CCursorPositionEditorView::CanClose() const
 {
+	// TODO
 	return true;
 }
 
@@ -130,10 +156,10 @@ void CCursorPositionEditorView::syncCrosshairWindowWithCursor()
 	ASSERT(m_keyPressedSubscriptionId != -1 && m_mouseMoveSubscriptionId != -1);
 	
 	CPoint requiredPoint = InputManager::GetMousePosition();
-	auto currentRect = m_crosshairWindow.GetWindowRect();
+	auto currentRect = m_cursorReplacingWindow.GetWindowRect();
 	currentRect.OffsetRect(requiredPoint - currentRect.CenterPoint());
 
-	m_crosshairWindow.SetWindowPos(nullptr,
+	m_cursorReplacingWindow.SetWindowPos(nullptr,
 		currentRect.left,
 		currentRect.top,
 		0,
@@ -143,4 +169,7 @@ void CCursorPositionEditorView::syncCrosshairWindowWithCursor()
 	const CSize windowSize = m_toolWindow.GetWindowSize();
 	m_toolWindow.SetWindowPos(nullptr, currentRect.right, currentRect.bottom, windowSize.cx, windowSize.cy,
 		SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_SHOWWINDOW);
+	CString text;
+	text.Format(L"x=%d, y=%d", requiredPoint.x, requiredPoint.y);
+	m_toolWindow.SetDescription(text);
 }

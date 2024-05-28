@@ -9,7 +9,7 @@
 #include <ext/core/tracer.h>
 #include <ext/constexpr/map.h>
 
-#define DONT_USE_HOOK
+//#define DONT_USE_HOOK
 
 namespace {
 

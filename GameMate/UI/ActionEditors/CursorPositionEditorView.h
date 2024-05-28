@@ -46,5 +46,5 @@ private:
 	int m_keyPressedSubscriptionId = -1;
 	int m_mouseMoveSubscriptionId = -1;
 	CToolWindow m_toolWindow;
-	process_toolkit::crosshair::CrosshairWindow m_crosshairWindow;
+	process_toolkit::crosshair::CursorReplacingWindow m_cursorReplacingWindow;
 };

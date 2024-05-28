@@ -92,126 +92,57 @@ void ResizeCrosshair(CBitmap& bitmap, const CSize& size)
     ::DeleteDC(destCompatCDC);
 }
 
-CrosshairWindow* g_crosshairWindow = nullptr;
+AttachableCrosshairWindow* g_crosshairWindow = nullptr;
 
 void CALLBACK WinPosChangedProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime) {
     g_crosshairWindow->OnWindowPosChanged(hwnd);
 }
 
-BEGIN_MESSAGE_MAP(CrosshairWindow, CWnd)
+BEGIN_MESSAGE_MAP(TransparentWindowWithBitmap, CWnd)
     ON_WM_PAINT()
 END_MESSAGE_MAP()
 
-CrosshairWindow::CrosshairWindow()
+TransparentWindowWithBitmap::TransparentWindowWithBitmap()
+    : m_className(typeid(*this).name())
 {
-    if (g_crosshairWindow == nullptr)
-        g_crosshairWindow = this;
-
     HINSTANCE instance = AfxGetInstanceHandle();
-    const CString className(typeid(*this).name());
 
     WNDCLASSEX wndClass;
-    if (!::GetClassInfoEx(instance, className, &wndClass))
+    if (!::GetClassInfoEx(instance, m_className, &wndClass))
     {
         memset(&wndClass, 0, sizeof(WNDCLASSEX));
         wndClass.cbSize = sizeof(WNDCLASSEX);
         wndClass.style = 0;
         wndClass.lpfnWndProc = ::DefMDIChildProc;
         wndClass.hInstance = instance;
-        wndClass.lpszClassName = className;
+        wndClass.lpszClassName = m_className;
 
         static WindowClassRegistrationLock registrator(wndClass);
     }
 }
 
-CrosshairWindow::~CrosshairWindow()
+TransparentWindowWithBitmap::~TransparentWindowWithBitmap()
 {
-    RemoveCrosshairWindow();
+    if (::IsWindow(m_hWnd))
+        DestroyWindow();
 }
 
-void CrosshairWindow::InitCrosshairWindow(const Settings& crosshair)
+void TransparentWindowWithBitmap::Create(CBitmap&& bitmap, UINT extraExFlags)
 {
-    // TODO try to fix paint problems and don't destroy window
-    
-    // We recreate window every time to avoid transparent collisions
-    ASSERT(!IsWindow(*this));
-
-    try
-    {
-        auto old = m_crosshair.Detach();
-        if (old != nullptr)
-            ::DeleteObject(old);
-
-        LoadCrosshair(crosshair, m_crosshair);
-    }
-    catch (...)
-    {
-        MessageBox(ext::ManageExceptionText(L"").c_str(), L"Failed to load crosshair", MB_ICONERROR);
-        return;
-    }
-
     BITMAP bm;
-    ENSURE(m_crosshair.GetBitmap(&bm) != 0);
+    ENSURE(bitmap.GetBitmap(&bm) != 0);
 
-    CreateEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_TRANSPARENT, CString(typeid(*this).name()), NULL, WS_POPUP, CRect(0, 0, bm.bmWidth, bm.bmHeight), NULL, NULL);
+    auto old = m_crosshair.Detach();
+    if (old != nullptr)
+        ::DeleteObject(old);
+    m_crosshair.Attach(bitmap.Detach());
+
+    CreateEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW | extraExFlags, m_className, NULL, WS_POPUP, CRect(0, 0, bm.bmWidth, bm.bmHeight), NULL, NULL);
     SetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE, GetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE) | WS_EX_LAYERED);
     SetLayeredWindowAttributes(RGB(255, 255, 255), 0, LWA_COLORKEY);
 }
 
-void CrosshairWindow::AttachCrosshairToWindow(HWND hWndOfActiveWindow)
-{
-    m_attachedWindowHwnd = hWndOfActiveWindow;
-    OnWindowPosChanged(m_attachedWindowHwnd);
-
-    DWORD pid = 0;
-    GetWindowThreadProcessId(hWndOfActiveWindow, &pid);
-    m_windowPosChangedHook = SetWinEventHook(EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_LOCATIONCHANGE, NULL, WinPosChangedProc, pid, 0, WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
-}
-
-void CrosshairWindow::RemoveCrosshairWindow()
-{
-    m_attachedWindowHwnd = nullptr;
-    if (m_windowPosChangedHook)
-    {
-        UnhookWinEvent(m_windowPosChangedHook);
-        m_windowPosChangedHook = nullptr;
-    }
-
-    if (IsWindow(*this))
-        DestroyWindow();
-}
-
-CRect CrosshairWindow::GetWindowRect() const
-{
-    CRect rect;
-    CWnd::GetWindowRect(rect);
-    return rect;
-}
-
-void CrosshairWindow::OnWindowPosChanged(HWND hwnd)
-{
-    if (hwnd != m_attachedWindowHwnd)
-        return;
-
-    BITMAP bm;
-    ENSURE(m_crosshair.GetBitmap(&bm) != 0);
-
-    CRect activeWindowRect;
-    ::GetWindowRect(m_attachedWindowHwnd, activeWindowRect);
-
-    CPoint topLeft = activeWindowRect.CenterPoint();
-    topLeft.Offset(-bm.bmWidth / 2, -bm.bmHeight / 2);
-
-    SetWindowPos(
-           nullptr,
-           topLeft.x,
-           topLeft.y,
-           0,
-           0,
-           SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOREDRAW);
-}
-
-afx_msg void CrosshairWindow::OnPaint()
+afx_msg void TransparentWindowWithBitmap::OnPaint()
 {
     BITMAP bm;
     ENSURE(m_crosshair.GetBitmap(&bm) != 0);
@@ -230,4 +161,101 @@ afx_msg void CrosshairWindow::OnPaint()
     }
 }
 
-} // namespace crosshair
+AttachableCrosshairWindow::AttachableCrosshairWindow()
+{
+    g_crosshairWindow = this;
+}
+
+AttachableCrosshairWindow::~AttachableCrosshairWindow()
+{
+    RemoveCrosshairWindow();
+}
+
+void AttachableCrosshairWindow::AttachCrosshairToWindow(const Settings& settings, HWND hWndOfActiveWindow)
+{
+    // TODO try to fix paint problems and don't destroy window
+    
+    // We recreate window every time to avoid transparent collisions
+    ASSERT(!IsWindow(*this));
+
+    CBitmap crosshair;
+    try
+    {
+        LoadCrosshair(settings, crosshair);
+    }
+    catch (...)
+    {
+        MessageBox(ext::ManageExceptionText(L"").c_str(), L"Failed to load crosshair", MB_ICONERROR);
+        return;
+    }
+
+    Create(std::move(crosshair), WS_EX_TRANSPARENT);
+
+    m_attachedWindowHwnd = hWndOfActiveWindow;
+    OnWindowPosChanged(m_attachedWindowHwnd);
+
+    DWORD pid = 0;
+    GetWindowThreadProcessId(hWndOfActiveWindow, &pid);
+    m_windowPosChangedHook = SetWinEventHook(EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_LOCATIONCHANGE, NULL, WinPosChangedProc, pid, 0, WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS);
+}
+
+void AttachableCrosshairWindow::RemoveCrosshairWindow()
+{
+    m_attachedWindowHwnd = nullptr;
+    if (m_windowPosChangedHook)
+    {
+        UnhookWinEvent(m_windowPosChangedHook);
+        m_windowPosChangedHook = nullptr;
+    }
+
+    if (IsWindow(*this))
+        DestroyWindow();
+}
+
+void AttachableCrosshairWindow::OnWindowPosChanged(HWND hwnd)
+{
+    if (hwnd != m_attachedWindowHwnd)
+        return;
+
+    CRect rect;
+    TransparentWindowWithBitmap::GetWindowRect(rect);
+
+    CRect activeWindowRect;
+    ::GetWindowRect(m_attachedWindowHwnd, activeWindowRect);
+
+    CPoint topLeft = activeWindowRect.CenterPoint();
+    topLeft.Offset(-rect.Width() / 2, -rect.Height() / 2);
+
+    SetWindowPos(
+           nullptr,
+           topLeft.x,
+           topLeft.y,
+           0,
+           0,
+           SWP_NOACTIVATE | SWP_NOZORDER | SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOREDRAW);
+}
+
+BEGIN_MESSAGE_MAP(CursorReplacingWindow, TransparentWindowWithBitmap)
+    ON_WM_SETCURSOR()
+END_MESSAGE_MAP()
+
+void CursorReplacingWindow::Create(CBitmap&& cursorImage)
+{
+    TransparentWindowWithBitmap::Create(std::move(cursorImage), 0);
+}
+
+CRect CursorReplacingWindow::GetWindowRect() const
+{
+    CRect rect;
+    TransparentWindowWithBitmap::GetWindowRect(rect);
+    return rect;
+}
+
+BOOL CursorReplacingWindow::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
+{
+    // removing default cursor
+    ::SetCursor(NULL);
+    return TRUE;
+}
+
+} // namespace process_toolkit::crosshair

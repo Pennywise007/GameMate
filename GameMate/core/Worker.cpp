@@ -148,10 +148,7 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
 
     auto& crossahair = m_activeExeConfig->crosshairSettings;
     if (crossahair.show)
-    {
-        m_crosshairWindow.InitCrosshairWindow(crossahair);
-        m_crosshairWindow.AttachCrosshairToWindow(m_activeWindow);
-    }
+        m_crosshairWindow.AttachCrosshairToWindow(crossahair, m_activeWindow);
 }
 
 bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)

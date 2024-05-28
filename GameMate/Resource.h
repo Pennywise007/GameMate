@@ -61,6 +61,7 @@
 #define IDB_PNG_ADD                     185
 #define IDD_VIEW_ACTIONS_EDITOR         185
 #define IDB_PNG_DELETE                  186
+#define IDB_PNG_CURSOR_POSITION_SELECTION 188
 #define IDC_TABCONTROL_MODES            1000
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
@@ -176,7 +177,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        188
+#define _APS_NEXT_RESOURCE_VALUE        189
 #define _APS_NEXT_COMMAND_VALUE         32781
 #define _APS_NEXT_CONTROL_VALUE         1095
 #define _APS_NEXT_SYMED_VALUE           101

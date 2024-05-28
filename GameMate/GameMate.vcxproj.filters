@@ -346,5 +346,8 @@
     <Image Include="res\delete.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\cursor_position_selector.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

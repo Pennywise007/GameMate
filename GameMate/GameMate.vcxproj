@@ -389,6 +389,7 @@
     <Image Include="res\crosshairs\crosshair_8_16.png" />
     <Image Include="res\crosshairs\crosshair_8_24.png" />
     <Image Include="res\crosshairs\crosshair_8_32.png" />
+    <Image Include="res\cursor_position_selector.png" />
     <Image Include="res\delete.png" />
     <Image Include="res\GameMate.ico" />
     <Image Include="res\settings.png" />
