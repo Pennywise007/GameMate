@@ -115,7 +115,7 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 
 		controls::SetTooltip(
 			m_staticCrosshairInfo,
-			L"If you want to add your own crosshair put file with name crosshair_X with .png or .ico extenstion to the folder:\n"
+			L"If you want to add your own cross hair put file with name crosshair_X with .png or .ico extenstion to the folder:\n"
 			L"$GAME_MATE_FOLDER$\\res\n"
 			L"Note: all images bigger than 32x32 will be ignored.");
 	}
@@ -126,7 +126,7 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 
 	{
 		m_crosshairDemo.ModifyStyle(0, SS_ICON);
-		controls::SetTooltip(m_crosshairDemo, L"Demo of the crosshair");
+		controls::SetTooltip(m_crosshairDemo, L"Demo of the cross hair");
 	}
 
 	CRect rect;
@@ -134,7 +134,7 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 
 	constexpr int kKeybindColumnWidth = 80;
 	constexpr int kRandomizeDelayColumnWidth = 50;
-	m_listActions.InsertColumn(Columns::eKeybind, L"Keybind", LVCFMT_CENTER, kKeybindColumnWidth);
+	m_listActions.InsertColumn(Columns::eKeybind, L"Key bind", LVCFMT_CENTER, kKeybindColumnWidth);
 	m_listActions.InsertColumn(Columns::eMacros, L"Macros", LVCFMT_CENTER, rect.Width() - kKeybindColumnWidth - kRandomizeDelayColumnWidth);
 	m_listActions.InsertColumn(Columns::eRandomizeDelay, L"Randomize delay(%)", LVCFMT_CENTER, kRandomizeDelayColumnWidth);
 	m_listActions.SetProportionalResizingColumns({ Columns::eMacros });
@@ -370,7 +370,7 @@ void CActiveProcessToolkitTab::UpdateDemoCrosshair()
 	}
 	catch (...)
 	{
-		MessageBox(ext::ManageExceptionText(L"").c_str(), L"Failed to load crosshair for demo", MB_ICONERROR);
+		MessageBox(ext::ManageExceptionText(L"").c_str(), L"Failed to load cross hair for demo", MB_ICONERROR);
 	}
 
 	// Convert bitmap to icon because we don't want to change control size
@@ -407,12 +407,12 @@ void CActiveProcessToolkitTab::InitCrosshairsList()
 			crosshairSettings.type = type;
 			process_toolkit::crosshair::LoadCrosshair(crosshairSettings, m_crosshairs.back());
 
-			const std::wstring name = L"Crosshair " + std::to_wstring(m_crosshairs.size());
+			const std::wstring name = L"Cross hair " + std::to_wstring(m_crosshairs.size());
 			m_comboCrosshairs.InsertItem((int)m_crosshairs.size() - 1, name.c_str(), (int)m_crosshairs.size() - 1);
 		}
 		catch (const std::exception&)
 		{
-			EXT_EXPECT(false) << ext::ManageExceptionText("Failed to load standart crosshair");
+			EXT_EXPECT(false) << ext::ManageExceptionText("Failed to load standard cross hair");
 		}
 	};
 
@@ -512,7 +512,7 @@ void CActiveProcessToolkitTab::InitCrosshairsList()
 	}
 	m_comboCrosshairs.SetBitmapsList(crosshairs);
 
-	// m_comboCrosshairs control recreated, we need to restor its anchers
+	// m_comboCrosshairs control recreated, we need to restore its anchers
 	Layout::AnchorWindow(m_comboCrosshairs, *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
 	Layout::AnchorWindow(m_comboCrosshairs, *this, { AnchorSide::eTop, AnchorSide::eBottom }, AnchorSide::eBottom, 100);
 }
@@ -554,7 +554,7 @@ void CActiveProcessToolkitTab::OnBnClickedButtonAddConfiguration()
 		return;
 
 	auto& settings = ext::get_singleton<Settings>().process_toolkit;
-	settings.activeConfiguration = settings.processConfigurations.size();
+	settings.activeConfiguration = (int)settings.processConfigurations.size();
 	settings.processConfigurations.emplace_back(
 		std::make_shared<process_toolkit::ProcessConfiguration>(std::move(configuration.value())));
 
@@ -710,7 +710,7 @@ void CActiveProcessToolkitTab::OnBnClickedButtonAddMacros()
 	if (!newActions.has_value())
 		return;
 
-	// removing old copy of eddited actionsByBind
+	// removing old copy of edited actionsByBind
 	if (actionExists)
 	{
 		auto sameItem = (int)std::distance(m_configuration->actionsByBind.begin(), it);

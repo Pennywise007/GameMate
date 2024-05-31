@@ -231,37 +231,35 @@ bool Bind::IsBindPressed(WORD _vkCode, bool down) const
 Action Action::NewAction(WORD vkCode, bool down, unsigned delay)
 {
 	Action res;
+	res.type = Type::eKeyOrMouseAction;
 	res.vkCode = vkCode;
 	res.down = down;
 	res.delayInMilliseconds = delay;
-
-	switch (vkCode)
-	{
-	case VK_LBUTTON:
-	case VK_RBUTTON:
-	case VK_MBUTTON:
-	case VK_XBUTTON1:
-	case VK_XBUTTON2:
-	case InputManager::VK_MOUSE_WHEEL:
-	case InputManager::VK_MOUSE_HWHEEL:
-		res.type = Type::eMouseAction;
-		break;
-	default:
-		res.type = Type::eKeyAction;
-		break;
-	}
 
 	EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << std::string_sprintf("New action: type %d, vkCode %hu, down %d, %hu ms delay",
 		(int)res.type, res.vkCode, int(res.down), res.delayInMilliseconds);
 	return res;
 }
 
-Action Action::NewMouseMove(long mouseMovedToPointX, long mouseMovedToPointY, unsigned delay)
+Action Action::NewMousePosition(long mouseMovedToPointX, long mouseMovedToPointY, unsigned delay)
+{
+	Action res;
+	res.type = Type::eCursorPosition;
+	res.mouseX = mouseMovedToPointX;
+	res.mouseY = mouseMovedToPointY;
+	res.delayInMilliseconds = delay;
+
+	EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << std::string_sprintf("type %d, pos(%ld, %ld), %hu ms delay",
+		(int)res.type, res.mouseX, res.mouseY, res.delayInMilliseconds);
+	return res;
+}
+
+Action Action::NewMouseMove(long mouseDeltaX, long mouseDeltaY, unsigned delay)
 {
 	Action res;
 	res.type = Type::eMouseMove;
-	res.mouseX = mouseMovedToPointX;
-	res.mouseY = mouseMovedToPointY;
+	res.mouseX = mouseDeltaX;
+	res.mouseY = mouseDeltaY;
 	res.delayInMilliseconds = delay;
 
 	EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << std::string_sprintf("type %d, pos(%ld, %ld), %hu ms delay",
@@ -285,11 +283,12 @@ std::wstring Action::ToString() const
 {
 	switch (type)
 	{
-	case Type::eMouseAction:
-	case Type::eKeyAction:
+	case Type::eKeyOrMouseAction:
 		return (down ? L"↓ " : L"↑ ") + VkCodeToText(vkCode);
+	case Type::eCursorPosition:
+		return std::string_swprintf(L"Set cursor position(%ld,%ld)", mouseX, mouseY);
 	case Type::eMouseMove:
-		return std::string_swprintf(L"Mouse move(%ld,%ld)", mouseX, mouseY);
+		return std::string_swprintf(L"Move mouse(%ld,%ld)", mouseX, mouseY);
 	case Type::eRunScript:
 		return L"Run script: " + scriptPath;
 	default:
@@ -304,17 +303,32 @@ void Action::ExecuteAction(float delayRandomize) const
 		auto randomMultiply = 1.;
 		if (delayRandomize)
 			randomMultiply = (100. - delayRandomize + double(rand() % int(delayRandomize * 2. * 1000.)) / 1000.) / 100.;
-		ext::this_thread::interruptible_sleep_for(std::chrono::milliseconds(long long(delayInMilliseconds * randomMultiply)));
+
+		auto sleepDurationInMs = std::chrono::milliseconds(long long(delayInMilliseconds * randomMultiply));
+		if (sleepDurationInMs.count() < 100)
+		{
+			ext::this_thread::sleep_for(sleepDurationInMs);
+			ext::this_thread::interruption_point();
+		}
+		else
+			ext::this_thread::interruptible_sleep_for(sleepDurationInMs);
 	}
 
 	switch (type)
 	{
-	case Type::eMouseAction:
-	case Type::eKeyAction:
+	case Type::eKeyOrMouseAction:
 		InputManager::SendKeyOrMouse(vkCode, down);
 		break;
-	case Type::eMouseMove:
+	case Type::eCursorPosition:
 		InputManager::MouseMove(POINT{ mouseX, mouseY });
+		break;
+	case Type::eMouseMove:
+		{
+			auto cursor = InputManager::GetMousePosition();
+			cursor.x += mouseX;
+			cursor.y += mouseY;
+			InputManager::MouseMove(POINT{ cursor.x, cursor.y });
+		}
 		break;
 	case Type::eRunScript:
 		{
@@ -348,6 +362,12 @@ void Actions::Execute() const
 	catch (const ext::thread::thread_interrupted&)
 	{
 	}
+}
+
+actions_executor::Settings::Settings()
+{
+	// Init vk code here to avoid calling UpdateBind before object deserialization
+	enableBind.vkCode = VK_F6;
 }
 
 void actions_executor::Settings::Execute() const

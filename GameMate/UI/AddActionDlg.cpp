@@ -40,20 +40,23 @@ BOOL CAddActionDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	m_type.AddString(L"Mouse or keyboard input");
+	m_type.AddString(L"Set cursor position");
 	m_type.AddString(L"Mouse move");
 	m_type.AddString(L"Run script");
 
 	switch (m_currentAction.type)
 	{
-	case Action::Type::eKeyAction:
-	case Action::Type::eMouseAction:
+	case Action::Type::eKeyOrMouseAction:
 		m_type.SetCurSel(0);
 		break;
-	case Action::Type::eMouseMove:
+	case Action::Type::eCursorPosition:
 		m_type.SetCurSel(1);
 		break;
-	case Action::Type::eRunScript:
+	case Action::Type::eMouseMove:
 		m_type.SetCurSel(2);
+		break;
+	case Action::Type::eRunScript:
+		m_type.SetCurSel(3);
 		break;
 	default:
 		EXT_UNREACHABLE();
@@ -61,6 +64,7 @@ BOOL CAddActionDlg::OnInitDialog()
 
 	m_editors = {
 		ActionsEditor::CreateEditor(&m_editor, ActionsEditor::Editor::eAction),
+		ActionsEditor::CreateEditor(&m_editor, ActionsEditor::Editor::eCursorPosition),
 		ActionsEditor::CreateEditor(&m_editor, ActionsEditor::Editor::eMouseMove),
 		ActionsEditor::CreateEditor(&m_editor, ActionsEditor::Editor::eScript),
 	};
@@ -74,6 +78,7 @@ BOOL CAddActionDlg::OnInitDialog()
 		editor->MoveWindow(editorRect, FALSE);
 		editor->SetAction(m_currentAction);
 		editor->SetOwner(this);
+		editor->OnInitDone();
 
 		editorsMaxWidth = std::max(editorsMaxWidth, editor->GetTotalSize().cx);
 

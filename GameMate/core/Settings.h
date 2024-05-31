@@ -55,7 +55,8 @@ struct Action
 {
     Action() = default;
     static Action NewAction(WORD vkCode, bool down, unsigned delay);
-    static Action NewMouseMove(long mouseMovedToPointX, long mouseMovedToPointY, unsigned delay);
+    static Action NewMousePosition(long mouseMovedToPointX, long mouseMovedToPointY, unsigned delay);
+    static Action NewMouseMove(long mouseDeltaX, long mouseDeltaY, unsigned delay);
     static Action NewRunScript(const std::wstring& scriptPath, unsigned delay);
 
     // Get action text
@@ -67,12 +68,12 @@ struct Action
 
     enum class Type
     {
-        eMouseAction,
-        eKeyAction,
+        eKeyOrMouseAction,
+        eCursorPosition,
         eMouseMove,
         eRunScript
     };
-    DECLARE_SERIALIZABLE_FIELD(Type, type, Type::eKeyAction);
+    DECLARE_SERIALIZABLE_FIELD(Type, type, Type::eKeyOrMouseAction);
     DECLARE_SERIALIZABLE_FIELD(int, vkCode, kNotSetVkCode);
     DECLARE_SERIALIZABLE_FIELD(bool, down, false);
     DECLARE_SERIALIZABLE_FIELD(unsigned, delayInMilliseconds, 0);
@@ -105,13 +106,15 @@ struct Settings
     bool enabled = false;
 
     DECLARE_SERIALIZABLE_FIELD(Actions, actionsSettings);
-    DECLARE_SERIALIZABLE_FIELD(Bind, enableBind, Bind(VK_F6));
+    DECLARE_SERIALIZABLE_FIELD(Bind, enableBind);
     DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalMinutes, 0);
     DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalSeconds, 0);
     DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalMilliseconds, 0);
 
     DECLARE_SERIALIZABLE_FIELD(RepeatMode, repeatMode, RepeatMode::eTimes);
     DECLARE_SERIALIZABLE_FIELD(unsigned, repeatTimes, 0);
+
+    Settings();
 
     void Execute() const;
 };

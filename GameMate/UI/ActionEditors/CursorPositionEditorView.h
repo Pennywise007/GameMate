@@ -11,24 +11,22 @@
 
 #include "../ActionsEditor.h"
 
-class CCursorPositionEditorView : public ActionsEditor
+class CMouseMovementEditorView : public ActionsEditor
 {
 protected:
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_VIEW_EDIT_MOUSE_MOVE };
 #endif
 
-	CCursorPositionEditorView();
-	DECLARE_DYNCREATE(CCursorPositionEditorView)
+	CMouseMovementEditorView();
 	DECLARE_MESSAGE_MAP()
 
 	void DoDataExchange(CDataExchange* pDX) override;
-	void OnInitialUpdate() override;
+	virtual void OnInitialUpdate() override;
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedButtonMousePositionSelect();
 
 protected: // ActionsEditor
-	bool CanClose() const override;
 	void SetAction(const Action& action) override;
 	Action GetAction() override;
 
@@ -41,10 +39,35 @@ protected:
 	CSpinEdit m_editMousePositionX;
 	CSpinEdit m_editMousePositionY;
 
-private:
+protected:
 	Action m_action;
 	int m_keyPressedSubscriptionId = -1;
 	int m_mouseMoveSubscriptionId = -1;
 	CToolWindow m_toolWindow;
 	process_toolkit::crosshair::CursorReplacingWindow m_cursorReplacingWindow;
+};
+
+class CCursorPositionEditorView : public CMouseMovementEditorView
+{
+protected:
+	CCursorPositionEditorView();
+	DECLARE_DYNCREATE(CCursorPositionEditorView)
+
+	void OnInitialUpdate() override;
+
+protected: // ActionsEditor
+	bool CanClose() const override;
+};
+
+class CMouseMoveEditorView : public CMouseMovementEditorView
+{
+protected:
+	CMouseMoveEditorView();
+	DECLARE_DYNCREATE(CMouseMoveEditorView)
+
+	void OnInitialUpdate() override;
+
+protected: // ActionsEditor
+	void OnInitDone() override;
+	bool CanClose() const override;
 };

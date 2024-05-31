@@ -3,8 +3,11 @@
 #include "afxdialogex.h"
 
 #include <chrono>
+#include <list>
 
 #include "core/Settings.h"
+
+#include <ext/thread/thread.h>
 
 #include <Controls/Button/IconButton/IconButton.h>
 #include <Controls/Edit/SpinEdit/SpinEdit.h>
@@ -51,11 +54,14 @@ protected:
 	afx_msg void OnBnClickedButtonMoveDown();
 	afx_msg void OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnEnChangeEditRandomizeDelays();
+	afx_msg void OnBnClickedCheckUniteMovements();
 
 private:
-	void subscribeOnInputEvents();
-	void unsubscribeFromInputEvents();
-	void addAction(Action action);
+	void startRecording();
+	void stopRecoring();
+	void addActions(const std::list<Action>& actions);
+	void addAction(Action&& action);
+	int addAction(int item, Action action);
 	void updateButtonStates();
 	void onSettingsChanged();
 
@@ -68,14 +74,19 @@ protected:
 	CIconButton m_buttonMoveUp;
 	CIconButton m_buttonMoveDown;
 	CIconButton m_buttonDelete;
+	CButton m_checkUniteMouseMovements;
+	CComboBox m_comboRecordMode;
 
 private:
 	int m_keyPressedSubscriptionId = -1;
 	int m_mouseMoveSubscriptionId = -1;
 	Actions* m_actions = nullptr;
-	bool m_captureMousePositions = false;
 	std::optional<std::chrono::steady_clock::time_point> m_lastActionTime;
 	OnSettingsChangedCallback m_onSettingsChangedCallback;
+	bool m_showMovementsTogether = false;
+
+private: // we add recorded actions after finishing recording just to avoid any delays during actions processing
+	std::list<Action> m_recordedActions;
 };
 
 // Dialog to edit actions

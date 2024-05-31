@@ -12,7 +12,7 @@ void LoadCrosshair(const Settings& crosshair, CBitmap& bitmap) EXT_THROWS(std::r
 void ChangeCrosshairColor(CBitmap& bitmap, COLORREF color);
 void ResizeCrosshair(CBitmap& bitmap, const CSize& size);
 
-// Transparent window with drowable bitmap
+// Transparent window with drawable bitmap
 class TransparentWindowWithBitmap : protected CWnd
 {
     DECLARE_MESSAGE_MAP()
@@ -30,7 +30,7 @@ private:
     const CString m_className;
 };
 
-// Layered non clickable topmost window to show crosshair in games
+// Layered non clickable topmost window to show cross hair in games
 class AttachableCrosshairWindow : protected TransparentWindowWithBitmap
 {
 public:

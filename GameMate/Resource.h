@@ -82,7 +82,6 @@
 #define IDC_EDIT_GAME_NAME              1015
 #define IDC_MACROSES_GROUP2             1015
 #define IDC_BUTTON_RECORD               1017
-#define IDC_EDIT1                       1024
 #define IDC_EDIT_ACTION                 1024
 #define IDC_EDIT_RANDOMIZE_DELAYS       1024
 #define IDC_EDIT_INTERVAL_MIN           1024
@@ -98,6 +97,7 @@
 #define IDC_COMBO_INPUT_DRIVER          1032
 #define IDC_COMBO_TYPE                  1032
 #define IDC_COMBO_SCRIPT                1032
+#define IDC_COMBO_RECORD_MODE           1032
 #define IDC_COMBO2                      1033
 #define IDC_COMBO_CROSSHAIR_SIZE        1033
 #define IDC_COMBO3                      1034
@@ -162,6 +162,7 @@
 #define IDC_STATIC_BIND_EDITOR_PLACEHOLDER 1092
 #define IDC_STATIC_DESCRIPTION          1093
 #define IDC_STATIC_ACTIONS_EDITOR_PLACEHOLDER 1094
+#define IDC_CHECK_UNITE_MOVEMENTS       1095
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -179,7 +180,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        189
 #define _APS_NEXT_COMMAND_VALUE         32781
-#define _APS_NEXT_CONTROL_VALUE         1095
+#define _APS_NEXT_CONTROL_VALUE         1096
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

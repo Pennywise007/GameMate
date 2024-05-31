@@ -49,6 +49,7 @@ BOOL CEditBindDlg::OnInitDialog()
 	editorRect.bottom = editorRect.top + requiredEditorRect.cy;
 	m_bindEditor->MoveWindow(editorRect);
 	m_bindEditor->SetOwner(this);
+	m_bindEditor->OnInitDone();
 
 	placeholder->ShowWindow(SW_HIDE);
 	m_bindEditor->ShowWindow(SW_SHOW);

@@ -200,6 +200,8 @@ BOOL CMainDlg::OnInitDialog()
 		MessageBox((L"Try to remove config file and restart app. Err:\n" + ext::ManageExceptionText(L"")).c_str(), L"Failed to init input simulator", MB_OK);
 	}
 
+	// Deserialize settings before starting worker to avoid any mouse lags
+	EXT_UNUSED(ext::get_singleton<Settings>());
 	// Starting worker
 	EXT_UNUSED(ext::get_singleton<Worker>());
 
@@ -378,9 +380,9 @@ void CMainDlg::OnCbnSelchangeComboInputDriver()
 
 	if (selecetedInputSimulator == InputManager::InputSimulator::SendInput)
 	{
-		if (MessageBox(L"Be aware that some game guards might detect input from standart windows input and may take some actions against it. "
+		if (MessageBox(L"Be aware that some game guards might detect input from standard windows input and may take some actions against it. "
 					   L"It is recommended to install some input driver to avoid such detections. Do you want to see extra information?",
-					   L"You will use standart windows API input", MB_YESNO) == IDYES)
+					   L"You will use standard windows API input", MB_YESNO) == IDYES)
 		{
 			OnBnClickedMfcbuttonInputSimulatorInfo();
 		}

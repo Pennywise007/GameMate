@@ -6,10 +6,25 @@
 #include "EditActions.h"
 #include "InputManager.h"
 
+#include <ext/thread/invoker.h>
+
 #include <Controls/Layout/Layout.h>
 #include <Controls/Tooltip/ToolTip.h>
 
 #include <ext/core/check.h>
+
+namespace {
+
+using TableItemType = std::list<Action>;
+
+enum class RecordModes
+{
+	eNoMouseMovements,
+	eRecordCursorPosition,
+	eRecordCursorDelta
+};
+
+} // namespace
 
 IMPLEMENT_DYNCREATE(CActionsEditorView, CFormView)
 
@@ -23,6 +38,7 @@ BEGIN_MESSAGE_MAP(CActionsEditorView, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON_MOVE_DOWN, &CActionsEditorView::OnBnClickedButtonMoveDown)
 	ON_EN_CHANGE(IDC_EDIT_RANDOMIZE_DELAYS, &CActionsEditorView::OnEnChangeEditRandomizeDelays)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_MACROSES, &CActionsEditorView::OnLvnItemchangedListActions)
+	ON_BN_CLICKED(IDC_CHECK_UNITE_MOVEMENTS, &CActionsEditorView::OnBnClickedCheckUniteMovements)
 END_MESSAGE_MAP()
 
 CActionsEditorView::CActionsEditorView()
@@ -41,6 +57,8 @@ void CActionsEditorView::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_MOVE_DOWN, m_buttonMoveDown);
 	DDX_Control(pDX, IDC_BUTTON_ADD, m_buttonAdd);
 	DDX_Control(pDX, IDC_BUTTON_REMOVE, m_buttonDelete);
+	DDX_Control(pDX, IDC_CHECK_UNITE_MOVEMENTS, m_checkUniteMouseMovements);
+	DDX_Control(pDX, IDC_COMBO_RECORD_MODE, m_comboRecordMode);
 }
 
 BOOL CActionsEditorView::PreCreateWindow(CREATESTRUCT& cs)
@@ -53,7 +71,6 @@ BOOL CActionsEditorView::PreCreateWindow(CREATESTRUCT& cs)
 void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callback, bool captureMousePositions)
 {
 	m_actions = &actions;
-	m_captureMousePositions = captureMousePositions;
 
 	CRect rect;
 	m_staticDelayHelp.GetClientRect(rect);
@@ -66,7 +83,7 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 	m_staticDelayHelp.SetIcon(icon);
 
 	controls::SetTooltip(m_staticDelayHelp, L"Some game guards may check if you press buttons with the same delay and can ban you.\n"
-		L"To avoid this you can set a percentage of the delay which will be applied to te ation delay randomly.\n"
+		L"To avoid this you can set a percentage of the delay which will be applied to the action delay randomly.\n"
 		L"Formula: delay ± random(percentage)\n");
 
 	m_listActions.GetClientRect(rect);
@@ -85,9 +102,17 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 
 	using namespace controls::list::widgets;
 	m_listActions.setSubItemEditorController(Columns::eDelay,
-		[](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
+		[&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams) -> std::shared_ptr<CWnd>
 		{
 			auto edit = std::make_shared<CEditBase>();
+
+			// Don't edit united rows
+			TableItemType* itemData = (TableItemType*)m_listActions.GetItemDataPtr(pParams->iItem);
+			if (itemData->size() > 1)
+			{
+				MessageBox(L"Stop items uniting and edit them separately", L"Can't edit united items", MB_OK);
+				return nullptr;
+			}
 
 			edit->Create(SubItemEditorControllerBase::getStandartEditorWndStyle() |
 				ES_CENTER | CBS_AUTOHSCROLL,
@@ -111,8 +136,10 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 			auto* list = dynamic_cast<CListGroupCtrl*>(pList);
 			ASSERT(list);
 
-			Action* action = (Action*)list->GetItemDataPtr(pParams->iItem);
-			action->delayInMilliseconds = _wtoi(currentEditorText);
+			TableItemType* action = (TableItemType*)list->GetItemDataPtr(pParams->iItem);
+			EXT_ASSERT(action->size() == 1);
+
+			action->front().delayInMilliseconds = _wtoi(currentEditorText);
 			onSettingsChanged();
 
 			return true;
@@ -120,13 +147,21 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 	m_listActions.setSubItemEditorController(Columns::eAction,
 		[&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
 		{
-			Action* action = (Action*)m_listActions.GetItemDataPtr(pParams->iItem);
+			// Don't edit united rows
+			TableItemType* itemData = (TableItemType*)m_listActions.GetItemDataPtr(pParams->iItem);
+			if (itemData->size() > 1)
+			{
+				MessageBox(L"Stop items uniting and edit them separately", L"Can't edit united items", MB_OK);
+				return nullptr;
+			}
 
-			auto newAction = CAddActionDlg::EditAction(this, *action);
+			Action& action = itemData->front();
+
+			auto newAction = CAddActionDlg::EditAction(this, action);
 			if (newAction.has_value())
 			{
-				*action = std::move(*newAction);
-				m_listActions.SetItemText(pParams->iItem, Columns::eAction, action->ToString().c_str());
+				action = std::move(*newAction);
+				m_listActions.SetItemText(pParams->iItem, Columns::eAction, action.ToString().c_str());
 				onSettingsChanged();
 			}
 
@@ -136,10 +171,7 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 	m_editRandomizeDelays.UsePositiveDigitsOnly();
 	m_editRandomizeDelays.SetMinMaxLimits(0, 100);
 
-	for (const auto& action : m_actions->actions)
-	{
-		addAction(action);
-	}
+	addActions(m_actions->actions);
 
 	std::wostringstream str;
 	str << m_actions->randomizeDelays;
@@ -158,8 +190,12 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 	m_buttonDelete.SetBitmap(IDB_PNG_DELETE, Alignment::CenterCenter);
 	m_buttonDelete.SetWindowTextW(L"");
 
-	// TODO FIX TAB TOPS FOR ARROWS
+	m_comboRecordMode.InsertString((int)RecordModes::eNoMouseMovements, L"Don't record mouse");
+	m_comboRecordMode.InsertString((int)RecordModes::eRecordCursorPosition, L"Record cursor position");
+	m_comboRecordMode.InsertString((int)RecordModes::eRecordCursorDelta, L"Record cursor delta");
+	m_comboRecordMode.SetCurSel(int(captureMousePositions ? RecordModes::eRecordCursorPosition : RecordModes::eNoMouseMovements));
 
+	// TODO FIX TAB TOPS FOR ARROWS
 	controls::SetTooltip(m_buttonAdd, L"Add action");
 	controls::SetTooltip(m_buttonDelete, L"Delete selected action");
 	controls::SetTooltip(m_buttonMoveUp, L"Move selected up");
@@ -173,12 +209,14 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 void CActionsEditorView::onSettingsChanged()
 {
 	const auto size = m_listActions.GetItemCount();
-
-	m_actions->actions.resize(size);
-	auto it = m_actions->actions.begin();
-	for (auto item = 0; item < size; ++item, ++it)
+	m_actions->actions.clear();
+	for (auto item = 0; item < size; ++item)
 	{
-		*it = *(Action*)m_listActions.GetItemDataPtr(item);
+		TableItemType* actionPtr((TableItemType*)m_listActions.GetItemDataPtr(item));
+		for (auto&& action : *actionPtr)
+		{
+			m_actions->actions.emplace_back(std::move(action));
+		}
 	}
 
 	if (m_onSettingsChangedCallback)
@@ -187,15 +225,15 @@ void CActionsEditorView::onSettingsChanged()
 
 void CActionsEditorView::OnDestroy()
 {
-	unsubscribeFromInputEvents();
-
-	CFormView::OnDestroy();
+	stopRecoring();
 
 	// Free memory
 	for (auto item = 0, size = m_listActions.GetItemCount(); item < size; ++item)
 	{
-		std::unique_ptr<Action> actionPtr((Action*)m_listActions.GetItemDataPtr(item));
+		std::unique_ptr<TableItemType> actionPtr((TableItemType*)m_listActions.GetItemDataPtr(item));
 	}
+
+	CFormView::OnDestroy();
 }
 
 BOOL CActionsEditorView::PreTranslateMessage(MSG* pMsg)
@@ -218,23 +256,43 @@ BOOL CActionsEditorView::PreTranslateMessage(MSG* pMsg)
 	return CFormView::PreTranslateMessage(pMsg);
 }
 
-inline void CActionsEditorView::subscribeOnInputEvents()
+inline void CActionsEditorView::startRecording()
 {
 	EXT_ASSERT(m_mouseMoveSubscriptionId == -1 && m_keyPressedSubscriptionId == -1);
+	EXT_ASSERT(m_recordedActions.empty());
 
-	if (m_captureMousePositions)
+	RecordModes recordMode = (RecordModes)m_comboRecordMode.GetCurSel();
+
+	// If we record mouse movements we can receive 3 mouse move event in 1 ms and to avoid delays we will add them in a table after finishing the recording
+
+	if (recordMode != RecordModes::eNoMouseMovements)
 	{
-		m_mouseMoveSubscriptionId = InputManager::AddMouseMoveHandler([&](const POINT& position, const POINT& delta) {
+		// TODO add text in table or place recording banner
+
+		m_mouseMoveSubscriptionId = InputManager::AddMouseMoveHandler([&, recordMode](const POINT& position, const POINT& delta) {
+			if (delta.x == 0 && delta.y == 0)
+				return;
+			
 			EXT_ASSERT(m_lastActionTime.has_value());
 
 			auto curTime = std::chrono::steady_clock::now();
 			auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
-
-			addAction(Action::NewMouseMove(position.x, position.y, int(delay)));
 			m_lastActionTime = std::move(curTime);
-			});
+
+			switch (recordMode)
+			{
+			case RecordModes::eRecordCursorPosition:
+				m_recordedActions.emplace_back(Action::NewMousePosition(position.x, position.y, (int)delay));
+				break;
+			case RecordModes::eRecordCursorDelta:
+				m_recordedActions.emplace_back(Action::NewMouseMove(delta.x, delta.y, (int)delay));
+				break;
+			default:
+				EXT_UNREACHABLE();
+			}
+		});
 	}
-	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkCode, bool isDown) -> bool {
+	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&, recordMode](WORD vkCode, bool isDown) -> bool {
 		EXT_ASSERT(m_lastActionTime.has_value());
 
 		switch (vkCode)
@@ -246,7 +304,7 @@ inline void CActionsEditorView::subscribeOnInputEvents()
 
 			// Process stop recording and OK click
 			auto window = ::WindowFromPoint(cursor);
-			if (window == m_buttonRecord.m_hWnd || window == CFormView::GetDlgItem(IDOK)->m_hWnd)
+			if (window == m_buttonRecord.m_hWnd || (!!GetOwner()->GetDlgItem(IDOK) && window == GetOwner()->GetDlgItem(IDOK)->m_hWnd))
 			{
 				onSettingsChanged();
 				return false;
@@ -258,40 +316,136 @@ inline void CActionsEditorView::subscribeOnInputEvents()
 		{
 			auto curTime = std::chrono::steady_clock::now();
 			auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
-
-			addAction(Action::NewAction(vkCode, isDown, int(delay)));
 			m_lastActionTime = std::move(curTime);
-			return true;
+
+			if (recordMode == RecordModes::eNoMouseMovements)
+				addAction(Action::NewAction(vkCode, isDown, int(delay)));
+			else
+				m_recordedActions.emplace_back(Action::NewAction(vkCode, isDown, int(delay)));
+
+			// allow action in other programs except ours
+			auto activeWindow = GetForegroundWindow();
+			return (activeWindow == this ||
+				activeWindow == GetOwner() ||
+				activeWindow == AfxGetMainWnd());
 		}
 		}
-		});
+	});
 }
 
-inline void CActionsEditorView::unsubscribeFromInputEvents()
+inline void CActionsEditorView::stopRecoring()
 {
 	if (m_keyPressedSubscriptionId != -1)
 		InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
 	if (m_mouseMoveSubscriptionId != -1)
 		InputManager::RemoveMouseMoveHandler(m_mouseMoveSubscriptionId);
 	m_keyPressedSubscriptionId = m_mouseMoveSubscriptionId = -1;
+
+	addActions(m_recordedActions);
+	m_recordedActions.clear();
 }
 
-void CActionsEditorView::addAction(Action action)
+void CActionsEditorView::addActions(const std::list<Action>& actions)
 {
-	std::vector<int> selectedActions = m_listActions.GetSelectedItems();
+	if (actions.empty())
+		return;
 
-	int item;
-	if (selectedActions.empty())
-		item = m_listActions.GetItemCount();
+	// TODO replace cursor on waiting?
+
+	m_listActions.LockWindowUpdate();
+	m_listActions.SetRedraw(FALSE);
+
+	int item = m_listActions.GetLastSelectedItem();
+	if (item == -1)
+		item = m_listActions.GetItemCount() - 1;
+
+	if (m_showMovementsTogether)
+	{
+		std::list<Action> mousePosChangeActions;
+		auto addActions = [&]() {
+			if (mousePosChangeActions.empty())
+				return;
+
+			long long delay = 0, sumX = 0, sumY = 0;
+			for (const auto& action : mousePosChangeActions)
+			{
+				EXT_ASSERT(action.type == Action::Type::eMouseMove || action.type == Action::Type::eCursorPosition);
+				delay += action.delayInMilliseconds;
+				sumX += action.mouseX;
+				sumY += action.mouseY;
+			}
+
+			CString text;
+			if (mousePosChangeActions.size() == 1)
+				text = mousePosChangeActions.front().ToString().c_str();
+			else if (mousePosChangeActions.front().type == Action::Type::eCursorPosition)
+				text = CString(L"United: ") + mousePosChangeActions.back().ToString().c_str();
+			else
+				text.Format(L"United: Move mouse(%lld,%lld)", sumX, sumY);
+
+			item = m_listActions.InsertItem(item + 1, std::to_wstring(delay).c_str());
+			m_listActions.SetItemText(item, Columns::eAction, text.GetString());
+			m_listActions.SelectItem(item);
+
+			std::unique_ptr<TableItemType> actionPtr = std::make_unique<TableItemType>(std::move(mousePosChangeActions));
+			m_listActions.SetItemDataPtr(item, actionPtr.release());
+
+			mousePosChangeActions = {};
+		};
+
+		for (const auto& action : actions)
+		{
+			switch (action.type)
+			{
+			case Action::Type::eKeyOrMouseAction:
+			case Action::Type::eRunScript:
+				addActions();
+				item = addAction(item + 1, action);
+				break;
+			case Action::Type::eMouseMove:
+			case Action::Type::eCursorPosition:
+				if (!mousePosChangeActions.empty() && mousePosChangeActions.back().type != action.type)
+					addActions();
+				
+				mousePosChangeActions.emplace_back(action);
+				break;
+			default:
+				EXT_UNREACHABLE();
+			}
+		}
+
+		addActions();
+	}
 	else
-		item = selectedActions.back() + 1;
+	{
+		for (const auto& action : actions)
+		{
+			item = addAction(item + 1, action);
+		}
+	}
 
+	m_listActions.UnlockWindowUpdate();
+	m_listActions.SetRedraw(TRUE);
+	m_listActions.Invalidate();
+}
+
+void CActionsEditorView::addAction(Action&& action)
+{
+	int item = m_listActions.GetLastSelectedItem() + 1;
+	if (item == 0)
+		item = m_listActions.GetItemCount();
+	addAction(item, std::move(action));
+}
+
+int CActionsEditorView::addAction(int item, Action action)
+{
 	item = m_listActions.InsertItem(item, std::to_wstring(action.delayInMilliseconds).c_str());
 	m_listActions.SetItemText(item, Columns::eAction, action.ToString().c_str());
 	m_listActions.SelectItem(item);
 
-	std::unique_ptr<Action> actionPtr = std::make_unique<Action>(std::move(action));
+	std::unique_ptr<TableItemType> actionPtr = std::make_unique<TableItemType>(TableItemType{ std::move(action) });
 	m_listActions.SetItemDataPtr(item, actionPtr.release());
+	return item;
 }
 
 void CActionsEditorView::updateButtonStates()
@@ -317,12 +471,20 @@ void CActionsEditorView::OnBnClickedButtonRemove()
 {
 	std::vector<int> selectedActions = m_listActions.GetSelectedItems();
 
+	m_listActions.LockWindowUpdate();
+	m_listActions.SetRedraw(FALSE);
+
 	for (auto it = selectedActions.rbegin(), end = selectedActions.rend(); it != end; ++it)
 	{
-		std::unique_ptr<Action> actionPtr((Action*)m_listActions.GetItemDataPtr(*it));
+		std::unique_ptr<TableItemType> actionPtr((TableItemType*)m_listActions.GetItemDataPtr(*it));
 		m_listActions.DeleteItem(*it);
 	}
 	m_listActions.SelectItem(selectedActions.back() - int(selectedActions.size()) + 1);
+
+	m_listActions.UnlockWindowUpdate();
+	m_listActions.SetRedraw(TRUE);
+	m_listActions.Invalidate();
+
 	onSettingsChanged();
 }
 
@@ -340,10 +502,10 @@ void CActionsEditorView::OnBnClickedButtonRecord()
 	}
 	else
 	{
-		unsubscribeFromInputEvents();
+		m_buttonRecord.SetWindowTextW(L"Saving actions...");
+		stopRecoring();
 		m_buttonRecord.SetWindowTextW(L"Record actions");
 		m_buttonRecord.SetIcon(IDI_ICON_START_RECORDING, Alignment::LeftCenter);
-		m_lastActionTime.reset();
 		onSettingsChanged();
 	}
 }
@@ -363,9 +525,9 @@ void CActionsEditorView::OnTimer(UINT_PTR nIDEvent)
 		m_buttonRecord.SetWindowTextW(L"Recording starts in 1...");
 		break;
 	case kRecordingTimer2Id:
-		m_buttonRecord.SetWindowTextW(L"Cancel recording");
-		subscribeOnInputEvents();
+		m_buttonRecord.SetWindowTextW(L"Stop recording");
 		m_lastActionTime = std::chrono::steady_clock::now();
+		startRecording();
 		break;
 	default:
 		EXT_ASSERT(false) << "Unknown event id " << nIDEvent;
@@ -403,6 +565,24 @@ void CActionsEditorView::OnEnChangeEditRandomizeDelays()
 	onSettingsChanged();
 }
 
+void CActionsEditorView::OnBnClickedCheckUniteMovements()
+{
+	m_showMovementsTogether = m_checkUniteMouseMovements.GetCheck();
+
+	const auto size = m_listActions.GetItemCount();
+	m_actions->actions.clear();
+	for (auto item = 0; item < size; ++item)
+	{
+		std::unique_ptr<TableItemType> actionPtr((TableItemType*)m_listActions.GetItemDataPtr(item));
+		for (auto&& action : *actionPtr)
+		{
+			m_actions->actions.emplace_back(std::move(action));
+		}
+	}
+	m_listActions.DeleteAllItems();
+
+	addActions(m_actions->actions);
+}
 
 IMPLEMENT_DYNAMIC(CActionsEditDlg, CDialogEx)
 
@@ -420,7 +600,7 @@ BOOL CActionsEditDlg::OnInitDialog()
 	CDialogEx::OnInitDialog();
 
 	CCreateContext  ctx;
-	// memebers we do not use, so set them to null
+	// members we do not use, so set them to null
 	ctx.m_pNewViewClass = RUNTIME_CLASS(CActionsEditorView);
 	ctx.m_pNewDocTemplate = NULL;
 	ctx.m_pLastView = NULL;
@@ -432,8 +612,6 @@ BOOL CActionsEditDlg::OnInitDialog()
 	pView->OnInitialUpdate();
 	m_editorView = dynamic_cast<CActionsEditorView*>(pView);
 	EXT_ASSERT(m_editorView);
-
-	m_editorView->Init(m_actions, nullptr, false);
 
 	CWnd* placeholder = GetDlgItem(IDC_STATIC_ACTIONS_EDITOR_PLACEHOLDER);
 
@@ -454,6 +632,8 @@ BOOL CActionsEditDlg::OnInitDialog()
 	editorRect.bottom = editorRect.top + requiredEditorRect.cy;
 	m_editorView->MoveWindow(editorRect);
 	m_editorView->SetOwner(this);
+
+	m_editorView->Init(m_actions, nullptr, false);
 
 	placeholder->ShowWindow(SW_HIDE);
 	m_editorView->ShowWindow(SW_SHOW);

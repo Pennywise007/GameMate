@@ -6,17 +6,17 @@
 
 #include <ext/thread/invoker.h>
 
+#include <Controls/Layout/Layout.h>
+
 #include "CursorPositionEditorView.h"
 
-IMPLEMENT_DYNCREATE(CCursorPositionEditorView, ActionsEditor)
-
-CCursorPositionEditorView::CCursorPositionEditorView()
+CMouseMovementEditorView::CMouseMovementEditorView()
 	: ActionsEditor(IDD_VIEW_EDIT_MOUSE_MOVE)
 {
 	m_action.type = Action::Type::eMouseMove;
 }
 
-void CCursorPositionEditorView::DoDataExchange(CDataExchange* pDX)
+void CMouseMovementEditorView::DoDataExchange(CDataExchange* pDX)
 {
 	ActionsEditor::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_BUTTON_MOUSE_POSITION_SELECT, m_buttonMousePositionSelect);
@@ -24,18 +24,16 @@ void CCursorPositionEditorView::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT_MOUSE_POSITION_Y, m_editMousePositionY);
 }
 
-BEGIN_MESSAGE_MAP(CCursorPositionEditorView, ActionsEditor)
-	ON_BN_CLICKED(IDC_BUTTON_MOUSE_POSITION_SELECT, &CCursorPositionEditorView::OnBnClickedButtonMousePositionSelect)
+BEGIN_MESSAGE_MAP(CMouseMovementEditorView, ActionsEditor)
+	ON_BN_CLICKED(IDC_BUTTON_MOUSE_POSITION_SELECT, &CMouseMovementEditorView::OnBnClickedButtonMousePositionSelect)
 END_MESSAGE_MAP()
 
-void CCursorPositionEditorView::OnInitialUpdate()
+void CMouseMovementEditorView::OnInitialUpdate()
 {
 	ActionsEditor::OnInitialUpdate();
 
 	m_editMousePositionX.SetUseOnlyIntegersValue();
-	m_editMousePositionX.UsePositiveDigitsOnly();
 	m_editMousePositionY.SetUseOnlyIntegersValue();
-	m_editMousePositionY.UsePositiveDigitsOnly();
 
 	updateMousePositionControlsStates();
 
@@ -55,10 +53,10 @@ void CCursorPositionEditorView::OnInitialUpdate()
 	m_cursorReplacingWindow.Create(std::move(bitmap));
 
 	m_toolWindow.Create(m_cursorReplacingWindow.m_hWnd, true);
-	m_toolWindow.SetLabel(L"Click to select point or ESC to exit");
+	m_toolWindow.SetLabel(L"Left click to select point or ESC to cancel");
 }
 
-void CCursorPositionEditorView::OnDestroy()
+void CMouseMovementEditorView::OnDestroy()
 {
 	ActionsEditor::OnDestroy();
 
@@ -66,10 +64,10 @@ void CCursorPositionEditorView::OnDestroy()
 	m_cursorReplacingWindow.DestroyWindow();
 }
 
-void CCursorPositionEditorView::OnBnClickedButtonMousePositionSelect()
+void CMouseMovementEditorView::OnBnClickedButtonMousePositionSelect()
 {
+	ShowWindow(SW_HIDE);
 	CWnd* wnd = this;
-	wnd->ShowWindow(SW_HIDE);
 	do
 	{
 		wnd = wnd->GetParent();
@@ -98,8 +96,8 @@ void CCursorPositionEditorView::OnBnClickedButtonMousePositionSelect()
 					SWP_NOACTIVATE | SWP_NOZORDER | SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOREDRAW | SWP_NOREPOSITION);
 				m_toolWindow.ShowWindow(SW_HIDE);
 
+				ShowWindow(SW_SHOW);
 				CWnd* wnd = this;
-				wnd->ShowWindow(SW_SHOW);
 				do
 				{
 					wnd = wnd->GetParent();
@@ -119,13 +117,7 @@ void CCursorPositionEditorView::OnBnClickedButtonMousePositionSelect()
 	syncCrosshairWindowWithCursor();
 }
 
-bool CCursorPositionEditorView::CanClose() const
-{
-	// TODO
-	return true;
-}
-
-void CCursorPositionEditorView::SetAction(const Action& action)
+void CMouseMovementEditorView::SetAction(const Action& action)
 {
 	m_action.mouseX = action.mouseX;
 	m_action.mouseY = action.mouseY;
@@ -133,7 +125,7 @@ void CCursorPositionEditorView::SetAction(const Action& action)
 	updateMousePositionControlsStates();
 }
 
-Action CCursorPositionEditorView::GetAction()
+Action CMouseMovementEditorView::GetAction()
 {
 	CString text;
 	m_editMousePositionX.GetWindowTextW(text);
@@ -145,13 +137,13 @@ Action CCursorPositionEditorView::GetAction()
 	return m_action;
 }
 
-void CCursorPositionEditorView::updateMousePositionControlsStates()
+void CMouseMovementEditorView::updateMousePositionControlsStates()
 {
 	m_editMousePositionX.SetWindowTextW(std::to_wstring(m_action.mouseX).c_str());
 	m_editMousePositionY.SetWindowTextW(std::to_wstring(m_action.mouseY).c_str());
 }
 
-void CCursorPositionEditorView::syncCrosshairWindowWithCursor()
+void CMouseMovementEditorView::syncCrosshairWindowWithCursor()
 {
 	ASSERT(m_keyPressedSubscriptionId != -1 && m_mouseMoveSubscriptionId != -1);
 	
@@ -172,4 +164,81 @@ void CCursorPositionEditorView::syncCrosshairWindowWithCursor()
 	CString text;
 	text.Format(L"x=%d, y=%d", requiredPoint.x, requiredPoint.y);
 	m_toolWindow.SetDescription(text);
+}
+
+IMPLEMENT_DYNCREATE(CCursorPositionEditorView, CMouseMovementEditorView)
+
+CCursorPositionEditorView::CCursorPositionEditorView()
+{
+	m_action.type = Action::Type::eCursorPosition;
+}
+
+void CCursorPositionEditorView::OnInitialUpdate()
+{
+	CMouseMovementEditorView::OnInitialUpdate();
+
+	m_editMousePositionX.UsePositiveDigitsOnly();
+	m_editMousePositionY.UsePositiveDigitsOnly();
+}
+
+bool CCursorPositionEditorView::CanClose() const
+{
+	static const auto screenWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+	static const auto screenHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+	if (m_action.mouseX < 0 || m_action.mouseX > screenWidth ||
+		m_action.mouseY < 0 || m_action.mouseY > screenHeight)
+	{
+		if (::MessageBox(m_hWnd, std::string_swprintf(
+			L"Current maximum screen size if (%d,%d), are you sure that you want to set mouse point(%d,%d) beyond its borders?",
+			screenWidth, screenHeight, m_action.mouseX, m_action.mouseY).c_str(),
+			L"Not valid mouse position selected", MB_OKCANCEL) == IDCANCEL)
+			return false;
+	}
+	return true;
+}
+
+IMPLEMENT_DYNCREATE(CMouseMoveEditorView, CMouseMovementEditorView)
+
+CMouseMoveEditorView::CMouseMoveEditorView()
+{
+	m_action.type = Action::Type::eMouseMove;
+}
+
+void CMouseMoveEditorView::OnInitialUpdate()
+{
+	CMouseMovementEditorView::OnInitialUpdate();
+}
+
+void CMouseMoveEditorView::OnInitDone()
+{
+	CMouseMovementEditorView::OnInitDone();
+
+	// hiding select mouse pos button
+	CRect rect;
+	m_buttonMousePositionSelect.GetWindowRect(rect);
+	m_buttonMousePositionSelect.ShowWindow(SW_HIDE);
+	long offset = rect.Height() + 10;
+
+	HWND hWndChild = ::GetWindow(m_hWnd, GW_CHILD);
+	while (hWndChild)
+	{
+		CRect rect;
+		::GetWindowRect(hWndChild, &rect);
+		ScreenToClient(rect);
+		::SetWindowPos(hWndChild, NULL, rect.left, rect.top - offset, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+
+		hWndChild = ::GetWindow(hWndChild, GW_HWNDNEXT);
+	}
+
+	CSize size = GetTotalSize();
+	size.cy -= offset;
+	SetScrollSizes(MM_TEXT, size);
+
+	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
+}
+
+bool CMouseMoveEditorView::CanClose() const
+{
+	return true;
 }

@@ -238,8 +238,7 @@ void Worker::OnSettingsChanged(ISettingsChanged::ChangedType changedType)
                 m_actionExecutor.add_task([](actions_executor::Settings actionsExecutor) -> void {
                     actionsExecutor.Execute();
 
-                    bool s = ext::this_thread::interruption_requested();
-                    if (!s)
+                    if (!ext::this_thread::interruption_requested())
                         ext::InvokeMethodAsync([]() {
                             ext::get_singleton<Settings>().actions_executor.enabled = false;
                             ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);

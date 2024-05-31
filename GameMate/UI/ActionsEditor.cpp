@@ -35,8 +35,10 @@ ActionsEditor* ActionsEditor::CreateEditor(CWnd* parent, Editor editor)
         return CreateView<CActionEditorView>(parent);
     case Editor::eBind:
         return CreateView<CBindEditorView>(parent);
-    case Editor::eMouseMove:
+    case Editor::eCursorPosition:
         return CreateView<CCursorPositionEditorView>(parent);
+    case Editor::eMouseMove:
+        return CreateView<CMouseMoveEditorView>(parent);
     case Editor::eScript:
         return CreateView<CScriptEditorView>(parent);
     default:
