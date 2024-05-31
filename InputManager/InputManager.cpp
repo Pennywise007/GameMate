@@ -91,7 +91,7 @@ std::optional<InputManager::Error> InputManager::SetInputSimulator(InputSimulato
 
     if (inputSimulator == InputSimulator::Auto)
     {
-        std::array driversPriority = {
+        constexpr std::array driversPriority = {
             Send::SendType::Razer,
             Send::SendType::LogitechGHubNew,
             Send::SendType::DD,
@@ -525,8 +525,8 @@ void InputManager::MouseMove(POINT position)
     static const auto screenWidth = static_cast<float>(GetSystemMetrics(SM_CXVIRTUALSCREEN));
     static const auto screenHeight = static_cast<float>(GetSystemMetrics(SM_CYVIRTUALSCREEN));
 
-    position.x = (int)roundf(float(position.x * 65536) / screenWidth);
-    position.y = (int)roundf(float(position.y * 65536) / screenHeight);
+    position.x = (LONG)std::ceilf(position.x * 65536.f / screenWidth);
+    position.y = (LONG)std::ceilf(position.y * 65536.f / screenHeight);
 
     if (!IbSendMouseMove(position.x, position.y, Send::MoveMode::Absolute))
     {
