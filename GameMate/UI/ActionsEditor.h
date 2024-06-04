@@ -19,9 +19,6 @@ struct ActionsEditor : CFormView {
     };
     static ActionsEditor* CreateEditor(CWnd* parent, Editor editor);
 
-    // Notification about finishing view init
-    virtual void OnInitDone() {}
-        
     virtual void SetAction(const Action& action) = 0;
     virtual Action GetAction() = 0;
     virtual bool CanClose() const = 0;

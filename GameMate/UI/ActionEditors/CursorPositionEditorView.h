@@ -27,8 +27,8 @@ protected:
 	afx_msg void OnBnClickedButtonMousePositionSelect();
 
 protected: // ActionsEditor
-	void SetAction(const Action& action) override;
-	Action GetAction() override;
+	virtual void SetAction(const Action& action) override;
+	virtual Action GetAction() override;
 
 private:
 	void updateMousePositionControlsStates();
@@ -58,17 +58,19 @@ protected:
 
 protected: // ActionsEditor
 	bool CanClose() const override;
+	void SetAction(const Action& action) override;
 };
 
 class CMouseMoveEditorView : public CMouseMovementEditorView
 {
 protected:
-	CMouseMoveEditorView();
+	CMouseMoveEditorView() = default;
 	DECLARE_DYNCREATE(CMouseMoveEditorView)
 
 	void OnInitialUpdate() override;
 
 protected: // ActionsEditor
-	void OnInitDone() override;
 	bool CanClose() const override;
+	void SetAction(const Action& action) override;
+	Action GetAction() override;
 };

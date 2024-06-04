@@ -61,6 +61,7 @@ BOOL CActionsExecutorTab::OnInitDialog()
 		std::wstringstream str;
 		str << value;
 		edit.SetWindowTextW(str.str().c_str());
+		edit.SetMinMaxLimits(0., 9999.);
 	};
 
 	auto& settings = ext::get_singleton<Settings>().actions_executor;
@@ -69,6 +70,7 @@ BOOL CActionsExecutorTab::OnInitDialog()
 	initSpinEdit(m_editIntervalSeconds, settings.repeatIntervalSeconds);
 	initSpinEdit(m_editIntervalMilliseconds, settings.repeatIntervalMilliseconds);
 	initSpinEdit(m_editRepeatTimes, settings.repeatTimes);
+	m_editRepeatTimes.SetMinMaxLimits(1., 9999);
 
 	switch (settings.repeatMode)
 	{

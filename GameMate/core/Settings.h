@@ -113,7 +113,7 @@ struct Settings
     DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalMilliseconds, 0);
 
     DECLARE_SERIALIZABLE_FIELD(RepeatMode, repeatMode, RepeatMode::eTimes);
-    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatTimes, 0);
+    DECLARE_SERIALIZABLE_FIELD(unsigned, repeatTimes, 1);
 
     Settings();
 

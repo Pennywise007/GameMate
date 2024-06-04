@@ -741,7 +741,7 @@ void CActiveProcessToolkitTab::OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESUL
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 	if (pNMLV->uChanged & LVIF_STATE)
 	{
-		if ((pNMLV->uNewState & LVIS_SELECTED) == (pNMLV->uOldState & LVIS_SELECTED))
+		if ((pNMLV->uNewState & LVIS_SELECTED) != (pNMLV->uOldState & LVIS_SELECTED))
 		{
 			// selection changed
 			GetDlgItem(IDC_BUTTON_REMOVE_MACROS)->EnableWindow(m_listActions.GetSelectedCount() > 0);

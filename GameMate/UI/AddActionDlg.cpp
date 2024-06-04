@@ -79,7 +79,6 @@ BOOL CAddActionDlg::OnInitDialog()
 		editor->MoveWindow(editorRect, FALSE);
 		editor->SetAction(m_currentAction);
 		editor->SetOwner(this);
-		editor->OnInitDone();
 
 		editorsMaxWidth = std::max(editorsMaxWidth, editor->GetTotalSize().cx);
 

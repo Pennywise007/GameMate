@@ -316,8 +316,12 @@ inline void CActionsEditorView::startRecording()
 
 		if (m_mouseMoveDirectXSubscriptionId == -1)
 		{
-			EXT_ASSERT(false);
-			// TODO show warning and cancel recording
+			MessageBox(L"Failed to subscribe on DirectX input, check if DirectX is installed or don't record DirectX mouse movements",
+				L"Failed to subscribe on DirectX input", MB_ICONERROR);
+			// Stop recording
+			m_buttonRecord.SetCheck(BST_UNCHECKED);
+			OnBnClickedButtonRecord();
+			return;
 		}
 		break;
 	}
@@ -633,7 +637,7 @@ void CActionsEditorView::OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pRe
 
 	if (pNMLV->uChanged & LVIF_STATE)
 	{
-		if ((pNMLV->uNewState & LVIS_SELECTED) == (pNMLV->uOldState & LVIS_SELECTED))
+		if ((pNMLV->uNewState & LVIS_SELECTED) != (pNMLV->uOldState & LVIS_SELECTED))
 		{
 			// selection changed
 			updateButtonStates();

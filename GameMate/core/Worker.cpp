@@ -226,7 +226,7 @@ void Worker::OnSettingsChanged(ISettingsChanged::ChangedType changedType)
     switch (changedType)
     {
     case ISettingsChanged::ChangedType::eProcessToolkit:
-        // Force crosshairs and m_activeExeConfig to apply new changes
+        // Force cross hairs and m_activeExeConfig to apply new changes
         OnForegroundChanged(m_activeWindow, m_activeProcessName);
         break;
     case ISettingsChanged::ChangedType::eActionsExecutorEnableChanged:

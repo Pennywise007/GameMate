@@ -394,7 +394,6 @@ void actions_executor::Settings::Execute() const
 		switch (repeatMode)
 		{
 		case RepeatMode::eTimes:
-			++executions;
 			if (++executions >= repeatTimes)
 				return;
 

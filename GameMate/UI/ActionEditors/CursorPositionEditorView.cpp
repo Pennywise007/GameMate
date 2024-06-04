@@ -185,8 +185,8 @@ void CCursorPositionEditorView::OnInitialUpdate()
 
 bool CCursorPositionEditorView::CanClose() const
 {
-	static const auto screenWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-	static const auto screenHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+	static const long screenWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+	static const long screenHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
 	if (m_action.mouseX < 0 || m_action.mouseX > screenWidth ||
 		m_action.mouseY < 0 || m_action.mouseY > screenHeight)
@@ -200,50 +200,39 @@ bool CCursorPositionEditorView::CanClose() const
 	return true;
 }
 
-IMPLEMENT_DYNCREATE(CMouseMoveEditorView, CMouseMovementEditorView)
-
-CMouseMoveEditorView::CMouseMoveEditorView()
+void CCursorPositionEditorView::SetAction(const Action& action)
 {
-	m_action.type = Action::Type::eMouseMove;
+	static const long screenWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+	static const long screenHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+	Action modifiedAction = action;
+	modifiedAction.mouseX = std::clamp(modifiedAction.mouseX, 0l, screenWidth);
+	modifiedAction.mouseY = std::clamp(modifiedAction.mouseY, 0l, screenHeight);
+	CMouseMovementEditorView::SetAction(modifiedAction);
 }
+
+IMPLEMENT_DYNCREATE(CMouseMoveEditorView, CMouseMovementEditorView)
 
 void CMouseMoveEditorView::OnInitialUpdate()
 {
 	CMouseMovementEditorView::OnInitialUpdate();
 
-	// TODO add check logic processing, remember about set action function
 	m_buttonMousePositionSelect.ShowWindow(SW_HIDE);
-}
-
-void CMouseMoveEditorView::OnInitDone()
-{
-	CMouseMovementEditorView::OnInitDone();
-
-	// hiding select mouse pos button
-	/*CRect rect;
-	m_buttonMousePositionSelect.GetWindowRect(rect);
-	m_buttonMousePositionSelect.ShowWindow(SW_HIDE);
-	long offset = rect.Height() + 10;
-
-	HWND hWndChild = ::GetWindow(m_hWnd, GW_CHILD);
-	while (hWndChild)
-	{
-		CRect rect;
-		::GetWindowRect(hWndChild, &rect);
-		ScreenToClient(rect);
-		::SetWindowPos(hWndChild, NULL, rect.left, rect.top - offset, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-
-		hWndChild = ::GetWindow(hWndChild, GW_HWNDNEXT);
-	}
-
-	CSize size = GetTotalSize();
-	size.cy -= offset;
-	SetScrollSizes(MM_TEXT, size);
-
-	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);*/
 }
 
 bool CMouseMoveEditorView::CanClose() const
 {
 	return true;
+}
+
+void CMouseMoveEditorView::SetAction(const Action& action)
+{
+	CMouseMovementEditorView::SetAction(action);
+	m_checkUseDirectInput.SetCheck(action.type == Action::Type::eMouseMoveDirectInput);
+}
+
+Action CMouseMoveEditorView::GetAction()
+{
+	m_action.type = m_checkUseDirectInput.GetCheck() ? Action::Type::eMouseMoveDirectInput : Action::Type::eMouseMove;
+	return CMouseMovementEditorView::GetAction();
 }
