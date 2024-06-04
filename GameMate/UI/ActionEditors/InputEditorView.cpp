@@ -69,7 +69,6 @@ void CInputEditorBaseView::OnTimer(UINT_PTR nIDEvent)
 
 				if ((window && window->GetParent() == owner && !window->IsKindOf(RUNTIME_CLASS(CStatic))) ||
 					std::wstring(className) != L"ComboLBox")
-				//if (window != GetParent()->GetDlgItem(IDOK)->m_hWnd)
 				{
 					return false;
 				}
@@ -130,6 +129,7 @@ void CInputEditorBaseView::OnShowWindow(BOOL bShow, UINT nStatus)
 
 	if (!bShow)
 	{
+		KillTimer(kTimerIdActionsSubscription);
 		if (m_keyPressedSubscriptionId != -1)
 			InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
 		m_keyPressedSubscriptionId = -1;

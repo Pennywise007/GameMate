@@ -56,7 +56,7 @@ struct Action
     Action() = default;
     static Action NewAction(WORD vkCode, bool down, unsigned delay);
     static Action NewMousePosition(long mouseMovedToPointX, long mouseMovedToPointY, unsigned delay);
-    static Action NewMouseMove(long mouseDeltaX, long mouseDeltaY, unsigned delay);
+    static Action NewMouseMove(long mouseDeltaX, long mouseDeltaY, unsigned delay, bool directInput);
     static Action NewRunScript(const std::wstring& scriptPath, unsigned delay);
 
     // Get action text
@@ -71,13 +71,14 @@ struct Action
         eKeyOrMouseAction,
         eCursorPosition,
         eMouseMove,
+        eMouseMoveDirectInput,
         eRunScript
     };
     DECLARE_SERIALIZABLE_FIELD(Type, type, Type::eKeyOrMouseAction);
     DECLARE_SERIALIZABLE_FIELD(int, vkCode, kNotSetVkCode);
     DECLARE_SERIALIZABLE_FIELD(bool, down, false);
     DECLARE_SERIALIZABLE_FIELD(unsigned, delayInMilliseconds, 0);
-    // eMouseMove
+    // eCursorPosition/eMouseMove/eMouseMoveDirectInput
     DECLARE_SERIALIZABLE_FIELD(long, mouseX, 0);
     DECLARE_SERIALIZABLE_FIELD(long, mouseY, 0);
     // eRunScript

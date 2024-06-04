@@ -62,6 +62,8 @@
 #define IDD_VIEW_ACTIONS_EDITOR         185
 #define IDB_PNG_DELETE                  186
 #define IDB_PNG_CURSOR_POSITION_SELECTION 188
+#define IDB_PNG_DELAY                   189
+#define IDD_DIALOG_EDIT_NUMBER          190
 #define IDC_TABCONTROL_MODES            1000
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
@@ -118,6 +120,7 @@
 #define IDC_BUTTON_MOVE_UP2             1044
 #define IDC_BUTTON_MOVE_DOWN            1044
 #define IDC_CHECK_PROGRAM_WORKING       1045
+#define IDC_BUTTON_EDIT_DELAY           1045
 #define IDC_STATIC_NO_TABS              1046
 #define IDC_STATIC_INPUT_DRIVER         1047
 #define IDC_BUTTON1                     1048
@@ -163,6 +166,8 @@
 #define IDC_STATIC_DESCRIPTION          1093
 #define IDC_STATIC_ACTIONS_EDITOR_PLACEHOLDER 1094
 #define IDC_CHECK_UNITE_MOVEMENTS       1095
+#define IDC_EDIT                        1096
+#define IDC_CHECK_USE_DIRECT_INPUT      1097
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -178,9 +183,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        189
+#define _APS_NEXT_RESOURCE_VALUE        192
 #define _APS_NEXT_COMMAND_VALUE         32781
-#define _APS_NEXT_CONTROL_VALUE         1096
+#define _APS_NEXT_CONTROL_VALUE         1098
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

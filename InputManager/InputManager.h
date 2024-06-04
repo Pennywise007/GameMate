@@ -1,8 +1,8 @@
 #pragma once
 #include <array>
 #include <functional>
-#include <optional>
 #include <map>
+#include <optional>
 #include <windows.h>
 
 #include <ext/core/singleton.h>
@@ -14,6 +14,7 @@ class InputManager
     // Callback about mouse or keyboard key pressed, also includes VK_MOUSE_WHEEL and VK_MOUSE_HWHEEL
     using OnKeyOrMouseCallback = std::function<bool(WORD vkCode, bool isDown)>;
     using OnMouseMoveCallback = std::function<void(const POINT& position, const POINT& delta)>;
+    using OnDirectInputMouseMoveCallback = std::function<void(const POINT& delta)>;
 
 public:
     inline static constexpr WORD VK_MOUSE_WHEEL = 0x0E;
@@ -35,16 +36,25 @@ public:
     [[nodiscard]] static bool GetKeyState(DWORD vkCode);
     [[nodiscard]] static POINT GetMousePosition();
     
+    // Subscribe/unsubscribe on low level key or mouse press
     static unsigned AddKeyOrMouseHandler(OnKeyOrMouseCallback handler);
     static void RemoveKeyOrMouseHandler(unsigned id);
+    // Subscribe/unsubscribe on low level mouse move event
     static unsigned AddMouseMoveHandler(OnMouseMoveCallback handler);
     static void RemoveMouseMoveHandler(unsigned id);
+    // Subscribe/unsubscribe on direct input events mouse move events from DirectX
+    // Callback will be called from a different thread
+    static unsigned AddDirectInputMouseMoveHandler(HINSTANCE hInstance, OnDirectInputMouseMoveCallback handler);
+    static void RemoveDirectInputMouseMoveHandler(unsigned id);
     
     static void SendKeyOrMouse(WORD vkCode, bool isDown);
 
     static void MouseSendDown(DWORD mouseVkCode);
     static void MouseSendUp(DWORD mouseVkCode);
-    static void MouseMove(POINT position);
+
+    static void SetCursorPos(POINT position);
+    static void MouseMove(POINT delta);
+
     static void KeyboardSendDown(WORD vkCode);
     static void KeyboardSendUp(WORD vkCode);
 private:

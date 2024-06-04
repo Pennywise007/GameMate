@@ -53,6 +53,7 @@ BOOL CAddActionDlg::OnInitDialog()
 		m_type.SetCurSel(1);
 		break;
 	case Action::Type::eMouseMove:
+	case Action::Type::eMouseMoveDirectInput:
 		m_type.SetCurSel(2);
 		break;
 	case Action::Type::eRunScript:

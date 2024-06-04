@@ -239,6 +239,7 @@
     <ClInclude Include="UI\AddActionDlg.h" />
     <ClInclude Include="UI\AddingProcessToolkitDlg.h" />
     <ClInclude Include="UI\EditBindDlg.h" />
+    <ClInclude Include="UI\EditValueDlg.h" />
     <ClInclude Include="UI\InputSimulatorInfoDlg.h" />
     <ClInclude Include="UI\ActiveProcessToolkitTab.h" />
     <ClInclude Include="UI\EditActions.h" />
@@ -347,6 +348,7 @@
     <ClCompile Include="UI\AddActionDlg.cpp" />
     <ClCompile Include="UI\AddingProcessToolkitDlg.cpp" />
     <ClCompile Include="UI\EditBindDlg.cpp" />
+    <ClCompile Include="UI\EditValueDlg.cpp" />
     <ClCompile Include="UI\InputSimulatorInfoDlg.cpp" />
     <ClCompile Include="UI\ActiveProcessToolkitTab.cpp" />
     <ClCompile Include="UI\EditActions.cpp" />
@@ -390,6 +392,7 @@
     <Image Include="res\crosshairs\crosshair_8_24.png" />
     <Image Include="res\crosshairs\crosshair_8_32.png" />
     <Image Include="res\cursor_position_selector.png" />
+    <Image Include="res\delay.png" />
     <Image Include="res\delete.png" />
     <Image Include="res\GameMate.ico" />
     <Image Include="res\settings.png" />

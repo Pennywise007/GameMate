@@ -1,5 +1,4 @@
-
-#include "pch.h"
+﻿#include "pch.h"
 #include "framework.h"
 #include "afxdialogex.h"
 #include "resource.h"

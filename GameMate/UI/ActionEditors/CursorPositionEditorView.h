@@ -36,6 +36,7 @@ private:
 
 protected:
 	CButton m_buttonMousePositionSelect;
+	CButton m_checkUseDirectInput;
 	CSpinEdit m_editMousePositionX;
 	CSpinEdit m_editMousePositionY;
 

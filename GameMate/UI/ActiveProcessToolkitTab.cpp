@@ -115,7 +115,7 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 
 		controls::SetTooltip(
 			m_staticCrosshairInfo,
-			L"If you want to add your own cross hair put file with name crosshair_X with .png or .ico extenstion to the folder:\n"
+			L"If you want to add your own cross hair put file with name crosshair_X with .png or .ico extension to the folder:\n"
 			L"$GAME_MATE_FOLDER$\\res\n"
 			L"Note: all images bigger than 32x32 will be ignored.");
 	}
@@ -738,7 +738,15 @@ void CActiveProcessToolkitTab::OnBnClickedButtonRemoveMacros()
 
 void CActiveProcessToolkitTab::OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	GetDlgItem(IDC_BUTTON_REMOVE_MACROS)->EnableWindow(m_listActions.GetSelectedCount() > 0);
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	if (pNMLV->uChanged & LVIF_STATE)
+	{
+		if ((pNMLV->uNewState & LVIS_SELECTED) == (pNMLV->uOldState & LVIS_SELECTED))
+		{
+			// selection changed
+			GetDlgItem(IDC_BUTTON_REMOVE_MACROS)->EnableWindow(m_listActions.GetSelectedCount() > 0);
+		}
+	}
 	*pResult = 0;
 }
 

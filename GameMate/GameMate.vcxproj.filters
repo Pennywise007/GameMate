@@ -134,6 +134,9 @@
     <ClInclude Include="Controls\ToolWindow\ToolWindow.h">
       <Filter>Controls</Filter>
     </ClInclude>
+    <ClInclude Include="UI\EditValueDlg.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\TabControl\TabControl.cpp">
@@ -229,6 +232,7 @@
     <ClCompile Include="Controls\ToolWindow\ToolWindow.cpp">
       <Filter>Controls</Filter>
     </ClCompile>
+    <ClCompile Include="UI\EditValueDlg.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GameMate.rc">
@@ -347,6 +351,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\cursor_position_selector.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\delay.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

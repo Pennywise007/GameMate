@@ -52,6 +52,7 @@ protected:
 	afx_msg void OnBnClickedButtonRecord();
 	afx_msg void OnBnClickedButtonMoveUp();
 	afx_msg void OnBnClickedButtonMoveDown();
+	afx_msg void OnBnClickedButtonEditDelay();
 	afx_msg void OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnEnChangeEditRandomizeDelays();
 	afx_msg void OnBnClickedCheckUniteMovements();
@@ -74,12 +75,14 @@ protected:
 	CIconButton m_buttonMoveUp;
 	CIconButton m_buttonMoveDown;
 	CIconButton m_buttonDelete;
+	CIconButton m_buttonEditDelay;
 	CButton m_checkUniteMouseMovements;
 	CComboBox m_comboRecordMode;
 
 private:
 	int m_keyPressedSubscriptionId = -1;
 	int m_mouseMoveSubscriptionId = -1;
+	int m_mouseMoveDirectXSubscriptionId = -1;
 	Actions* m_actions = nullptr;
 	std::optional<std::chrono::steady_clock::time_point> m_lastActionTime;
 	OnSettingsChangedCallback m_onSettingsChangedCallback;
@@ -87,6 +90,7 @@ private:
 
 private: // we add recorded actions after finishing recording just to avoid any delays during actions processing
 	std::list<Action> m_recordedActions;
+	std::mutex mutex;
 };
 
 // Dialog to edit actions

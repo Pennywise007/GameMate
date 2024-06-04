@@ -22,6 +22,7 @@ void CMouseMovementEditorView::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_MOUSE_POSITION_SELECT, m_buttonMousePositionSelect);
 	DDX_Control(pDX, IDC_EDIT_MOUSE_POSITION_X, m_editMousePositionX);
 	DDX_Control(pDX, IDC_EDIT_MOUSE_POSITION_Y, m_editMousePositionY);
+	DDX_Control(pDX, IDC_CHECK_USE_DIRECT_INPUT, m_checkUseDirectInput);
 }
 
 BEGIN_MESSAGE_MAP(CMouseMovementEditorView, ActionsEditor)
@@ -79,9 +80,8 @@ void CMouseMovementEditorView::OnBnClickedButtonMousePositionSelect()
 		{
 		case VK_LBUTTON:
 		{
-			CPoint cursor;
-			::GetCursorPos(&cursor);
-			SetAction(Action::NewMouseMove(cursor.x, cursor.y, m_action.delayInMilliseconds));
+			auto cursor = InputManager::GetMousePosition();
+			SetAction(Action::NewMousePosition(cursor.x, cursor.y, m_action.delayInMilliseconds));
 			[[fallthrough]];
 		}
 		case VK_ESCAPE:
@@ -121,6 +121,7 @@ void CMouseMovementEditorView::SetAction(const Action& action)
 {
 	m_action.mouseX = action.mouseX;
 	m_action.mouseY = action.mouseY;
+	m_action.delayInMilliseconds = action.delayInMilliseconds;
 
 	updateMousePositionControlsStates();
 }
@@ -177,6 +178,7 @@ void CCursorPositionEditorView::OnInitialUpdate()
 {
 	CMouseMovementEditorView::OnInitialUpdate();
 
+	m_checkUseDirectInput.ShowWindow(SW_HIDE);
 	m_editMousePositionX.UsePositiveDigitsOnly();
 	m_editMousePositionY.UsePositiveDigitsOnly();
 }
@@ -208,6 +210,9 @@ CMouseMoveEditorView::CMouseMoveEditorView()
 void CMouseMoveEditorView::OnInitialUpdate()
 {
 	CMouseMovementEditorView::OnInitialUpdate();
+
+	// TODO add check logic processing, remember about set action function
+	m_buttonMousePositionSelect.ShowWindow(SW_HIDE);
 }
 
 void CMouseMoveEditorView::OnInitDone()
@@ -215,7 +220,7 @@ void CMouseMoveEditorView::OnInitDone()
 	CMouseMovementEditorView::OnInitDone();
 
 	// hiding select mouse pos button
-	CRect rect;
+	/*CRect rect;
 	m_buttonMousePositionSelect.GetWindowRect(rect);
 	m_buttonMousePositionSelect.ShowWindow(SW_HIDE);
 	long offset = rect.Height() + 10;
@@ -235,7 +240,7 @@ void CMouseMoveEditorView::OnInitDone()
 	size.cy -= offset;
 	SetScrollSizes(MM_TEXT, size);
 
-	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
+	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);*/
 }
 
 bool CMouseMoveEditorView::CanClose() const

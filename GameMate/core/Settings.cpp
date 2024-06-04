@@ -254,10 +254,10 @@ Action Action::NewMousePosition(long mouseMovedToPointX, long mouseMovedToPointY
 	return res;
 }
 
-Action Action::NewMouseMove(long mouseDeltaX, long mouseDeltaY, unsigned delay)
+Action Action::NewMouseMove(long mouseDeltaX, long mouseDeltaY, unsigned delay, bool directInput)
 {
 	Action res;
-	res.type = Type::eMouseMove;
+	res.type = directInput ? Type::eMouseMoveDirectInput : Type::eMouseMove;
 	res.mouseX = mouseDeltaX;
 	res.mouseY = mouseDeltaY;
 	res.delayInMilliseconds = delay;
@@ -289,6 +289,8 @@ std::wstring Action::ToString() const
 		return std::string_swprintf(L"Set cursor position(%ld,%ld)", mouseX, mouseY);
 	case Type::eMouseMove:
 		return std::string_swprintf(L"Move mouse(%ld,%ld)", mouseX, mouseY);
+	case Type::eMouseMoveDirectInput:
+		return std::string_swprintf(L"DirectX mouse move(%ld,%ld)", mouseX, mouseY);
 	case Type::eRunScript:
 		return L"Run script: " + scriptPath;
 	default:
@@ -320,15 +322,18 @@ void Action::ExecuteAction(float delayRandomize) const
 		InputManager::SendKeyOrMouse(vkCode, down);
 		break;
 	case Type::eCursorPosition:
-		InputManager::MouseMove(POINT{ mouseX, mouseY });
+		InputManager::SetCursorPos(POINT{ mouseX, mouseY });
 		break;
 	case Type::eMouseMove:
 		{
 			auto cursor = InputManager::GetMousePosition();
 			cursor.x += mouseX;
 			cursor.y += mouseY;
-			InputManager::MouseMove(POINT{ cursor.x, cursor.y });
+			InputManager::SetCursorPos(POINT{ cursor.x, cursor.y });
 		}
+		break;
+	case Type::eMouseMoveDirectInput:
+		InputManager::MouseMove(POINT{ mouseX, mouseY });
 		break;
 	case Type::eRunScript:
 		{

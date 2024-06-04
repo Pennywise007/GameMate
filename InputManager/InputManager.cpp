@@ -2,6 +2,7 @@
 
 #include <array>
 
+#include "DirectInputManager.h"
 #include "InputManager.h"
 #include "InputSimulator.hpp"
 
@@ -55,7 +56,7 @@ INPUT CreateMouseInput(unsigned short vkCode, bool down)
     return input;
 }
 
-INPUT CreateMouseMoveInput(const POINT& position)
+INPUT CreateSetCursorPosInput(const POINT& position)
 {
     INPUT input;
     ZeroMemory(&input, sizeof(INPUT));
@@ -64,6 +65,18 @@ INPUT CreateMouseMoveInput(const POINT& position)
     input.mi.dx = position.x;
     input.mi.dy = position.y;
     input.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_VIRTUALDESK;
+    return input;
+}
+
+INPUT CreateMouseMoveInput(const POINT& delta)
+{
+    INPUT input;
+    ZeroMemory(&input, sizeof(INPUT));
+
+    input.type = INPUT_MOUSE;
+    input.mi.dx = delta.x;
+    input.mi.dy = delta.y;
+    input.mi.dwFlags = MOUSEEVENTF_MOVE;
     return input;
 }
 
@@ -354,6 +367,18 @@ void InputManager::RemoveMouseMoveHandler(unsigned id)
     EXT_ASSERT(res == 1);
 }
 
+unsigned InputManager::AddDirectInputMouseMoveHandler(HINSTANCE hInstance, OnDirectInputMouseMoveCallback handler)
+{
+    auto& manager = ext::get_singleton<DirectInputManager>();
+    return manager.AddMouseMovedHandler(hInstance, std::move(handler));
+}
+
+void InputManager::RemoveDirectInputMouseMoveHandler(unsigned id)
+{
+    auto& manager = ext::get_singleton<DirectInputManager>();
+    return manager.RemoveMouseMovedHandler(id);
+}
+
 void InputManager::SendKeyOrMouse(WORD vkCode, bool isDown)
 {
     if ((vkCode >= VK_LBUTTON && vkCode <= VK_XBUTTON2) || vkCode == VK_MOUSE_WHEEL || vkCode == VK_MOUSE_HWHEEL)
@@ -520,7 +545,7 @@ void InputManager::MouseSendUp(DWORD mouseVkCode)
     }
 }
 
-void InputManager::MouseMove(POINT position)
+void InputManager::SetCursorPos(POINT position)
 {
     static const auto screenWidth = static_cast<float>(GetSystemMetrics(SM_CXVIRTUALSCREEN));
     static const auto screenHeight = static_cast<float>(GetSystemMetrics(SM_CYVIRTUALSCREEN));
@@ -533,7 +558,20 @@ void InputManager::MouseMove(POINT position)
         EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse move";
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
-        INPUT input = CreateMouseMoveInput(position);
+        INPUT input = CreateSetCursorPosInput(position);
+        SendInput(1, &input, sizeof(INPUT));
+#endif // SEND_INPUT_ON_DRIVER_FAIL
+    }
+}
+
+void InputManager::MouseMove(POINT delta)
+{
+    if (!IbSendMouseMove(delta.x, delta.y, Send::MoveMode::Relative))
+    {
+        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse move";
+
+#ifdef SEND_INPUT_ON_DRIVER_FAIL
+        INPUT input = CreateMouseMoveInput(delta);
         SendInput(1, &input, sizeof(INPUT));
 #endif // SEND_INPUT_ON_DRIVER_FAIL
     }

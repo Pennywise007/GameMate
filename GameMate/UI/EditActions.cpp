@@ -4,6 +4,7 @@
 
 #include "AddActionDlg.h"
 #include "EditActions.h"
+#include "EditValueDlg.h"
 #include "InputManager.h"
 
 #include <ext/thread/invoker.h>
@@ -21,7 +22,8 @@ enum class RecordModes
 {
 	eNoMouseMovements,
 	eRecordCursorPosition,
-	eRecordCursorDelta
+	eRecordCursorDelta,
+	eRecordCursorDeltaWithDirectX
 };
 
 } // namespace
@@ -36,6 +38,7 @@ BEGIN_MESSAGE_MAP(CActionsEditorView, CFormView)
 	ON_BN_CLICKED(IDC_BUTTON_RECORD, &CActionsEditorView::OnBnClickedButtonRecord)
 	ON_BN_CLICKED(IDC_BUTTON_MOVE_UP, &CActionsEditorView::OnBnClickedButtonMoveUp)
 	ON_BN_CLICKED(IDC_BUTTON_MOVE_DOWN, &CActionsEditorView::OnBnClickedButtonMoveDown)
+	ON_BN_CLICKED(IDC_BUTTON_EDIT_DELAY, &CActionsEditorView::OnBnClickedButtonEditDelay)
 	ON_EN_CHANGE(IDC_EDIT_RANDOMIZE_DELAYS, &CActionsEditorView::OnEnChangeEditRandomizeDelays)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_MACROSES, &CActionsEditorView::OnLvnItemchangedListActions)
 	ON_BN_CLICKED(IDC_CHECK_UNITE_MOVEMENTS, &CActionsEditorView::OnBnClickedCheckUniteMovements)
@@ -59,6 +62,7 @@ void CActionsEditorView::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_REMOVE, m_buttonDelete);
 	DDX_Control(pDX, IDC_CHECK_UNITE_MOVEMENTS, m_checkUniteMouseMovements);
 	DDX_Control(pDX, IDC_COMBO_RECORD_MODE, m_comboRecordMode);
+	DDX_Control(pDX, IDC_BUTTON_EDIT_DELAY, m_buttonEditDelay);
 }
 
 BOOL CActionsEditorView::PreCreateWindow(CREATESTRUCT& cs)
@@ -189,10 +193,14 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 	m_buttonAdd.SetWindowTextW(L"");
 	m_buttonDelete.SetBitmap(IDB_PNG_DELETE, Alignment::CenterCenter);
 	m_buttonDelete.SetWindowTextW(L"");
+	m_buttonEditDelay.SetBitmap(IDB_PNG_DELAY, Alignment::CenterCenter);
+	m_buttonEditDelay.SetWindowTextW(L"");
 
+	/// TODO add help
 	m_comboRecordMode.InsertString((int)RecordModes::eNoMouseMovements, L"Don't record mouse");
 	m_comboRecordMode.InsertString((int)RecordModes::eRecordCursorPosition, L"Record cursor position");
 	m_comboRecordMode.InsertString((int)RecordModes::eRecordCursorDelta, L"Record cursor delta");
+	m_comboRecordMode.InsertString((int)RecordModes::eRecordCursorDeltaWithDirectX, L"Record DirectX cursor delta");
 	m_comboRecordMode.SetCurSel(int(captureMousePositions ? RecordModes::eRecordCursorPosition : RecordModes::eNoMouseMovements));
 
 	// TODO FIX TAB TOPS FOR ARROWS
@@ -200,6 +208,7 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 	controls::SetTooltip(m_buttonDelete, L"Delete selected action");
 	controls::SetTooltip(m_buttonMoveUp, L"Move selected up");
 	controls::SetTooltip(m_buttonMoveDown, L"Move selected up");
+	controls::SetTooltip(m_buttonEditDelay, L"Set delay for all selected items");
 
 	updateButtonStates();
 
@@ -258,23 +267,24 @@ BOOL CActionsEditorView::PreTranslateMessage(MSG* pMsg)
 
 inline void CActionsEditorView::startRecording()
 {
-	EXT_ASSERT(m_mouseMoveSubscriptionId == -1 && m_keyPressedSubscriptionId == -1);
+	EXT_ASSERT(m_mouseMoveSubscriptionId == -1 && m_keyPressedSubscriptionId == -1 && m_mouseMoveDirectXSubscriptionId == -1);
 	EXT_ASSERT(m_recordedActions.empty());
 
 	RecordModes recordMode = (RecordModes)m_comboRecordMode.GetCurSel();
 
 	// If we record mouse movements we can receive 3 mouse move event in 1 ms and to avoid delays we will add them in a table after finishing the recording
 
-	if (recordMode != RecordModes::eNoMouseMovements)
+	// TODO add text in table or place recording banner
+	switch (recordMode)
 	{
-		// TODO add text in table or place recording banner
-
+	case RecordModes::eRecordCursorPosition:
+	case RecordModes::eRecordCursorDelta:
 		m_mouseMoveSubscriptionId = InputManager::AddMouseMoveHandler([&, recordMode](const POINT& position, const POINT& delta) {
 			if (delta.x == 0 && delta.y == 0)
 				return;
-			
-			EXT_ASSERT(m_lastActionTime.has_value());
 
+			std::unique_lock l(mutex);
+			// EXT_ASSERT(m_lastActionTime.has_value());
 			auto curTime = std::chrono::steady_clock::now();
 			auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
 			m_lastActionTime = std::move(curTime);
@@ -285,13 +295,33 @@ inline void CActionsEditorView::startRecording()
 				m_recordedActions.emplace_back(Action::NewMousePosition(position.x, position.y, (int)delay));
 				break;
 			case RecordModes::eRecordCursorDelta:
-				m_recordedActions.emplace_back(Action::NewMouseMove(delta.x, delta.y, (int)delay));
+				m_recordedActions.emplace_back(Action::NewMouseMove(delta.x, delta.y, (int)delay, false));
 				break;
 			default:
 				EXT_UNREACHABLE();
 			}
 		});
+		break;
+	case RecordModes::eRecordCursorDeltaWithDirectX:
+		m_mouseMoveDirectXSubscriptionId = InputManager::AddDirectInputMouseMoveHandler(AfxGetInstanceHandle(), [&](const POINT& delta) {
+			//EXT_TRACE() << "Mouse move " << delta.x << "," << delta.y;
+
+			std::unique_lock l(mutex);
+			//EXT_ASSERT(m_lastActionTime.has_value());
+			auto curTime = std::chrono::steady_clock::now();
+			auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
+			m_lastActionTime = std::move(curTime);
+			m_recordedActions.emplace_back(Action::NewMouseMove(delta.x, delta.y, (int)delay, true));
+		});
+
+		if (m_mouseMoveDirectXSubscriptionId == -1)
+		{
+			EXT_ASSERT(false);
+			// TODO show warning and cancel recording
+		}
+		break;
 	}
+
 	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&, recordMode](WORD vkCode, bool isDown) -> bool {
 		EXT_ASSERT(m_lastActionTime.has_value());
 
@@ -314,6 +344,7 @@ inline void CActionsEditorView::startRecording()
 		}
 		default:
 		{
+			std::unique_lock l(mutex);
 			auto curTime = std::chrono::steady_clock::now();
 			auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
 			m_lastActionTime = std::move(curTime);
@@ -339,7 +370,9 @@ inline void CActionsEditorView::stopRecoring()
 		InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
 	if (m_mouseMoveSubscriptionId != -1)
 		InputManager::RemoveMouseMoveHandler(m_mouseMoveSubscriptionId);
-	m_keyPressedSubscriptionId = m_mouseMoveSubscriptionId = -1;
+	if (m_mouseMoveDirectXSubscriptionId != -1)
+		InputManager::RemoveDirectInputMouseMoveHandler(m_mouseMoveDirectXSubscriptionId);
+	m_mouseMoveDirectXSubscriptionId = m_keyPressedSubscriptionId = m_mouseMoveSubscriptionId = -1;
 
 	addActions(m_recordedActions);
 	m_recordedActions.clear();
@@ -369,7 +402,6 @@ void CActionsEditorView::addActions(const std::list<Action>& actions)
 			long long delay = 0, sumX = 0, sumY = 0;
 			for (const auto& action : mousePosChangeActions)
 			{
-				EXT_ASSERT(action.type == Action::Type::eMouseMove || action.type == Action::Type::eCursorPosition);
 				delay += action.delayInMilliseconds;
 				sumX += action.mouseX;
 				sumY += action.mouseY;
@@ -380,8 +412,13 @@ void CActionsEditorView::addActions(const std::list<Action>& actions)
 				text = mousePosChangeActions.front().ToString().c_str();
 			else if (mousePosChangeActions.front().type == Action::Type::eCursorPosition)
 				text = CString(L"United: ") + mousePosChangeActions.back().ToString().c_str();
+			else if (mousePosChangeActions.front().type == Action::Type::eMouseMoveDirectInput)
+				text.Format(L"United: DirectX mouse move(%lld,%lld)", sumX, sumY);
 			else
+			{
+				EXT_ASSERT(mousePosChangeActions.front().type == Action::Type::eMouseMove);
 				text.Format(L"United: Move mouse(%lld,%lld)", sumX, sumY);
+			}
 
 			item = m_listActions.InsertItem(item + 1, std::to_wstring(delay).c_str());
 			m_listActions.SetItemText(item, Columns::eAction, text.GetString());
@@ -403,6 +440,7 @@ void CActionsEditorView::addActions(const std::list<Action>& actions)
 				item = addAction(item + 1, action);
 				break;
 			case Action::Type::eMouseMove:
+			case Action::Type::eMouseMoveDirectInput:
 			case Action::Type::eCursorPosition:
 				if (!mousePosChangeActions.empty() && mousePosChangeActions.back().type != action.type)
 					addActions();
@@ -441,10 +479,9 @@ int CActionsEditorView::addAction(int item, Action action)
 {
 	item = m_listActions.InsertItem(item, std::to_wstring(action.delayInMilliseconds).c_str());
 	m_listActions.SetItemText(item, Columns::eAction, action.ToString().c_str());
-	m_listActions.SelectItem(item);
-
 	std::unique_ptr<TableItemType> actionPtr = std::make_unique<TableItemType>(TableItemType{ std::move(action) });
 	m_listActions.SetItemDataPtr(item, actionPtr.release());
+	m_listActions.SelectItem(item);
 	return item;
 }
 
@@ -454,6 +491,22 @@ void CActionsEditorView::updateButtonStates()
 	m_buttonDelete.EnableWindow(selectionExist);
 	m_buttonMoveUp.EnableWindow(selectionExist);
 	m_buttonMoveDown.EnableWindow(selectionExist);
+
+	bool noUnitedItemsInSelection = selectionExist;
+	if (m_checkUniteMouseMovements.GetCheck() == TRUE)
+	{
+		std::vector<int> selectedActions = m_listActions.GetSelectedItems();
+		for (auto it = selectedActions.rbegin(), end = selectedActions.rend(); it != end && noUnitedItemsInSelection; ++it)
+		{
+			TableItemType* actionPtr((TableItemType*)m_listActions.GetItemDataPtr(*it));
+			if (actionPtr->size() != 1)
+			{
+				noUnitedItemsInSelection = false;
+				break;
+			}
+		}
+	}
+	m_buttonEditDelay.EnableWindow(noUnitedItemsInSelection);
 }
 
 void CActionsEditorView::OnBnClickedButtonAdd()
@@ -470,6 +523,7 @@ void CActionsEditorView::OnBnClickedButtonAdd()
 void CActionsEditorView::OnBnClickedButtonRemove()
 {
 	std::vector<int> selectedActions = m_listActions.GetSelectedItems();
+	EXT_ASSERT(!selectedActions.empty());
 
 	m_listActions.LockWindowUpdate();
 	m_listActions.SetRedraw(FALSE);
@@ -484,6 +538,30 @@ void CActionsEditorView::OnBnClickedButtonRemove()
 	m_listActions.UnlockWindowUpdate();
 	m_listActions.SetRedraw(TRUE);
 	m_listActions.Invalidate();
+
+	onSettingsChanged();
+}
+
+void CActionsEditorView::OnBnClickedButtonEditDelay()
+{
+	std::vector<int> selectedActions = m_listActions.GetSelectedItems();
+	EXT_ASSERT(!selectedActions.empty());
+
+	auto newDalay = CEditValueDlg::EditValue(this, L"Enter delay, ms", selectedActions.front(), false);
+	if (!newDalay.has_value())
+		return;
+
+	auto text = std::to_wstring(newDalay.value());
+	for (auto it = selectedActions.rbegin(), end = selectedActions.rend(); it != end; ++it)
+	{
+		TableItemType* actionPtr((TableItemType*)m_listActions.GetItemDataPtr(*it));
+		EXT_ASSERT(actionPtr->size() == 1);
+
+		auto& action = actionPtr->front();
+		action.delayInMilliseconds = newDalay.value();
+
+		m_listActions.SetItemText(*it, Columns::eDelay, text.c_str());
+	}
 
 	onSettingsChanged();
 }
@@ -551,7 +629,17 @@ void CActionsEditorView::OnBnClickedButtonMoveDown()
 
 void CActionsEditorView::OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	updateButtonStates();
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+
+	if (pNMLV->uChanged & LVIF_STATE)
+	{
+		if ((pNMLV->uNewState & LVIS_SELECTED) == (pNMLV->uOldState & LVIS_SELECTED))
+		{
+			// selection changed
+			updateButtonStates();
+		}
+	}
+
 	*pResult = 0;
 }
 
