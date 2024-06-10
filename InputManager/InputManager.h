@@ -33,7 +33,7 @@ public:
     using Error = const wchar_t*;
     static std::optional<Error> SetInputSimulator(InputSimulator& inputSimulator);
 
-    [[nodiscard]] static bool GetKeyState(DWORD vkCode);
+    [[nodiscard]] static bool IsKeyPressed(DWORD vkCode);
     [[nodiscard]] static POINT GetMousePosition();
     
     // Subscribe/unsubscribe on low level key or mouse press

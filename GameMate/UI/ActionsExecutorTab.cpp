@@ -113,9 +113,8 @@ BOOL CActionsExecutorTab::OnInitDialog()
 	Layout::AnchorWindow(*m_actionsEditView, m_actionsGroup, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
 
 	m_actionsEditView->Init(
-		ext::get_singleton<Settings>().actions_executor.actionsSettings,
-		[]() { ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor); },
-		true);
+		ext::get_singleton<Settings>().actions_executor.actions,
+		[]() { ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor); });
 
 	pView->ShowWindow(SW_NORMAL);
 
@@ -243,7 +242,7 @@ void CActionsExecutorTab::UpdateSettingsFromControl(CSpinEdit& edit, unsigned& s
 
 void CActionsExecutorTab::EditActions()
 {
-	auto& currentActions = ext::get_singleton<Settings>().actions_executor.actionsSettings;
+	auto& currentActions = ext::get_singleton<Settings>().actions_executor.actions;
 	auto updatedActions = CActionsEditDlg::ExecModal(this, currentActions);
 	if (!updatedActions.has_value())
 		return;

@@ -19,8 +19,8 @@ void LoadCrosshair(const Settings& crosshair, CBitmap& bitmap) EXT_THROWS(std::r
         const auto fullFilePath = std::filesystem::get_exe_directory() / L"res" / crosshair.customCrosshairName;
 
         CImage image;
-        EXT_CHECK(SUCCEEDED(image.Load(fullFilePath.c_str()))) << "Failed to load custom cross hair " << fullFilePath;
-        EXT_CHECK(bitmap.Attach(image.Detach())) << "Failed to load custom cross hair";
+        EXT_CHECK(SUCCEEDED(image.Load(fullFilePath.c_str()))) << "Failed to load custom crosshair " << fullFilePath;
+        EXT_CHECK(bitmap.Attach(image.Detach())) << "Failed to load custom crosshair";
     }
     else
     {
@@ -185,7 +185,7 @@ void AttachableCrosshairWindow::AttachCrosshairToWindow(const Settings& settings
     }
     catch (...)
     {
-        MessageBox(ext::ManageExceptionText(L"").c_str(), L"Failed to load cross hair", MB_ICONERROR);
+        MessageBox(ext::ManageExceptionText(L"").c_str(), L"Failed to load crosshair", MB_ICONERROR);
         return;
     }
 

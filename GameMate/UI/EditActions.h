@@ -21,19 +21,12 @@ class CActionsEditorView : public CFormView
 		eDelay = 0,
 		eAction
 	};
-
-	static inline constexpr UINT kTimerInterval1Sec = 1000;
-
-	static inline constexpr UINT kRecordingTimer0Id = 0;
-	static inline constexpr UINT kRecordingTimer1Id = 1;
-	static inline constexpr UINT kRecordingTimer2Id = 2;
-
 	DECLARE_DYNCREATE(CActionsEditorView)
 	CActionsEditorView();
 
 public:
 	using OnSettingsChangedCallback = std::function<void()>;
-	void Init(Actions& actions, OnSettingsChangedCallback callback, bool captureMousePositions);
+	void Init(Actions& actions, OnSettingsChangedCallback callback);
 
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_VIEW_ACTIONS_EDITOR };
@@ -53,6 +46,7 @@ protected:
 	afx_msg void OnBnClickedButtonMoveUp();
 	afx_msg void OnBnClickedButtonMoveDown();
 	afx_msg void OnBnClickedButtonEditDelay();
+	afx_msg void OnCbnSelendokComboRecordMode();
 	afx_msg void OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnEnChangeEditRandomizeDelays();
 	afx_msg void OnBnClickedCheckUniteMovements();
@@ -60,37 +54,43 @@ protected:
 private:
 	void startRecording();
 	void stopRecoring();
+	bool canDynamicallyAddRecordedActions() const;
+	void handleRecordedAction(Action&& action);
 	void addActions(const std::list<Action>& actions);
 	void addAction(Action&& action);
 	int addAction(int item, Action action);
 	void updateButtonStates();
-	void onSettingsChanged();
+	void copyItemsToClipboard();
+	void pasteItemsFromClipboard();
+	void onSettingsChanged(bool changesInActionsList);
 
 protected:
-	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listActions;
 	CIconButton m_buttonRecord;
-	CSpinEdit m_editRandomizeDelays;
-	CStatic m_staticDelayHelp;
+	CButton m_checkUniteMouseMovements;
+	CComboBox m_comboMouseRecordMode;
+	CStatic m_staticMouseMoveHelp;
 	CIconButton m_buttonAdd;
+	CIconButton m_buttonDelete;
 	CIconButton m_buttonMoveUp;
 	CIconButton m_buttonMoveDown;
-	CIconButton m_buttonDelete;
 	CIconButton m_buttonEditDelay;
-	CButton m_checkUniteMouseMovements;
-	CComboBox m_comboRecordMode;
+	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listActions;
+	CSpinEdit m_editRandomizeDelays;
+	CStatic m_staticDelayHelp;
 
 private:
+	// Input events subscriptions
 	int m_keyPressedSubscriptionId = -1;
 	int m_mouseMoveSubscriptionId = -1;
 	int m_mouseMoveDirectXSubscriptionId = -1;
+	// Editable actions settings
 	Actions* m_actions = nullptr;
-	std::optional<std::chrono::steady_clock::time_point> m_lastActionTime;
 	OnSettingsChangedCallback m_onSettingsChangedCallback;
-	bool m_showMovementsTogether = false;
 
 private: // we add recorded actions after finishing recording just to avoid any delays during actions processing
+	std::optional<std::chrono::steady_clock::time_point> m_lastActionTime;
 	std::list<Action> m_recordedActions;
-	std::mutex mutex;
+	std::mutex m_recordingActionsMutex;
 };
 
 // Dialog to edit actions
@@ -112,5 +112,4 @@ protected:
 
 private:
 	Actions& m_actions;
-	CActionsEditorView* m_editorView = nullptr;
 };

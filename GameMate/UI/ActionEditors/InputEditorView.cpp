@@ -61,22 +61,35 @@ void CInputEditorBaseView::OnTimer(UINT_PTR nIDEvent)
 				CPoint cursor;
 				::GetCursorPos(&cursor);
 
-				// Don't store click on parent controls like Ok button or combobox with mode switchers
-				auto window = CWnd::FromHandle(::WindowFromPoint(cursor));
-
-				wchar_t className[64];
-				GetClassName(window->m_hWnd, className, 64);
-
-				if ((window && window->GetParent() == owner && !window->IsKindOf(RUNTIME_CLASS(CStatic))) ||
-					std::wstring(className) != L"ComboLBox")
+				if (auto window = CWnd::FromHandle(::WindowFromPoint(cursor)); window)
 				{
-					return false;
-				}
+					wchar_t className[64];
+					GetClassName(window->m_hWnd, className, 64);
 
+					// Don't store click on parent controls like OK button or combobox with mode switchers
+					const auto allowClick = [&]()
+					{
+						if (std::wstring_view(className) == L"ComboLBox")
+							return true;
+						if (window->GetParent() != owner)
+							return true;
+						// Allow click on dialog or statics
+						for (const auto* cl : { RUNTIME_CLASS(CDialog), RUNTIME_CLASS(CFormView), RUNTIME_CLASS(CStatic) })
+						{
+							if (window->IsKindOf(cl))
+								return true;
+						}
+
+						return false;
+					};
+
+					if (!allowClick())
+						return false;
+				}
 				OnVkCodeAction(vkCode, isDown);
 
 				// Set timer to change displayed text because user might hit close button with mouse
-				// and if we change text immediatly the user will see Mouse down as a key text which wasn't his last input
+				// and if we change text immediately the user will see Mouse down as a key text which wasn't his last input
 				KillTimer(kTimerIdKeyTextChage);
 				SetTimer(kTimerIdKeyTextChage, 50, nullptr);
 
@@ -179,8 +192,7 @@ void CBindEditorView::OnInitialUpdate()
 	CInputEditorBaseView::OnInitialUpdate();
 
 	SetWindowText(L"Bind editor");
-
-	//TODO GetDlgItem(IDC_STATIC_DESCRIPTION)->SetWindowTextW(L"Enter mouse or keyboard action");
+	GetDlgItem(IDC_STATIC_DESCRIPTION)->SetWindowTextW(L"Press mouse or keyboard button");
 }
 
 std::wstring CBindEditorView::GetActionText() const

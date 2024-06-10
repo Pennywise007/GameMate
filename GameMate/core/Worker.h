@@ -34,7 +34,7 @@ private:
     int m_keyMauseHandlerId = -1;
     // Active window changed hook
     HWINEVENTHOOK m_activeWindowHook = nullptr;
-    // Transparent window to show top most cross hair
+    // Transparent window to show top most crosshair
     process_toolkit::crosshair::AttachableCrosshairWindow m_crosshairWindow;
     // we use 1 thread to put macroses in a single queue
     ext::thread_pool m_macrosExecutor = { 1 };

@@ -10,7 +10,7 @@
 #include <ext/core/tracer.h>
 #include <ext/constexpr/map.h>
 
-#define DONT_USE_HOOK
+//#define DONT_USE_HOOK
 
 namespace {
 
@@ -309,13 +309,17 @@ void InputManager::UpdateMousePosition(LONG x, LONG y)
     }
 }
 
-bool InputManager::GetKeyState(DWORD vkCode)
+bool InputManager::IsKeyPressed(DWORD vkCode)
 {
+#ifdef DONT_USE_HOOK
+    return ::GetKeyState(vkCode) & 0x8000;
+#else
     auto& keyStates = ext::get_singleton<InputManager>().m_keyStates;
     if (vkCode < keyStates.size()) {
         return keyStates[vkCode];
     }
     return false;
+#endif
 }
 
 POINT InputManager::GetMousePosition()

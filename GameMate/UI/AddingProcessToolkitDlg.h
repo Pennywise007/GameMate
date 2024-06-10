@@ -35,5 +35,6 @@ private:
 	CComboBox m_comboboxCopySettings;
 
 private:
+	const bool m_editingTabNameDialog;
 	process_toolkit::ProcessConfiguration m_configuration;
 };

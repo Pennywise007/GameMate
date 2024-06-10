@@ -157,7 +157,7 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
         return false;
 
     // Check if program working mode switched
-    if (vkCode == VK_F9 && !down && InputManager::GetKeyState(VK_SHIFT))
+    if (vkCode == VK_F9 && !down && InputManager::IsKeyPressed(VK_SHIFT))
     {
         auto& settings = ext::get_singleton<Settings>().process_toolkit;
         settings.enabled = !settings.enabled;
@@ -226,7 +226,7 @@ void Worker::OnSettingsChanged(ISettingsChanged::ChangedType changedType)
     switch (changedType)
     {
     case ISettingsChanged::ChangedType::eProcessToolkit:
-        // Force cross hairs and m_activeExeConfig to apply new changes
+        // Force crosshairs and m_activeExeConfig to apply new changes
         OnForegroundChanged(m_activeWindow, m_activeProcessName);
         break;
     case ISettingsChanged::ChangedType::eActionsExecutorEnableChanged:

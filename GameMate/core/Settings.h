@@ -14,12 +14,13 @@
 
 constexpr int kNotSetVkCode = -1;
 
+// User bind settings
 struct Bind
 {
     Bind() = default;
     Bind(WORD vkCode);
 
-    // Comparision operator for map
+    // Comparison operator for map
     int operator<(const Bind& other) const { return ToString() < other.ToString(); }
 
     // Get text
@@ -48,7 +49,7 @@ struct Bind
     DECLARE_SERIALIZABLE_FIELD(int, vkCode, kNotSetVkCode);
 
     static_assert(size_t(ExtraKeys::eScrollUp) < CHAR_BIT * sizeof(decltype(extraKeys)),
-        "Bind::extraKeys type too small to use enum ExtraKeys as flags");
+        "Bind::extraKeys type is too small to use enum ExtraKeys as flags");
 };
 
 struct Action
@@ -75,9 +76,11 @@ struct Action
         eRunScript
     };
     DECLARE_SERIALIZABLE_FIELD(Type, type, Type::eKeyOrMouseAction);
+    // Delay before executing action
+    DECLARE_SERIALIZABLE_FIELD(unsigned, delayInMilliseconds, 0);
+    // eKeyOrMouseAction
     DECLARE_SERIALIZABLE_FIELD(int, vkCode, kNotSetVkCode);
     DECLARE_SERIALIZABLE_FIELD(bool, down, false);
-    DECLARE_SERIALIZABLE_FIELD(unsigned, delayInMilliseconds, 0);
     // eCursorPosition/eMouseMove/eMouseMoveDirectInput
     DECLARE_SERIALIZABLE_FIELD(long, mouseX, 0);
     DECLARE_SERIALIZABLE_FIELD(long, mouseY, 0);
@@ -87,7 +90,20 @@ struct Action
 
 struct Actions
 {
+    enum class MouseRecordMode
+    {
+        eNoMouseMovements,
+        eRecordCursorPosition,
+        eRecordCursorDelta,
+        eRecordCursorDeltaWithDirectX
+    };
+
     REGISTER_SERIALIZABLE_OBJECT();
+    //--------------------------------------------------------------------------------------------- 
+    // UI settings
+    DECLARE_SERIALIZABLE_FIELD(MouseRecordMode, mouseRecordMode, MouseRecordMode::eNoMouseMovements);
+    DECLARE_SERIALIZABLE_FIELD(bool, showMouseMovementsUnited, false);
+    //--------------------------------------------------------------------------------------------- 
     DECLARE_SERIALIZABLE_FIELD(std::list<Action>, actions);
     DECLARE_SERIALIZABLE_FIELD(float, randomizeDelays, 0.f);
 
@@ -104,10 +120,13 @@ enum class RepeatMode {
 struct Settings
 {
     REGISTER_SERIALIZABLE_OBJECT();
+
+    // UI status, not serializable
     bool enabled = false;
 
-    DECLARE_SERIALIZABLE_FIELD(Actions, actionsSettings);
     DECLARE_SERIALIZABLE_FIELD(Bind, enableBind);
+    DECLARE_SERIALIZABLE_FIELD(Actions, actions);
+
     DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalMinutes, 0);
     DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalSeconds, 0);
     DECLARE_SERIALIZABLE_FIELD(unsigned, repeatIntervalMilliseconds, 0);
@@ -152,7 +171,7 @@ struct Settings
     DECLARE_SERIALIZABLE_FIELD(crosshair::Size, size, Size::eMedium);
     DECLARE_SERIALIZABLE_FIELD(crosshair::Type, type, Type::eCross);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, customCrosshairName);
-    DECLARE_SERIALIZABLE_FIELD(COLORREF, color, RGB(255, 192, 0));
+    DECLARE_SERIALIZABLE_FIELD(COLORREF, color, RGB(128, 0, 128));
 };
 
 } // namespace crosshair
@@ -160,10 +179,10 @@ struct Settings
 struct ProcessConfiguration
 {
     REGISTER_SERIALIZABLE_OBJECT();
-    DECLARE_SERIALIZABLE_FIELD(std::wstring, configurationName);
     DECLARE_SERIALIZABLE_FIELD(bool, enabled, true);
-    DECLARE_SERIALIZABLE_FIELD(bool, disableWinButton, false);
+    DECLARE_SERIALIZABLE_FIELD(std::wstring, name, L"Configuration name");
     DECLARE_SERIALIZABLE_FIELD(std::wstring, exeName);
+    DECLARE_SERIALIZABLE_FIELD(bool, disableWinButton, false);
     DECLARE_SERIALIZABLE_FIELD(crosshair::Settings, crosshairSettings);
     DECLARE_SERIALIZABLE_FIELD((std::map<Bind, Actions>), actionsByBind);
 };
@@ -173,8 +192,9 @@ struct Settings
     REGISTER_SERIALIZABLE_OBJECT();
 
     DECLARE_SERIALIZABLE_FIELD(bool, enabled, true);
-    DECLARE_SERIALIZABLE_FIELD(int, activeConfiguration, -1);
-    DECLARE_SERIALIZABLE_FIELD(std::list<std::shared_ptr<ProcessConfiguration>>, processConfigurations);
+    DECLARE_SERIALIZABLE_FIELD(int, activeConfiguration, 0);
+    DECLARE_SERIALIZABLE_FIELD(std::list<std::shared_ptr<ProcessConfiguration>>, processConfigurations,
+        std::make_shared<ProcessConfiguration>());
 };
 
 } // namespace process_toolkit

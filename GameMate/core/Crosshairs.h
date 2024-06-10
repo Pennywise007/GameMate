@@ -30,7 +30,7 @@ private:
     const CString m_className;
 };
 
-// Layered non clickable topmost window to show cross hair in games
+// Layered non clickable topmost window to show crosshair in games
 class AttachableCrosshairWindow : protected TransparentWindowWithBitmap
 {
 public:

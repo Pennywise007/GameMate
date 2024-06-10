@@ -92,6 +92,7 @@
 #define IDC_BUTTON_DELAY_HELP           1028
 #define IDC_STATIC_DELAY_HELP           1029
 #define IDC_COMBO_EXE_NAME              1030
+#define IDC_STATIC_MAUSE_MOVE_HELP      1030
 #define IDC_STATIC_CROSSHAIR            1031
 #define IDC_STATIC_CROSSHAIR_DEMO       1031
 #define IDC_COMBO1                      1032
@@ -168,6 +169,7 @@
 #define IDC_CHECK_UNITE_MOVEMENTS       1095
 #define IDC_EDIT                        1096
 #define IDC_CHECK_USE_DIRECT_INPUT      1097
+#define IDC_STATIC_RECORDING_OVERLAY    1098
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -183,9 +185,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        192
+#define _APS_NEXT_RESOURCE_VALUE        193
 #define _APS_NEXT_COMMAND_VALUE         32781
-#define _APS_NEXT_CONTROL_VALUE         1098
+#define _APS_NEXT_CONTROL_VALUE         1099
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

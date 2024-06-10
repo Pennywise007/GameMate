@@ -8,6 +8,7 @@ IMPLEMENT_DYNAMIC(CAddingProcessToolkitDlg, CDialogEx)
 
 CAddingProcessToolkitDlg::CAddingProcessToolkitDlg(CWnd* pParent, const process_toolkit::ProcessConfiguration* configuration)
 	: CDialogEx(IDD_DIALOG_ADD_PROCESS_TOOLKIT, pParent)
+	, m_editingTabNameDialog(!!configuration)
 {
 	if (configuration)
 		m_configuration = *configuration;
@@ -29,10 +30,9 @@ BOOL CAddingProcessToolkitDlg::OnInitDialog()
 
 	m_editName.SetCueBanner(L"Enter configuration name...", TRUE);
 
-	if (!m_configuration.configurationName.empty())
+	if (m_editingTabNameDialog)
 	{
-		// editing tab
-		m_editName.SetWindowTextW(m_configuration.configurationName.c_str());
+		m_editName.SetWindowTextW(m_configuration.name.c_str());
 		m_comboboxCopySettings.ShowWindow(SW_HIDE);
 		GetDlgItem(IDC_STATIC_COPY_SETTINGS)->ShowWindow(SW_HIDE);
 
@@ -50,7 +50,7 @@ BOOL CAddingProcessToolkitDlg::OnInitDialog()
 		const auto newInd = m_comboboxCopySettings.AddString(L"Create new");
 		for (const auto& tab : configurations)
 		{
-			m_comboboxCopySettings.AddString(tab->configurationName.c_str());
+			m_comboboxCopySettings.AddString(tab->name.c_str());
 		}
 		m_comboboxCopySettings.SetCurSel(newInd);
 	}
@@ -60,10 +60,10 @@ BOOL CAddingProcessToolkitDlg::OnInitDialog()
 
 void CAddingProcessToolkitDlg::OnOK()
 {
-	CString tabName;
-	m_editName.GetWindowTextW(tabName);
+	CString name;
+	m_editName.GetWindowTextW(name);
 
-	if (tabName.IsEmpty())
+	if (name.IsEmpty())
 	{
 		MessageBox(L"Please enter a tab name", L"Tab name is empty", MB_ICONERROR);
 		return;
@@ -76,7 +76,7 @@ void CAddingProcessToolkitDlg::OnOK()
 		EXT_ASSERT(curSel < (int)configurations.size());
 		m_configuration = *std::next(configurations.begin(), curSel)->get();
 	}
-	m_configuration.configurationName = tabName;
+	m_configuration.name = name;
 
 	CDialogEx::OnOK();
 }

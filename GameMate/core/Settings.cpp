@@ -187,7 +187,7 @@ void Bind::UpdateBind(WORD _vkCode, bool down)
 	for (auto key = unsigned(ExtraKeys::FirstModifierKey), last = unsigned(ExtraKeys::LastModifierKey); key < last; ++key)
 	{
 		WORD extravkCode = kExtraKeysTovkCodes.get_value(ExtraKeys(key));
-		if (_vkCode == extravkCode || !InputManager::GetKeyState(extravkCode))
+		if (_vkCode == extravkCode || !InputManager::IsKeyPressed(extravkCode))
 			continue;
 
 		modifiers |= (1u << key);
@@ -222,7 +222,7 @@ bool Bind::IsBindPressed(WORD _vkCode, bool down) const
 
 		const bool keyMustbePressed = (extraKeys & (1u << key)) != 0;
 		if (keyMustbePressed)
-			pressed &= InputManager::GetKeyState(kExtraKeysTovkCodes.get_value(ExtraKeys(key)));
+			pressed &= InputManager::IsKeyPressed(kExtraKeysTovkCodes.get_value(ExtraKeys(key)));
 	}
 
 	return pressed;
@@ -386,7 +386,7 @@ void actions_executor::Settings::Execute() const
 
 	while (!stopToken.stop_requested())
 	{
-		actionsSettings.Execute();
+		actions.Execute();
 
 		if (stopToken.stop_requested())
 			return;
