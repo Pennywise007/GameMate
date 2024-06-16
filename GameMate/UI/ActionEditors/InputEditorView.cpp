@@ -5,7 +5,7 @@
 #include "core/events.h"
 
 #include "InputManager.h"
-#include "InputEditorView.h"
+#include "UI/ActionEditors/InputEditorView.h"
 
 namespace {
 
@@ -176,9 +176,9 @@ void CActionEditorView::OnVkCodeAction(WORD vkCode, bool down)
 
 bool CActionEditorView::CanClose() const
 {
-	if (m_currentAction.vkCode == kNotSetVkCode &&
-		(::MessageBox(m_hWnd, L"You need to enter action, press any key or mouse button", L"No action selected", MB_OKCANCEL) == IDOK))
+	if (m_currentAction.vkCode == kNotSetVkCode)
 	{
+		::MessageBox(m_hWnd, L"You need to enter action, press any key or mouse button", L"No action selected", MB_OK);
 		return false;
 	}
 
@@ -210,9 +210,9 @@ void CBindEditorView::OnVkCodeAction(WORD vkCode, bool down)
 
 bool CBindEditorView::CanClose() const
 {
-	if (m_currentBind.vkCode == kNotSetVkCode &&
-		(::MessageBox(m_hWnd, L"You need to enter bind, press any key or mouse button", L"No bind selected", MB_OKCANCEL) == IDOK))
+	if (m_currentBind.vkCode == kNotSetVkCode)
 	{
+		::MessageBox(m_hWnd, L"You need to enter bind, press any key or mouse button", L"No bind selected", MB_OK);
 		return false;
 	}
 

@@ -2,9 +2,9 @@
 #include "afxdialogex.h"
 #include "resource.h"
 
-#include "AddActionDlg.h"
-#include "EditActions.h"
-#include "EditValueDlg.h"
+#include "UI/Dlg/AddActionDlg.h"
+#include "UI/ActionEditors/EditActions.h"
+#include "UI/Dlg/EditValueDlg.h"
 #include "InputManager.h"
 
 #include <ext/thread/invoker.h>

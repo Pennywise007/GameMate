@@ -3,10 +3,11 @@
 #include "afxdialogex.h"
 #include "resource.h"
 
-#include "MainDlg.h"
-#include "ActiveProcessToolkitTab.h"
-#include "ActionsExecutorTab.h"
-#include "InputSimulatorInfoDlg.h"
+#include "UI/Dlg/MainDlg.h"
+#include "UI/Tab/ActiveProcessToolkitTab.h"
+#include "UI/Tab/ActionsExecutorTab.h"
+#include "UI/Dlg/InputSimulatorInfoDlg.h"
+#include "UI/Dlg/EditBindDlg.h"
 
 #include "InputManager.h"
 
@@ -65,6 +66,8 @@ void CMainDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_TABCONTROL_MODES, m_tabControlModes());
 	DDX_Control(pDX, IDC_COMBO_INPUT_DRIVER, m_inputSimulator);
 	DDX_Control(pDX, IDC_MFCBUTTON_INPUT_DRIVER_INFO, m_buttonInputDriverInfo);
+	DDX_Control(pDX, IDC_CHECK_TIMER, m_buttonShowTimer);
+	DDX_Control(pDX, IDC_MFCBUTTON_TIMER_HOTKEY, m_buttonShowTimerHotkey);
 }
 
 BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
@@ -75,6 +78,8 @@ BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
 	ON_CBN_SELCHANGE(IDC_COMBO_INPUT_DRIVER, &CMainDlg::OnCbnSelchangeComboInputDriver)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TABCONTROL_MODES, &CMainDlg::OnTcnSelchangeTabcontrolGames)
 	ON_BN_CLICKED(IDC_MFCBUTTON_INPUT_DRIVER_INFO, &CMainDlg::OnBnClickedMfcbuttonInputSimulatorInfo)
+	ON_BN_CLICKED(IDC_MFCBUTTON_TIMER_HOTKEY, &CMainDlg::OnBnClickedMfcbuttonTimerHotkey)
+	ON_BN_CLICKED(IDC_CHECK_TIMER, &CMainDlg::OnBnClickedCheckTimer)
 END_MESSAGE_MAP()
 
 BOOL CMainDlg::OnInitDialog()
@@ -97,7 +102,7 @@ BOOL CMainDlg::OnInitDialog()
 							 CActiveProcessToolkitTab::IDD);
 	m_tabControlModes.SetCurSel(int(settings.selectedMode));
 	m_tabControlModes.AutoResizeTabsToFitFullControlWidth();
-	UpdateDriverInfoButton();
+	updateDriverInfoButton();
 
 	CTrayHelper::Instance().addTrayIcon(
 		m_hIcon, L"Game mate",
@@ -199,6 +204,11 @@ BOOL CMainDlg::OnInitDialog()
 		MessageBox((L"Try to remove config file and restart app. Err:\n" + ext::ManageExceptionText(L"")).c_str(), L"Failed to init input simulator", MB_OK);
 	}
 
+	m_buttonShowTimerHotkey.SetBitmap(IDB_PNG_SETTINGS, Alignment::CenterCenter);
+	m_timerDlg.Create(CTimerDlg::IDD, GetDesktopWindow());
+	//m_timerDlg.SetOwner(nullptr);
+	updateTimerButton();
+
 	// Deserialize settings before starting worker to avoid any mouse lags
 	EXT_UNUSED(ext::get_singleton<Settings>());
 	// Starting worker
@@ -244,6 +254,7 @@ void CMainDlg::OnPaint()
 
 void CMainDlg::OnDestroy()
 {
+	m_timerDlg.DestroyWindow();
 	CDialogEx::OnDestroy();
 
 	ext::get_singleton<Settings>().SaveSettings();
@@ -254,38 +265,6 @@ void CMainDlg::OnDestroy()
 HCURSOR CMainDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
-}
-
-void CMainDlg::UpdateDriverInfoButton()
-{
-	CString warning;
-	switch (ext::get_singleton<Settings>().inputSimulator)
-	{
-	case InputManager::InputSimulator::SendInput:
-		// TODO Warning about cheats detection
-		// warning +=
-		break;
-	case InputManager::InputSimulator::Razer:
-		break;
-	default:
-	{
-		int IntArr[3];
-		SystemParametersInfoA(SPI_GETMOUSE, 0, &IntArr, 0);
-		int speed;
-		SystemParametersInfoA(SPI_GETMOUSESPEED, 0, &speed, 0);
-
-		bool enchancePointerPrecisionIsOff = IntArr[2] == 0;
-		bool normalSpeed = speed == 10;
-		if (enchancePointerPrecisionIsOff && normalSpeed)
-			break;
-
-		// TODO warn about mouse move problems and ask to change windows mouse speed and disable enchancePointerPrecision
-		// warning +=
-		break;
-	}
-	}
-
-	// TODO if (warning.IsEmpty())...
 }
 
 BOOL CMainDlg::PreTranslateMessage(MSG* pMsg)
@@ -390,10 +369,72 @@ void CMainDlg::OnCbnSelchangeComboInputDriver()
 	ext::get_singleton<Settings>().inputSimulator = selecetedInputSimulator;
 	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eInputSimulator);
 
-	UpdateDriverInfoButton();
+	updateDriverInfoButton();
 }
 
 void CMainDlg::OnBnClickedMfcbuttonInputSimulatorInfo()
 {
 	CInputSimulatorInfoDlg(this).DoModal();
+}
+
+void CMainDlg::OnBnClickedMfcbuttonTimerHotkey()
+{
+	auto& currentBind = ext::get_singleton<Settings>().timer.showTimerBind;
+	auto bind = CEditBindDlg::EditBind(this, currentBind);
+	if (!bind.has_value() || currentBind.ToString() == bind->ToString())
+		return;
+
+	currentBind = bind.value();
+	updateTimerButton();
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eTimer);
+}
+
+void CMainDlg::OnBnClickedCheckTimer()
+{
+	m_buttonShowTimer.SetCheck(m_buttonShowTimer.GetCheck() == BST_CHECKED ? BST_UNCHECKED : BST_CHECKED);
+	ext::send_event_async(&ITimerNotifications::OnShowHideTimer);
+}
+
+void CMainDlg::OnShowHideTimer()
+{
+	m_buttonShowTimer.SetCheck(m_buttonShowTimer.GetCheck() == BST_CHECKED ? BST_UNCHECKED : BST_CHECKED);
+}
+
+void CMainDlg::updateDriverInfoButton()
+{
+	CString warning;
+	switch (ext::get_singleton<Settings>().inputSimulator)
+	{
+	case InputManager::InputSimulator::SendInput:
+		// TODO Warning about cheats detection
+		// warning +=
+		break;
+	case InputManager::InputSimulator::Razer:
+		break;
+	default:
+	{
+		int IntArr[3];
+		SystemParametersInfoA(SPI_GETMOUSE, 0, &IntArr, 0);
+		int speed;
+		SystemParametersInfoA(SPI_GETMOUSESPEED, 0, &speed, 0);
+
+		bool enchancePointerPrecisionIsOff = IntArr[2] == 0;
+		bool normalSpeed = speed == 10;
+		if (enchancePointerPrecisionIsOff && normalSpeed)
+			break;
+
+		// TODO warn about mouse move problems and ask to change windows mouse speed and disable enchancePointerPrecision
+		// warning +=
+		break;
+	}
+	}
+
+	// TODO if (warning.IsEmpty())...
+}
+
+void CMainDlg::updateTimerButton()
+{
+	CString buttonText;
+	buttonText.Format(L"Show timer (%s)", ext::get_singleton<Settings>().timer.showTimerBind.ToString().c_str());
+	m_buttonShowTimer.SetWindowTextW(buttonText);
 }

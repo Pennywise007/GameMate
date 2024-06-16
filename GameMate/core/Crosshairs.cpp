@@ -25,7 +25,7 @@ void LoadCrosshair(const Settings& crosshair, CBitmap& bitmap) EXT_THROWS(std::r
     else
     {
         constexpr auto kFirstResourceId = IDB_PNG_CROSSHAIR_0_16;
-
+        // we have 3 sizes for every crosshair type
         auto crosshairResourceId = kFirstResourceId + 3 * (int)crosshair.type + (int)crosshair.size;
 
         CPngImage pngImage;
@@ -127,42 +127,44 @@ TransparentWindowWithBitmap::~TransparentWindowWithBitmap()
         DestroyWindow();
 }
 
-void TransparentWindowWithBitmap::Create(CBitmap&& bitmap, UINT extraExFlags)
+void TransparentWindowWithBitmap::Init(CBitmap&& bitmap, UINT exFlags)
 {
+    m_bitmap.DeleteObject();
+    m_bitmap.Attach(bitmap.Detach());
+
     BITMAP bm;
-    ENSURE(bitmap.GetBitmap(&bm) != 0);
+    ENSURE(m_bitmap.GetBitmap(&bm) != 0);
 
-    auto old = m_crosshair.Detach();
-    if (old != nullptr)
-        ::DeleteObject(old);
-    m_crosshair.Attach(bitmap.Detach());
+    if (!IsWindow(*this))
+    {
+        CreateEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW | WS_EX_LAYERED | exFlags,
+            m_className, NULL, WS_POPUP, CRect(0, 0, bm.bmWidth, bm.bmHeight), NULL, NULL);
+    }
 
-    CreateEx(WS_EX_TOPMOST | WS_EX_TOOLWINDOW | extraExFlags, m_className, NULL, WS_POPUP, CRect(0, 0, bm.bmWidth, bm.bmHeight), NULL, NULL);
-    SetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE, GetWindowLongPtr(GetSafeHwnd(), GWL_EXSTYLE) | WS_EX_LAYERED);
-    SetLayeredWindowAttributes(RGB(255, 255, 255), 0, LWA_COLORKEY);
-}
+    // Create a compatible DC and select the bitmap into it
+    CDC memDC;
+    memDC.CreateCompatibleDC(NULL);
+    CBitmap* pOldBitmap = memDC.SelectObject(&m_bitmap);
 
-afx_msg void TransparentWindowWithBitmap::OnPaint()
-{
-    BITMAP bm;
-    ENSURE(m_crosshair.GetBitmap(&bm) != 0);
+    // Create a BLENDFUNCTION structure for alpha blending
+    BLENDFUNCTION blend = { 0 };
+    blend.BlendOp = AC_SRC_OVER;
+    blend.BlendFlags = 0;
+    blend.SourceConstantAlpha = 255; // Use 255 for per-pixel alpha
+    blend.AlphaFormat = AC_SRC_ALPHA;
+
+    POINT pptDst = {}, pptSrc = {};
+    SIZE size = { bm.bmWidth, bm.bmHeight };
 
     CPaintDC dc(this);
+    UpdateLayeredWindow(&dc, &pptDst, &size, &memDC, &pptSrc, RGB(0, 0, 0), &blend, ULW_ALPHA);
 
-    std::unique_ptr<BYTE[]> pBits(new BYTE[bm.bmWidthBytes * bm.bmHeight]);
-    ::ZeroMemory(pBits.get(), bm.bmWidthBytes * bm.bmHeight);
-    ::GetBitmapBits(m_crosshair, bm.bmWidthBytes * bm.bmHeight, pBits.get());
-
-    for (int i = 0; i < bm.bmWidth * bm.bmHeight; ++i) {
-        BYTE* pPixel = pBits.get() + i * 4; // Assuming 32-bit RGBA format
-
-        if (pPixel[3] != 0)  // Non-transparent pixel
-            dc.SetPixel(CPoint(i / bm.bmWidth, i % bm.bmWidth), RGB(pPixel[2], pPixel[1], pPixel[0]));
-    }
+    memDC.SelectObject(pOldBitmap);
 }
 
 AttachableCrosshairWindow::AttachableCrosshairWindow()
 {
+    EXT_ASSERT(!g_crosshairWindow) << "Attachable crosshair window should be only 1 on the whole app";
     g_crosshairWindow = this;
 }
 
@@ -173,11 +175,6 @@ AttachableCrosshairWindow::~AttachableCrosshairWindow()
 
 void AttachableCrosshairWindow::AttachCrosshairToWindow(const Settings& settings, HWND hWndOfActiveWindow)
 {
-    // TODO try to fix paint problems and don't destroy window
-    
-    // We recreate window every time to avoid transparent collisions
-    ASSERT(!IsWindow(*this));
-
     CBitmap crosshair;
     try
     {
@@ -189,7 +186,7 @@ void AttachableCrosshairWindow::AttachCrosshairToWindow(const Settings& settings
         return;
     }
 
-    Create(std::move(crosshair), WS_EX_TRANSPARENT);
+    TransparentWindowWithBitmap::Init(std::move(crosshair), WS_EX_TRANSPARENT);
 
     m_attachedWindowHwnd = hWndOfActiveWindow;
     OnWindowPosChanged(m_attachedWindowHwnd);
@@ -209,7 +206,7 @@ void AttachableCrosshairWindow::RemoveCrosshairWindow()
     }
 
     if (IsWindow(*this))
-        DestroyWindow();
+        ShowWindow(SW_HIDE);
 }
 
 void AttachableCrosshairWindow::OnWindowPosChanged(HWND hwnd)
@@ -241,7 +238,7 @@ END_MESSAGE_MAP()
 
 void CursorReplacingWindow::Create(CBitmap&& cursorImage)
 {
-    TransparentWindowWithBitmap::Create(std::move(cursorImage), 0);
+    TransparentWindowWithBitmap::Init(std::move(cursorImage));
 }
 
 CRect CursorReplacingWindow::GetWindowRect() const

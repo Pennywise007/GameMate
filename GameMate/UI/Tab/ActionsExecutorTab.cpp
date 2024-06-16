@@ -2,8 +2,8 @@
 #include "afxdialogex.h"
 #include "resource.h"
 
-#include "ActionsExecutorTab.h"
-#include "EditBindDlg.h"
+#include "UI/Tab/ActionsExecutorTab.h"
+#include "UI/Dlg/EditBindDlg.h"
 
 #include "core/Settings.h"
 

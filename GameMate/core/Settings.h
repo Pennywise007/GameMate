@@ -199,6 +199,39 @@ struct Settings
 
 } // namespace process_toolkit
 
+namespace timer {
+
+struct Settings
+{
+    struct Rect : CRect
+    {
+        Rect() : CRect(-1, -1, -1, -1)
+        {
+            REGISTER_SERIALIZABLE_FIELD(left);
+            REGISTER_SERIALIZABLE_FIELD(top);
+            REGISTER_SERIALIZABLE_FIELD(right);
+            REGISTER_SERIALIZABLE_FIELD(bottom);
+        }
+
+        REGISTER_SERIALIZABLE_OBJECT();
+    };
+
+    Settings();
+
+    REGISTER_SERIALIZABLE_OBJECT();
+    DECLARE_SERIALIZABLE_FIELD(Bind, showTimerBind);
+    DECLARE_SERIALIZABLE_FIELD(Bind, pauseTimerBind);
+    DECLARE_SERIALIZABLE_FIELD(Bind, resetTimerBind);
+    // UI
+    DECLARE_SERIALIZABLE_FIELD(Rect, windowRect);
+    DECLARE_SERIALIZABLE_FIELD(bool, hideInterface, true);
+    DECLARE_SERIALIZABLE_FIELD(bool, displayHours, false);
+    DECLARE_SERIALIZABLE_FIELD(COLORREF, textColor, RGB(0, 0, 0));
+    DECLARE_SERIALIZABLE_FIELD(COLORREF, backgroundColor, GetSysColor(COLOR_3DFACE));
+};
+
+} // namespace timer
+
 class Settings
 {
     friend ext::Singleton<Settings>;
@@ -212,12 +245,13 @@ public:
     };
 
     REGISTER_SERIALIZABLE_OBJECT();
+    // General program settings
     DECLARE_SERIALIZABLE_FIELD(bool, showMinimizedBubble, true);
     DECLARE_SERIALIZABLE_FIELD(bool, tracesEnabled, true);
-
+    // UI
     DECLARE_SERIALIZABLE_FIELD(InputManager::InputSimulator, inputSimulator, InputManager::InputSimulator::Auto);
-
     DECLARE_SERIALIZABLE_FIELD(ProgramMode, selectedMode, ProgramMode::eActionExecutor);
     DECLARE_SERIALIZABLE_FIELD(process_toolkit::Settings, process_toolkit);
     DECLARE_SERIALIZABLE_FIELD(actions_executor::Settings, actions_executor);
+    DECLARE_SERIALIZABLE_FIELD(timer::Settings, timer);
 };

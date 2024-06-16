@@ -9,8 +9,9 @@
 #include "Controls/Edit/SpinEdit/SpinEdit.h"
 #include "Controls/ToolWindow/ToolWindow.h"
 
-#include "../ActionsEditor.h"
+#include "UI/ActionEditors/ActionsEditor.h"
 
+// Base view for mouse editing
 class CMouseMovementEditorView : public ActionsEditor
 {
 protected:
@@ -33,6 +34,7 @@ protected: // ActionsEditor
 private:
 	void updateMousePositionControlsStates();
 	void syncCrosshairWindowWithCursor();
+	void showProgramWindows(int nCmdShow);
 
 protected:
 	CButton m_buttonMousePositionSelect;
@@ -41,13 +43,18 @@ protected:
 	CSpinEdit m_editMousePositionY;
 
 protected:
-	Action m_action;
+	// Cursor position selection subscriptions
 	int m_keyPressedSubscriptionId = -1;
 	int m_mouseMoveSubscriptionId = -1;
+	// Cursor image which will be drown on m_cursorReplacingWindow
 	CToolWindow m_toolWindow;
+	CBitmap m_cursorBitmap;
 	process_toolkit::crosshair::CursorReplacingWindow m_cursorReplacingWindow;
+	// Current action
+	Action m_action;
 };
 
+// Editor of the cursor position
 class CCursorPositionEditorView : public CMouseMovementEditorView
 {
 protected:
@@ -61,6 +68,7 @@ protected: // ActionsEditor
 	void SetAction(const Action& action) override;
 };
 
+// Editor of the mouse delta
 class CMouseMoveEditorView : public CMouseMovementEditorView
 {
 protected:

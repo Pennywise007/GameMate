@@ -4,7 +4,7 @@
 
 #include "core/Settings.h"
 
-#include "../ActionsEditor.h"
+#include "UI/ActionEditors/ActionsEditor.h"
 
 class CInputEditorBaseView : public ActionsEditor
 {

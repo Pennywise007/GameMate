@@ -300,6 +300,7 @@ std::wstring Action::ToString() const
 
 void Action::ExecuteAction(float delayRandomize) const
 {
+	// TODO improve sleep, take into account processing time
 	if (delayInMilliseconds != 0)
 	{
 		auto randomMultiply = 1.;
@@ -414,6 +415,14 @@ void actions_executor::Settings::Execute() const
 			return;
 		}
 	}
+}
+
+timer::Settings::Settings()
+{
+	// Init vk code here to avoid calling UpdateBind before object deserialization
+	showTimerBind.vkCode = pauseTimerBind.vkCode = resetTimerBind.vkCode = VK_F7;
+	pauseTimerBind.extraKeys |= (1u << (unsigned)Bind::ExtraKeys::LCtrl);
+	resetTimerBind.extraKeys |= (1u << (unsigned)Bind::ExtraKeys::LShift);
 }
 
 Settings::Settings()

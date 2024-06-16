@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "resource.h"
-#include "AddActionDlg.h"
+#include "UI/Dlg/AddActionDlg.h"
 
 #include <core/Settings.h>
 

@@ -7,10 +7,10 @@
 #include "afxdialogex.h"
 #include "resource.h"
 
-#include "ActiveProcessToolkitTab.h"
-#include "EditActions.h"
-#include "EditBindDlg.h"
-#include "AddingProcessToolkitDlg.h"
+#include "UI/Tab/ActiveProcessToolkitTab.h"
+#include "UI/ActionEditors/EditActions.h"
+#include "UI/Dlg/EditBindDlg.h"
+#include "UI/Dlg/AddingProcessToolkitDlg.h"
 
 #include "core/Crosshairs.h"
 
@@ -395,6 +395,9 @@ void CActiveProcessToolkitTab::UpdateDemoCrosshair()
 
 void CActiveProcessToolkitTab::InitCrosshairsList()
 {
+	m_crosshairs.clear();
+	m_comboCrosshairs.ResetContent();
+
 	process_toolkit::crosshair::Settings crosshairSettings;
 	crosshairSettings.size = process_toolkit::crosshair::Size::eSmall;
 	crosshairSettings.color = m_configuration->crosshairSettings.color;

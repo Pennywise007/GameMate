@@ -1,10 +1,13 @@
 
 #pragma once
 
+#include <Controls/Button/IconButton/IconButton.h>
 #include <Controls/TabControl/TabControl.h>
 #include <Controls/TabControl/CustomDrawWidgets.h>
 
-class CMainDlg : public CDialogEx
+#include "UI/Dlg/TimerDlg.h"
+
+class CMainDlg : public CDialogEx, ext::events::ScopeSubscription<ITimerNotifications>
 {
 // Construction
 public:
@@ -32,13 +35,26 @@ protected:
 	afx_msg void OnTcnSelchangeTabcontrolGames(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnCbnSelchangeComboInputDriver();
 	afx_msg void OnBnClickedMfcbuttonInputSimulatorInfo();
+	afx_msg void OnBnClickedMfcbuttonTimerHotkey();
+	afx_msg void OnBnClickedCheckTimer();
+
+private: // ITimerNotifications
+	void OnShowHideTimer() override;
+	void OnStartOrPauseTimer() override {}
+	void OnResetTimer() override {}
 
 private:
-	void UpdateDriverInfoButton();
+	void updateDriverInfoButton();
+	void updateTimerButton();
 
 private:
 	HICON m_hIcon;
 	CComboBox m_inputSimulator;
 	CButtonsTabCtrl<CTabControl> m_tabControlModes;
 	CMFCButton m_buttonInputDriverInfo;
+	CButton m_buttonShowTimer;
+	CIconButton m_buttonShowTimerHotkey;
+
+private:
+	CTimerDlg m_timerDlg;
 };

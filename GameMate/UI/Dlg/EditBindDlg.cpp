@@ -2,7 +2,7 @@
 #include "afxdialogex.h"
 #include "resource.h"
 
-#include "EditBindDlg.h"
+#include "UI/Dlg/EditBindDlg.h"
 
 #include "InputManager.h"
 

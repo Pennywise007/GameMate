@@ -2,7 +2,7 @@
 #include "afxdialogex.h"
 #include "resource.h"
 
-#include "AddingProcessToolkitDlg.h"
+#include "UI/Dlg/AddingProcessToolkitDlg.h"
 
 IMPLEMENT_DYNAMIC(CAddingProcessToolkitDlg, CDialogEx)
 

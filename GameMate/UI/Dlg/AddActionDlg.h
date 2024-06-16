@@ -3,7 +3,7 @@
 
 #include <optional>
 
-#include "ActionsEditor.h"
+#include "UI/ActionEditors/ActionsEditor.h"
 
 class CAddActionDlg : protected CDialogEx
 {

@@ -1,9 +1,9 @@
 #include "pch.h"
 
-#include "ActionsEditor.h"
-#include "ActionEditors/InputEditorView.h"
-#include "ActionEditors/CursorPositionEditorView.h"
-#include "ActionEditors/ScriptEditorView.h"
+#include "UI/ActionEditors/ActionsEditor.h"
+#include "UI/ActionEditors/InputEditorView.h"
+#include "UI/ActionEditors/CursorPositionEditorView.h"
+#include "UI/ActionEditors/ScriptEditorView.h"
 
 namespace {
 

@@ -16,17 +16,13 @@ void ResizeCrosshair(CBitmap& bitmap, const CSize& size);
 class TransparentWindowWithBitmap : protected CWnd
 {
     DECLARE_MESSAGE_MAP()
-public:
+protected:
     TransparentWindowWithBitmap();
     virtual ~TransparentWindowWithBitmap();
 
-    void Create(CBitmap&& bitmap, UINT extraExFlags);
-
+    void Init(CBitmap&& bitmap, UINT exFlags = 0);
 private:
-    afx_msg void OnPaint();
-
-private:
-    CBitmap m_crosshair;
+    CBitmap m_bitmap;
     const CString m_className;
 };
 

@@ -5,7 +5,7 @@
 #include "pch.h"
 #include "framework.h"
 #include "GameMate.h"
-#include "UI/MainDlg.h"
+#include "UI/Dlg/MainDlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

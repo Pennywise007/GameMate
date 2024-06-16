@@ -8,7 +8,7 @@
 
 #include <Controls/Layout/Layout.h>
 
-#include "CursorPositionEditorView.h"
+#include "UI/ActionEditors/CursorPositionEditorView.h"
 
 CMouseMovementEditorView::CMouseMovementEditorView()
 	: ActionsEditor(IDD_VIEW_EDIT_MOUSE_MOVE)
@@ -37,43 +37,42 @@ void CMouseMovementEditorView::OnInitialUpdate()
 	m_editMousePositionY.SetUseOnlyIntegersValue();
 
 	updateMousePositionControlsStates();
-
-	CBitmap bitmap;
-	try
-	{
-		CPngImage pngImage;
-		EXT_CHECK(pngImage.Load(IDB_PNG_CURSOR_POSITION_SELECTION, AfxGetResourceHandle()))
-			<< "Failed to load cursor position image";
-		EXT_CHECK(bitmap.Attach(pngImage.Detach())) << "Failed to load resouce";
-	}
-	catch (...)
-	{
-		MessageBox(ext::ManageExceptionText(L"").c_str(), L"Failed to load image", MB_ICONERROR);
-	}
-
-	m_cursorReplacingWindow.Create(std::move(bitmap));
-
-	m_toolWindow.Create(m_cursorReplacingWindow.m_hWnd, true);
-	m_toolWindow.SetLabel(L"Left click to select point or ESC to cancel");
 }
 
 void CMouseMovementEditorView::OnDestroy()
 {
 	ActionsEditor::OnDestroy();
 
-	ASSERT(m_keyPressedSubscriptionId == -1 && m_mouseMoveSubscriptionId == -1);
-	m_cursorReplacingWindow.DestroyWindow();
+	ASSERT(m_keyPressedSubscriptionId != -1 && m_mouseMoveSubscriptionId != -1 &&
+		!::IsWindow(m_cursorReplacingWindow.m_hWnd) && !::IsWindow(m_toolWindow.m_hWnd));
 }
 
 void CMouseMovementEditorView::OnBnClickedButtonMousePositionSelect()
 {
-	ShowWindow(SW_HIDE);
-	CWnd* wnd = this;
-	do
+	if (HGDIOBJ obj = m_cursorBitmap; !obj)
 	{
-		wnd = wnd->GetParent();
-		wnd->ShowWindow(SW_HIDE);
-	} while (wnd != AfxGetMainWnd());
+		try
+		{
+			CPngImage pngImage;
+			EXT_CHECK(pngImage.Load(IDB_PNG_CURSOR_POSITION_SELECTION, AfxGetResourceHandle()))
+				<< "Failed to load cursor position image";
+			EXT_CHECK(m_cursorBitmap.Attach(pngImage.Detach())) << "Failed to load resource";
+		}
+		catch (...)
+		{
+			MessageBox(ext::ManageExceptionText(L"").c_str(), L"Failed to load image", MB_ICONERROR);
+			return;
+		}
+	}
+
+	showProgramWindows(SW_HIDE);
+
+	ASSERT(m_keyPressedSubscriptionId == -1 && m_mouseMoveSubscriptionId == -1 &&
+		!::IsWindow(m_cursorReplacingWindow.m_hWnd) && !::IsWindow(m_toolWindow.m_hWnd));
+
+	m_cursorReplacingWindow.Create(std::move(m_cursorBitmap));
+	m_toolWindow.Create(m_cursorReplacingWindow.m_hWnd, true);
+	m_toolWindow.SetLabel(L"Left click to select point or ESC to cancel");
 
 	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkCode, bool isDown) -> bool {
 		switch (vkCode)
@@ -92,17 +91,10 @@ void CMouseMovementEditorView::OnBnClickedButtonMousePositionSelect()
 				InputManager::RemoveMouseMoveHandler(m_mouseMoveSubscriptionId);
 				m_mouseMoveSubscriptionId = -1;
 
-				m_cursorReplacingWindow.SetWindowPos(nullptr, 0, 0, 0, 0,
-					SWP_NOACTIVATE | SWP_NOZORDER | SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOREDRAW | SWP_NOREPOSITION);
-				m_toolWindow.ShowWindow(SW_HIDE);
+				m_cursorReplacingWindow.DestroyWindow();
+				m_toolWindow.DestroyWindow();
 
-				ShowWindow(SW_SHOW);
-				CWnd* wnd = this;
-				do
-				{
-					wnd = wnd->GetParent();
-					wnd->ShowWindow(SW_SHOW);
-				} while (wnd != AfxGetMainWnd());
+				showProgramWindows(SW_SHOW);
 			});
 			return true;
 		}
@@ -146,25 +138,48 @@ void CMouseMovementEditorView::updateMousePositionControlsStates()
 
 void CMouseMovementEditorView::syncCrosshairWindowWithCursor()
 {
-	ASSERT(m_keyPressedSubscriptionId != -1 && m_mouseMoveSubscriptionId != -1);
-	
-	CPoint requiredPoint = InputManager::GetMousePosition();
-	auto currentRect = m_cursorReplacingWindow.GetWindowRect();
-	currentRect.OffsetRect(requiredPoint - currentRect.CenterPoint());
+	ASSERT(m_keyPressedSubscriptionId != -1 && m_mouseMoveSubscriptionId != -1 &&
+		::IsWindow(m_cursorReplacingWindow.m_hWnd) && ::IsWindow(m_toolWindow.m_hWnd));
+
+	const CPoint cursorPosition = InputManager::GetMousePosition();
+	const auto cursorWindowSize = m_cursorReplacingWindow.GetWindowRect().Size();
+
+	CPoint windowTopLeft;
+	if (!GetPhysicalCursorPos(&windowTopLeft))
+		windowTopLeft = cursorPosition;
+
+	windowTopLeft.x -= LONG(cursorWindowSize.cx / 2.);
+	windowTopLeft.y -= LONG(cursorWindowSize.cy / 2.);
 
 	m_cursorReplacingWindow.SetWindowPos(nullptr,
-		currentRect.left,
-		currentRect.top,
+		windowTopLeft.x,
+		windowTopLeft.y,
 		0,
 		0,
-		SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_SHOWWINDOW);
+		SWP_NOZORDER | SWP_NOSIZE | SWP_NOOWNERZORDER | SWP_NOREDRAW | SWP_SHOWWINDOW);
+
+	CString text;
+	text.Format(L"x=%d, y=%d", cursorPosition.x, cursorPosition.y);
+	m_toolWindow.SetDescription(text);
 
 	const CSize windowSize = m_toolWindow.GetWindowSize();
-	m_toolWindow.SetWindowPos(nullptr, currentRect.right, currentRect.bottom, windowSize.cx, windowSize.cy,
+	m_toolWindow.SetWindowPos(nullptr,
+		windowTopLeft.x + cursorWindowSize.cx,
+		windowTopLeft.y + cursorWindowSize.cy,
+		windowSize.cx,
+		windowSize.cy,
 		SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_SHOWWINDOW);
-	CString text;
-	text.Format(L"x=%d, y=%d", requiredPoint.x, requiredPoint.y);
-	m_toolWindow.SetDescription(text);
+}
+
+void CMouseMovementEditorView::showProgramWindows(int nCmdShow)
+{
+	ShowWindow(nCmdShow);
+	CWnd* wnd = this;
+	do
+	{
+		wnd = wnd->GetParent();
+		wnd->ShowWindow(nCmdShow);
+	} while (wnd != AfxGetMainWnd());
 }
 
 IMPLEMENT_DYNCREATE(CCursorPositionEditorView, CMouseMovementEditorView)

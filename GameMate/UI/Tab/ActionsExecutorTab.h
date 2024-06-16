@@ -4,7 +4,7 @@
 #include "core/events.h"
 #include "core/Settings.h"
 
-#include "EditActions.h"
+#include "UI/ActionEditors/EditActions.h"
 
 #include <Controls/Edit/SpinEdit/SpinEdit.h>
 #include <Controls/Button/IconButton/IconButton.h>

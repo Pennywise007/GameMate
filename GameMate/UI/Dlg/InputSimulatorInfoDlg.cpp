@@ -2,7 +2,7 @@
 #include "afxdialogex.h"
 #include "resource.h"
 
-#include "InputSimulatorInfoDlg.h"
+#include "UI/Dlg/InputSimulatorInfoDlg.h"
 
 IMPLEMENT_DYNAMIC(CInputSimulatorInfoDlg, CDialogEx)
 

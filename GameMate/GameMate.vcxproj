@@ -111,7 +111,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Manifest>
-      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -139,7 +139,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Manifest>
-      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -171,7 +171,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Manifest>
-      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -203,7 +203,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Manifest>
-      <EnableDpiAwareness>PerMonitorHighDPIAware</EnableDpiAwareness>
+      <EnableDpiAwareness>true</EnableDpiAwareness>
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -213,6 +213,7 @@
     <ClInclude Include="Controls\Edit\CEditBase\CEditBase.h" />
     <ClInclude Include="Controls\Edit\SpinEdit\SpinEdit.h" />
     <ClInclude Include="Controls\Layout\Layout.h" />
+    <ClInclude Include="Controls\MFC\CMFCColorSelection.h" />
     <ClInclude Include="Controls\MFC\CMFCEditBrowseCtrlEx.h" />
     <ClInclude Include="Controls\SpinButton\SpinButton.h" />
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.h" />
@@ -231,19 +232,21 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="UI\ActionEditors\ActionsEditor.h" />
     <ClInclude Include="UI\ActionEditors\CursorPositionEditorView.h" />
-    <ClInclude Include="UI\ActionEditors\ScriptEditorView.h" />
-    <ClInclude Include="UI\ActionsEditor.h" />
+    <ClInclude Include="UI\ActionEditors\EditActions.h" />
     <ClInclude Include="UI\ActionEditors\InputEditorView.h" />
-    <ClInclude Include="UI\ActionsExecutorTab.h" />
-    <ClInclude Include="UI\AddActionDlg.h" />
-    <ClInclude Include="UI\AddingProcessToolkitDlg.h" />
-    <ClInclude Include="UI\EditBindDlg.h" />
-    <ClInclude Include="UI\EditValueDlg.h" />
-    <ClInclude Include="UI\InputSimulatorInfoDlg.h" />
-    <ClInclude Include="UI\ActiveProcessToolkitTab.h" />
-    <ClInclude Include="UI\EditActions.h" />
-    <ClInclude Include="UI\MainDlg.h" />
+    <ClInclude Include="UI\ActionEditors\ScriptEditorView.h" />
+    <ClInclude Include="UI\Dlg\AddActionDlg.h" />
+    <ClInclude Include="UI\Dlg\AddingProcessToolkitDlg.h" />
+    <ClInclude Include="UI\Dlg\EditBindDlg.h" />
+    <ClInclude Include="UI\Dlg\EditValueDlg.h" />
+    <ClInclude Include="UI\Dlg\InputSimulatorInfoDlg.h" />
+    <ClInclude Include="UI\Dlg\MainDlg.h" />
+    <ClInclude Include="UI\Dlg\TimerDlg.h" />
+    <ClInclude Include="UI\Dlg\TimerSettingsDlg.h" />
+    <ClInclude Include="UI\Tab\ActionsExecutorTab.h" />
+    <ClInclude Include="UI\Tab\ActiveProcessToolkitTab.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\Button\IconButton\IconButton.cpp">
@@ -281,6 +284,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Controls\MFC\CMFCColorSelection.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Controls\MFC\CMFCEditBrowseCtrlEx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -340,19 +349,21 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="UI\ActionEditors\ActionsEditor.cpp" />
     <ClCompile Include="UI\ActionEditors\CursorPositionEditorView.cpp" />
-    <ClCompile Include="UI\ActionEditors\ScriptEditorView.cpp" />
-    <ClCompile Include="UI\ActionsEditor.cpp" />
+    <ClCompile Include="UI\ActionEditors\EditActions.cpp" />
     <ClCompile Include="UI\ActionEditors\InputEditorView.cpp" />
-    <ClCompile Include="UI\ActionsExecutorTab.cpp" />
-    <ClCompile Include="UI\AddActionDlg.cpp" />
-    <ClCompile Include="UI\AddingProcessToolkitDlg.cpp" />
-    <ClCompile Include="UI\EditBindDlg.cpp" />
-    <ClCompile Include="UI\EditValueDlg.cpp" />
-    <ClCompile Include="UI\InputSimulatorInfoDlg.cpp" />
-    <ClCompile Include="UI\ActiveProcessToolkitTab.cpp" />
-    <ClCompile Include="UI\EditActions.cpp" />
-    <ClCompile Include="UI\MainDlg.cpp" />
+    <ClCompile Include="UI\ActionEditors\ScriptEditorView.cpp" />
+    <ClCompile Include="UI\Dlg\AddActionDlg.cpp" />
+    <ClCompile Include="UI\Dlg\AddingProcessToolkitDlg.cpp" />
+    <ClCompile Include="UI\Dlg\EditBindDlg.cpp" />
+    <ClCompile Include="UI\Dlg\EditValueDlg.cpp" />
+    <ClCompile Include="UI\Dlg\InputSimulatorInfoDlg.cpp" />
+    <ClCompile Include="UI\Dlg\MainDlg.cpp" />
+    <ClCompile Include="UI\Dlg\TimerDlg.cpp" />
+    <ClCompile Include="UI\Dlg\TimerSettingsDlg.cpp" />
+    <ClCompile Include="UI\Tab\ActionsExecutorTab.cpp" />
+    <ClCompile Include="UI\Tab\ActiveProcessToolkitTab.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GameMate.rc" />

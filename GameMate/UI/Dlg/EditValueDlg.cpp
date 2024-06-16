@@ -3,7 +3,7 @@
 #include "resource.h"
 #include "string"
 
-#include "EditValueDlg.h"
+#include "UI/Dlg/EditValueDlg.h"
 
 IMPLEMENT_DYNAMIC(CEditValueDlg, CDialogEx)
 

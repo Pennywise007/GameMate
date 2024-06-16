@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../ActionsEditor.h"
+#include "UI/ActionEditors/ActionsEditor.h"
 
 #include <Controls/MFC/CMFCEditBrowseCtrlEx.h>
 

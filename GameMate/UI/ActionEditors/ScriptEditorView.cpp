@@ -5,7 +5,7 @@
 
 #include <ext/std/filesystem.h>
 
-#include "ScriptEditorView.h"
+#include "UI/ActionEditors/ScriptEditorView.h"
 
 IMPLEMENT_DYNCREATE(CScriptEditorView, ActionsEditor)
 

@@ -49,7 +49,12 @@ void CALLBACK WindowForegroundChangedProc(HWINEVENTHOOK hWinEventHook, DWORD eve
     TCHAR className[MAX_PATH];
     GetClassName(hWnd, className, MAX_PATH);
     // Ignores specific windows
-    if (_tcscmp(className, _T("Shell_InputSwitchTopLevelWindow")) == 0) { // Win + Space window, it takes focus but don't return it back
+        // Win + Space window, it takes focus but don't return it back
+    if (_tcscmp(className, _T("Shell_InputSwitchTopLevelWindow")) == 0 ||
+        // Window appears when you do Win + ArrowLeft/Right and it shows you a list of other opened windows to attach to the opposite side
+        _tcscmp(className, _T("XamlExplorerHostIslandWindow")) == 0)
+    {
+        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << L"Ignore active window with class name: " << className;
         return;
     }
 
@@ -166,10 +171,29 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
         return false;
     }
 
-    if (auto& settings = ext::get_singleton<Settings>().actions_executor; settings.enableBind.IsBindPressed(vkCode, down))
+    auto& settings = ext::get_singleton<Settings>();
+    if (settings.actions_executor.enableBind.IsBindPressed(vkCode, down))
     {
-        settings.enabled = !settings.enabled;
+        settings.actions_executor.enabled = !settings.actions_executor.enabled;
         ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
+        return false;
+    }
+
+    if (settings.timer.showTimerBind.IsBindPressed(vkCode, down))
+    {
+        ext::send_event_async(&ITimerNotifications::OnShowHideTimer);
+        return false;
+    }
+
+    if (settings.timer.pauseTimerBind.IsBindPressed(vkCode, down))
+    {
+        ext::send_event_async(&ITimerNotifications::OnStartOrPauseTimer);
+        return false;
+    }
+    
+    if (settings.timer.resetTimerBind.IsBindPressed(vkCode, down))
+    {
+        ext::send_event_async(&ITimerNotifications::OnResetTimer);
         return false;
     }
 
@@ -240,6 +264,7 @@ void Worker::OnSettingsChanged(ISettingsChanged::ChangedType changedType)
 
                     if (!ext::this_thread::interruption_requested())
                         ext::InvokeMethodAsync([]() {
+                            // Changing UI enable button state
                             ext::get_singleton<Settings>().actions_executor.enabled = false;
                             ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
                         });

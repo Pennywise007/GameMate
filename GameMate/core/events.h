@@ -11,7 +11,8 @@ struct ISettingsChanged : ext::events::IBaseEvent
         eInputSimulator,                // Input simulator changed 
         eProcessToolkit,                // Settings of the process toolkit changed
         eActionsExecutor,               // Settings of the actions executor changed
-        eActionsExecutorEnableChanged   // Actions executor enabled state changed
+        eActionsExecutorEnableChanged,  // Actions executor enabled state changed
+        eTimer,                         // Timer settings changed
     };
     virtual ~ISettingsChanged() = default;
     virtual void OnSettingsChanged(ChangedType changedMode) = 0;
@@ -23,4 +24,13 @@ struct IKeyHandlerBlocker : ext::events::IBaseEvent
     virtual ~IKeyHandlerBlocker() = default;
     virtual void OnBlockHandler() = 0;
     virtual void OnUnblockHandler() = 0;
+};
+
+// Interface to notify timer window
+struct ITimerNotifications : ext::events::IBaseEvent
+{
+    virtual ~ITimerNotifications() = default;
+    virtual void OnShowHideTimer() = 0;
+    virtual void OnStartOrPauseTimer() = 0;
+    virtual void OnResetTimer() = 0;
 };

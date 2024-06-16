@@ -6,8 +6,7 @@
 
 #include "core/Settings.h"
 
-#include "ActionEditors/InputEditorView.h"
-#include "ActionsEditor.h"
+#include "UI/ActionEditors/InputEditorView.h"
 
 class CEditBindDlg : protected CDialogEx
 {
