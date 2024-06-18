@@ -41,7 +41,7 @@ BOOL CTimerSettings::OnInitDialog()
 
 	const auto& timerSettings = ext::get_singleton<Settings>().timer;
 
-	m_checkHideInterface.SetCheck(timerSettings.hideInterface ? BST_CHECKED : BST_UNCHECKED);
+	m_checkHideInterface.SetCheck(timerSettings.minimizeInterface ? BST_CHECKED : BST_UNCHECKED);
 	m_checkDisplayHours.SetCheck(timerSettings.displayHours ? BST_CHECKED : BST_UNCHECKED);
 	m_textColor.SetColor(timerSettings.textColor);
 	m_textColor.EnableAutomaticButton(L"Default", kDefaultTextColor);
@@ -60,7 +60,7 @@ void CTimerSettings::OnOK()
 {
 	auto& timerSettings = ext::get_singleton<Settings>().timer;
 
-	timerSettings.hideInterface = m_checkHideInterface.GetCheck() == BST_CHECKED;
+	timerSettings.minimizeInterface = m_checkHideInterface.GetCheck() == BST_CHECKED;
 	timerSettings.displayHours = m_checkDisplayHours.GetCheck() == BST_CHECKED;
 	timerSettings.backgroundColor = m_backgroundColor.GetColor();
 	timerSettings.textColor = m_textColor.GetColor();

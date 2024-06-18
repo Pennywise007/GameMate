@@ -206,7 +206,6 @@ BOOL CMainDlg::OnInitDialog()
 
 	m_buttonShowTimerHotkey.SetBitmap(IDB_PNG_SETTINGS, Alignment::CenterCenter);
 	m_timerDlg.Create(CTimerDlg::IDD, GetDesktopWindow());
-	//m_timerDlg.SetOwner(nullptr);
 	updateTimerButton();
 
 	// Deserialize settings before starting worker to avoid any mouse lags

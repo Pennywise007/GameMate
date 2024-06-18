@@ -54,6 +54,7 @@ protected:
 	virtual BOOL OnInitDialog() override;
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg void OnClose();
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedCheckStart();
@@ -69,8 +70,8 @@ private: // ITimerNotifications
 
 private:
 	void updateButtonText();
-	void showInterface();
-	void hideInterface();
+	void showFullInterface();
+	void minimizeInterface();
 
 private:
 	CButton m_checkStart;
@@ -81,6 +82,6 @@ private:
 private:
 	CPoint m_timerOffsetFromWindow;
 	CRect m_fullWindowRect;
-	bool m_showInterface = true;
+	bool m_interfaceMinimized = false;
 	bool m_childDlgOpened = false;
 };

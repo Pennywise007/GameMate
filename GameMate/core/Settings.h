@@ -224,7 +224,7 @@ struct Settings
     DECLARE_SERIALIZABLE_FIELD(Bind, resetTimerBind);
     // UI
     DECLARE_SERIALIZABLE_FIELD(Rect, windowRect);
-    DECLARE_SERIALIZABLE_FIELD(bool, hideInterface, true);
+    DECLARE_SERIALIZABLE_FIELD(bool, minimizeInterface, true);
     DECLARE_SERIALIZABLE_FIELD(bool, displayHours, false);
     DECLARE_SERIALIZABLE_FIELD(COLORREF, textColor, RGB(0, 0, 0));
     DECLARE_SERIALIZABLE_FIELD(COLORREF, backgroundColor, GetSysColor(COLOR_3DFACE));

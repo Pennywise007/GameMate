@@ -177,6 +177,7 @@ void CTimerDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CTimerDlg, CDialogEx)
 	ON_WM_TIMER()
 	ON_WM_MOUSEMOVE()
+	ON_WM_SHOWWINDOW()
 	ON_WM_CLOSE()
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_CHECK_START, &CTimerDlg::OnBnClickedCheckStart)
@@ -211,9 +212,6 @@ BOOL CTimerDlg::OnInitDialog()
 	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
 	Layout::SetWindowMinimumSize(*this, kMinimumTimerWindowSize.cx, kMinimumTimerWindowSize.cy);
 
-	if (timerSettings.hideInterface)
-		SetTimer(kHideTimerId, kHideInterfaceTimerInterval, nullptr);
-
 	CRect timerRect;
 	m_timerWindow.GetWindowRect(timerRect);
 	ScreenToClient(timerRect);
@@ -229,29 +227,33 @@ void CTimerDlg::OnTimer(UINT_PTR nIDEvent)
 	CRect rect;
 	GetWindowRect(rect);
 
-	bool bShowInterface = m_childDlgOpened || GetForegroundWindow() == this || rect.PtInRect(InputManager::GetMousePosition());
-	if (m_showInterface != bShowInterface)
-	{
-		m_showInterface = bShowInterface;
-
-		if (m_showInterface)
-			showInterface();
-		else
-			hideInterface();
-	}
+	bool bShowFullInterface = m_childDlgOpened || GetForegroundWindow() == this || rect.PtInRect(InputManager::GetMousePosition());
+	if (bShowFullInterface)
+		showFullInterface();
+	else
+		minimizeInterface();
 
 	__super::OnTimer(nIDEvent);
 }
 
 void CTimerDlg::OnMouseMove(UINT nFlags, CPoint point)
 {
-	if (!m_showInterface)
-	{
-		m_showInterface = true;
-		showInterface();
-	}
+	showFullInterface();
 
 	__super::OnMouseMove(nFlags, point);
+}
+
+void CTimerDlg::OnShowWindow(BOOL bShow, UINT nStatus)
+{
+	__super::OnShowWindow(bShow, nStatus);
+
+	if (bShow)
+	{
+		if (ext::get_singleton<Settings>().timer.minimizeInterface)
+			SetTimer(kHideTimerId, kHideInterfaceTimerInterval, nullptr);
+	}
+	else
+		KillTimer(kHideTimerId);
 }
 
 void CTimerDlg::OnClose()
@@ -262,7 +264,7 @@ void CTimerDlg::OnClose()
 
 void CTimerDlg::OnDestroy()
 {
-	if (!m_showInterface)
+	if (m_interfaceMinimized)
 		(CRect&)ext::get_singleton<Settings>().timer.windowRect = m_fullWindowRect;
 	else
 		GetWindowRect(ext::get_singleton<Settings>().timer.windowRect);
@@ -299,17 +301,30 @@ void CTimerDlg::OnBnClickedMfcbuttonTimerSettigns()
 	m_timerWindow.SetColors(timerSettings.backgroundColor, timerSettings.textColor);
 	m_timerWindow.DisplayHours(timerSettings.displayHours);
 
-	if (timerSettings.hideInterface)
+	if (timerSettings.minimizeInterface)
 		SetTimer(kHideTimerId, kHideInterfaceTimerInterval, nullptr);
 	else
+	{
 		KillTimer(kHideTimerId);
-
+		showFullInterface();
+	}
 	ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eTimer);
 }
 
 void CTimerDlg::OnShowHideTimer()
 {
-	ShowWindow(IsWindowVisible() ? SW_HIDE : SW_SHOW);
+	bool showWindow = !IsWindowVisible();
+	if (showWindow)
+	{
+		// Set focus on window
+		::SetForegroundWindow(m_hWnd);
+		// Restore interface if it was minimized
+		if (ext::get_singleton<Settings>().timer.minimizeInterface)
+			showFullInterface();
+	}
+
+	ShowWindow(showWindow ? SW_SHOW : SW_HIDE);
+
 }
 
 void CTimerDlg::OnStartOrPauseTimer()
@@ -332,8 +347,12 @@ void CTimerDlg::updateButtonText()
 	m_buttonReset.SetWindowTextW((L"Reset\n" + settings.resetTimerBind.ToString()).c_str());
 }
 
-void CTimerDlg::showInterface()
+void CTimerDlg::showFullInterface()
 {
+	if (!m_interfaceMinimized)
+		return;
+	m_interfaceMinimized = false;
+
 	SetRedraw(FALSE);
 
 	m_buttonTimerSettings.ShowWindow(SW_SHOW);
@@ -349,7 +368,7 @@ void CTimerDlg::showInterface()
 
 	ModifyStyle(0, WS_CAPTION | WS_THICKFRAME, SWP_FRAMECHANGED);
 
-	MoveWindow(m_fullWindowRect, FALSE);
+	MoveWindow(m_fullWindowRect);
 
 	Layout::AnchorWindow(m_timerWindow, *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
 	Layout::AnchorWindow(m_timerWindow, *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
@@ -361,8 +380,12 @@ void CTimerDlg::showInterface()
 	Layout::SetWindowMinimumSize(*this, kMinimumTimerWindowSize.cx, kMinimumTimerWindowSize.cy);
 }
 
-void CTimerDlg::hideInterface()
+void CTimerDlg::minimizeInterface()
 {
+	if (m_interfaceMinimized)
+		return;
+	m_interfaceMinimized = true;
+
 	GetWindowRect(m_fullWindowRect);
 
 	CRect timerWindowRect;
