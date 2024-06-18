@@ -356,7 +356,7 @@ void CActiveProcessToolkitTab::AddNewActions(const Bind& keybind, Actions&& newA
 	m_listActions.SetItemText(item, Columns::eMacros, actions.c_str());
 
 	std::wostringstream str;
-	str << it.first->second.randomizeDelays;
+	str << it.first->second.randomizeDelayMs; // TODO CHECK
 	m_listActions.SetItemText(item, Columns::eRandomizeDelay, str.str().c_str());
 
 	m_listActions.SelectItem(item);

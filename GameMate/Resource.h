@@ -189,6 +189,9 @@
 #define IDC_EDIT_RESET_BIND             1112
 #define IDC_STATIC_START_BIND           1112
 #define IDC_STATIC_RESET_BIND           1113
+#define IDC_CHECK_RANDOMIZE_DELAY       1113
+#define IDC_EDIT_DESCRIPTION            1114
+#define IDC_STATIC_DESTRIPTION          1115
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -206,7 +209,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        198
 #define _APS_NEXT_COMMAND_VALUE         32781
-#define _APS_NEXT_CONTROL_VALUE         1113
+#define _APS_NEXT_CONTROL_VALUE         1116
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

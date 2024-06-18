@@ -14,13 +14,13 @@
 #include <Controls/Tables/List/ListGroupCtrl/ListGroupCtrl.h>
 #include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
 
+class ActionsTableSubItemEditorController;
+
 // Dialog to edit actions
 class CActionsEditorView : public CFormView
 {
-	enum Columns {
-		eDelay = 0,
-		eAction
-	};
+	friend class ActionsTableSubItemEditorController;
+
 	DECLARE_DYNCREATE(CActionsEditorView)
 	CActionsEditorView();
 
@@ -45,18 +45,20 @@ protected:
 	afx_msg void OnBnClickedButtonRecord();
 	afx_msg void OnBnClickedButtonMoveUp();
 	afx_msg void OnBnClickedButtonMoveDown();
+	afx_msg void OnBnClickedCheckUniteMovements();
+	afx_msg void OnBnClickedCheckRandomizeDelay();
 	afx_msg void OnBnClickedButtonEditDelay();
 	afx_msg void OnCbnSelendokComboRecordMode();
 	afx_msg void OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnEnChangeEditRandomizeDelays();
-	afx_msg void OnBnClickedCheckUniteMovements();
 
 private:
+	void initTableContent();
 	void startRecording();
 	void stopRecoring();
 	bool canDynamicallyAddRecordedActions() const;
 	void handleRecordedAction(Action&& action);
-	void addActions(const std::list<Action>& actions);
+	void addActions(const std::list<Action>& actions, bool lockRedraw);
 	void addAction(Action&& action);
 	int addAction(int item, Action action);
 	void updateButtonStates();
@@ -75,6 +77,7 @@ protected:
 	CIconButton m_buttonMoveDown;
 	CIconButton m_buttonEditDelay;
 	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listActions;
+	CButton m_checkRandomizeDelay;
 	CSpinEdit m_editRandomizeDelays;
 	CStatic m_staticDelayHelp;
 
@@ -91,6 +94,11 @@ private: // we add recorded actions after finishing recording just to avoid any 
 	std::optional<std::chrono::steady_clock::time_point> m_lastActionTime;
 	std::list<Action> m_recordedActions;
 	std::mutex m_recordingActionsMutex;
+
+public:
+	int m_columnDelayIndex = 0;
+	int m_columnActionIndex = 1;
+	const std::shared_ptr<ActionsTableSubItemEditorController> m_actionsTableSubItemEditor;
 };
 
 // Dialog to edit actions
@@ -108,8 +116,28 @@ public:
 
 protected:
 	DECLARE_MESSAGE_MAP()
+	virtual void DoDataExchange(CDataExchange* pDX) override;
 	virtual BOOL OnInitDialog() override;
+	virtual void OnOK() override;
 
 private:
 	Actions& m_actions;
+	CEdit m_editDescription;
+};
+
+using controls::list::widgets::LVSubItemParams;
+using controls::list::widgets::SubItemEditorControllerBase;
+
+class ActionsTableSubItemEditorController : public SubItemEditorControllerBase
+{
+public:
+	ActionsTableSubItemEditorController(CActionsEditorView* editorView) : m_editorView(editorView) {}
+
+// ISubItemEditorController
+public:
+	std::shared_ptr<CWnd> createEditorControl(CListCtrl* pList, CWnd* parentWindow,	const LVSubItemParams* pParams) override;
+	void onEndEditSubItem(CListCtrl* pList, CWnd* editorControl, const LVSubItemParams* pParams, bool bAcceptResult) override;
+
+public:
+	CActionsEditorView* const m_editorView;
 };

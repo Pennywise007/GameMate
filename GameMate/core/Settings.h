@@ -77,6 +77,7 @@ struct Action
     };
     DECLARE_SERIALIZABLE_FIELD(Type, type, Type::eKeyOrMouseAction);
     // Delay before executing action
+    DECLARE_SERIALIZABLE_FIELD(bool, randomizeDelay, true);
     DECLARE_SERIALIZABLE_FIELD(unsigned, delayInMilliseconds, 0);
     // eKeyOrMouseAction
     DECLARE_SERIALIZABLE_FIELD(int, vkCode, kNotSetVkCode);
@@ -101,11 +102,13 @@ struct Actions
     REGISTER_SERIALIZABLE_OBJECT();
     //--------------------------------------------------------------------------------------------- 
     // UI settings
+    DECLARE_SERIALIZABLE_FIELD(std::wstring, description);
     DECLARE_SERIALIZABLE_FIELD(MouseRecordMode, mouseRecordMode, MouseRecordMode::eNoMouseMovements);
-    DECLARE_SERIALIZABLE_FIELD(bool, showMouseMovementsUnited, false);
+    DECLARE_SERIALIZABLE_FIELD(bool, showMouseMovementsUnited, true);
     //--------------------------------------------------------------------------------------------- 
+    DECLARE_SERIALIZABLE_FIELD(bool, enableRandomDelay, false);
+    DECLARE_SERIALIZABLE_FIELD(unsigned, randomizeDelayMs, 1);
     DECLARE_SERIALIZABLE_FIELD(std::list<Action>, actions);
-    DECLARE_SERIALIZABLE_FIELD(float, randomizeDelays, 0.f);
 
     void Execute() const;
 };
@@ -224,7 +227,7 @@ struct Settings
     DECLARE_SERIALIZABLE_FIELD(Bind, resetTimerBind);
     // UI
     DECLARE_SERIALIZABLE_FIELD(Rect, windowRect);
-    DECLARE_SERIALIZABLE_FIELD(bool, minimizeInterface, true);
+    DECLARE_SERIALIZABLE_FIELD(bool, minimizeInterface, false);
     DECLARE_SERIALIZABLE_FIELD(bool, displayHours, false);
     DECLARE_SERIALIZABLE_FIELD(COLORREF, textColor, RGB(0, 0, 0));
     DECLARE_SERIALIZABLE_FIELD(COLORREF, backgroundColor, GetSysColor(COLOR_3DFACE));

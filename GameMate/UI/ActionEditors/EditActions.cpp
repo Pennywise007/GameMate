@@ -54,10 +54,12 @@ BEGIN_MESSAGE_MAP(CActionsEditorView, CFormView)
 	ON_EN_CHANGE(IDC_EDIT_RANDOMIZE_DELAYS, &CActionsEditorView::OnEnChangeEditRandomizeDelays)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_MACROSES, &CActionsEditorView::OnLvnItemchangedListActions)
 	ON_CBN_SELENDOK(IDC_COMBO_RECORD_MODE, &CActionsEditorView::OnCbnSelendokComboRecordMode)
+	ON_BN_CLICKED(IDC_CHECK_RANDOMIZE_DELAY, &CActionsEditorView::OnBnClickedCheckRandomizeDelay)
 END_MESSAGE_MAP()
 
 CActionsEditorView::CActionsEditorView()
 	: CFormView(IDD_VIEW_ACTIONS_EDITOR)
+	, m_actionsTableSubItemEditor(std::make_shared<ActionsTableSubItemEditorController>(this))
 {}
 
 void CActionsEditorView::DoDataExchange(CDataExchange* pDX)
@@ -75,6 +77,7 @@ void CActionsEditorView::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST_MACROSES, m_listActions);
 	DDX_Control(pDX, IDC_EDIT_RANDOMIZE_DELAYS, m_editRandomizeDelays);
 	DDX_Control(pDX, IDC_STATIC_DELAY_HELP, m_staticDelayHelp);
+	DDX_Control(pDX, IDC_CHECK_RANDOMIZE_DELAY, m_checkRandomizeDelay);
 }
 
 BOOL CActionsEditorView::PreCreateWindow(CREATESTRUCT& cs)
@@ -102,8 +105,8 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 		controls::SetTooltip(control, tooltip);
 	};
 	initHelpStatic(m_staticDelayHelp, L"Some game guards may check if you execute actions with the same intervals and can ban you.\n"
-		L"To avoid this you can set a percentage of the delay which will be applied to the action delay randomly.\n"
-		L"Formula: delay ± random(percentage)");
+		L"To avoid this you can set a delay value in ms which will be applied to the action delay randomly.\n"
+		L"Formula: action_delay ± random(randomize_dalay)");
 	initHelpStatic(m_staticMouseMoveHelp, L"Switch mouse recording mode. Mouse mode descriptions:\n"
 		L"Record cursor position - record cursor coordinates on every mouse move\n"
 		L"Record cursor delta - record cursor movement on every mouse move\n"
@@ -112,8 +115,10 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 	m_editRandomizeDelays.UsePositiveDigitsOnly();
 	m_editRandomizeDelays.SetMinMaxLimits(0, 100);
 
+	m_checkRandomizeDelay.SetCheck(m_actions->enableRandomDelay ? BST_CHECKED : BST_UNCHECKED);
+
 	std::wostringstream str;
-	str << m_actions->randomizeDelays;
+	str << m_actions->randomizeDelayMs;
 	m_editRandomizeDelays.SetWindowTextW(str.str().c_str());
 
 	// TODO find better icons, maybe https://www.iconfinder.com/icons/22947/red_stop_icon?coming-from=related-results
@@ -139,88 +144,7 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 	m_comboMouseRecordMode.InsertString((int)MouseRecordMode::eRecordCursorDeltaWithDirectX, L"Record DirectX cursor delta");
 	m_comboMouseRecordMode.SetCurSel((int)m_actions->mouseRecordMode);
 
-	CRect rect;
-	m_listActions.GetClientRect(rect);
-	constexpr int kDelayColumnWidth = 70;
-	m_listActions.InsertColumn(Columns::eDelay, L"Delay(ms)", LVCFMT_CENTER, kDelayColumnWidth);
-	m_listActions.InsertColumn(Columns::eAction, L"Action", LVCFMT_LEFT, rect.Width() - kDelayColumnWidth);
-
-	LVCOLUMN colInfo;
-	colInfo.mask = LVCF_FMT;
-	m_listActions.GetColumn(Columns::eDelay, &colInfo);
-	colInfo.fmt |= LVCFMT_FIXED_WIDTH | LVCFMT_CENTER;
-	m_listActions.SetColumn(Columns::eDelay, &colInfo);
-
-	m_listActions.SetProportionalResizingColumns({ Columns::eAction });
-
-	using namespace controls::list::widgets;
-	m_listActions.setSubItemEditorController(Columns::eDelay,
-		[&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams) -> std::shared_ptr<CWnd>
-		{
-			auto edit = std::make_shared<CEditBase>();
-
-			// Don't edit united rows
-			TableItemType* itemData = (TableItemType*)m_listActions.GetItemDataPtr(pParams->iItem);
-			if (itemData->size() > 1)
-			{
-				MessageBox(L"Stop items uniting and edit them separately", L"Can't edit united items", MB_OK);
-				return nullptr;
-			}
-
-			edit->Create(SubItemEditorControllerBase::getStandartEditorWndStyle() |
-				ES_CENTER | CBS_AUTOHSCROLL,
-				CRect(), parentWindow, 0);
-			edit->UsePositiveDigitsOnly();
-			edit->SetUseOnlyIntegersValue();
-
-			CString curSubItemText = pList->GetItemText(pParams->iItem, pParams->iSubItem);
-			edit->SetWindowTextW(curSubItemText);
-
-			return std::shared_ptr<CWnd>(edit);
-		},
-		[&](CListCtrl* pList, CWnd* editorControl, const LVSubItemParams* pParams, bool bAcceptResult)
-		{
-			if (!bAcceptResult)
-				return false;
-
-			CString currentEditorText;
-			editorControl->GetWindowTextW(currentEditorText);
-
-			auto* list = dynamic_cast<CListGroupCtrl*>(pList);
-			EXT_ASSERT(list);
-
-			TableItemType* action = (TableItemType*)list->GetItemDataPtr(pParams->iItem);
-			EXT_ASSERT(action->size() == 1);
-
-			action->front().delayInMilliseconds = _wtoi(currentEditorText);
-			onSettingsChanged(true);
-
-			return true;
-		});
-	m_listActions.setSubItemEditorController(Columns::eAction,
-		[&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
-		{
-			// Don't edit united rows
-			TableItemType* itemData = (TableItemType*)m_listActions.GetItemDataPtr(pParams->iItem);
-			if (itemData->size() > 1)
-			{
-				MessageBox(L"Stop items uniting and edit them separately", L"Can't edit united items", MB_OK);
-				return nullptr;
-			}
-
-			Action& action = itemData->front();
-
-			auto newAction = CAddActionDlg::EditAction(this, action);
-			if (newAction.has_value())
-			{
-				action = std::move(*newAction);
-				m_listActions.SetItemText(pParams->iItem, Columns::eAction, action.ToString().c_str());
-				onSettingsChanged(true);
-			}
-
-			return nullptr;
-		});
-	addActions(m_actions->actions);
+	initTableContent();
 
 	updateButtonStates();
 
@@ -296,6 +220,78 @@ BOOL CActionsEditorView::PreTranslateMessage(MSG* pMsg)
 	}
 
 	return CFormView::PreTranslateMessage(pMsg);
+}
+
+void CActionsEditorView::initTableContent()
+{
+	const auto selection = m_listActions.GetSelectedItems();
+	const auto vertScrolPos = GetScrollPos(SB_VERT);
+
+	m_listActions.LockWindowUpdate();
+	m_listActions.SetRedraw(FALSE);
+
+	m_listActions.DeleteAllItems();
+
+	using controls::list::widgets::ISubItemEditorController;
+	for (int i = 0, countColumns = m_listActions.GetHeaderCtrl()->GetItemCount(); i < countColumns; ++i)
+	{
+		m_listActions.setSubItemEditorController(i, std::shared_ptr<ISubItemEditorController>());
+		m_listActions.DeleteColumn(i);
+	}
+
+	constexpr int kDelayColumnWidth = 80;
+
+	CRect rect;
+	m_listActions.GetClientRect(rect);
+
+	int allColumnWidthExceptAction = kDelayColumnWidth;
+	if (m_actions->enableRandomDelay)
+	{
+		m_listActions.ModifyExtendedStyle(0, LVS_EX_CHECKBOXES);
+
+		constexpr int kRandomDelayColumnWidth = 110;
+		allColumnWidthExceptAction += kRandomDelayColumnWidth;
+		ENSURE(m_listActions.InsertColumn(0, L"Randomize delay", LVCFMT_CENTER, kRandomDelayColumnWidth) == 0);
+
+		m_columnDelayIndex = 1;
+		m_columnActionIndex = 2;
+	}
+	else
+	{
+		m_listActions.ModifyExtendedStyle(LVS_EX_CHECKBOXES, 0);
+
+		m_columnDelayIndex = 0;
+		m_columnActionIndex = 1;
+	}
+
+	ENSURE(m_listActions.InsertColumn(m_columnDelayIndex, L"Delay(ms)", LVCFMT_CENTER, kDelayColumnWidth) == m_columnDelayIndex);
+	ASSERT(m_listActions.InsertColumn(m_columnActionIndex, L"Action", LVCFMT_LEFT, rect.Width() - allColumnWidthExceptAction) == m_columnActionIndex);
+
+	m_listActions.setSubItemEditorController(m_columnDelayIndex, m_actionsTableSubItemEditor);
+	m_listActions.setSubItemEditorController(m_columnActionIndex, m_actionsTableSubItemEditor);
+
+	LVCOLUMN colInfo;
+	colInfo.mask = LVCF_FMT;
+	m_listActions.GetColumn(m_columnDelayIndex, &colInfo);
+	colInfo.fmt |= LVCFMT_FIXED_WIDTH | LVCFMT_CENTER;
+	m_listActions.SetColumn(m_columnDelayIndex, &colInfo);
+
+	m_listActions.SetProportionalResizingColumns({ m_columnActionIndex });
+
+	// Adding items to table
+	addActions(m_actions->actions, false);
+	// Restoring selection
+	for (auto i : selection)
+	{
+		m_listActions.SelectItem(i, false);
+	}
+	// Restoring scroll position
+	SetScrollPos(SB_VERT, vertScrolPos);
+
+	m_listActions.UnlockWindowUpdate();
+	m_listActions.SetRedraw(TRUE);
+
+	m_listActions.Invalidate();
 }
 
 inline void CActionsEditorView::startRecording()
@@ -389,7 +385,7 @@ inline void CActionsEditorView::stopRecoring()
 		// If we show a recording overlay it means that we don't dynamically update the table and we need to clear selection
 		if (GetDlgItem(IDC_STATIC_RECORDING_OVERLAY)->IsWindowVisible())
 			m_listActions.ClearSelection();
-		addActions(m_recordedActions);
+		addActions(m_recordedActions, true);
 		m_recordedActions.clear();
 	}
 	m_listActions.ShowWindow(SW_SHOW);
@@ -426,7 +422,7 @@ void CActionsEditorView::handleRecordedAction(Action&& action)
 			// If we recorded some mouse movements, add them to the table before our action
 			if (!m_recordedActions.empty())
 			{
-				addActions(m_recordedActions);
+				addActions(m_recordedActions, true);
 				m_recordedActions.clear();
 			}
 			addAction(std::move(action));
@@ -445,13 +441,16 @@ void CActionsEditorView::handleRecordedAction(Action&& action)
 		m_recordedActions.emplace_back(std::move(action));
 }
 
-void CActionsEditorView::addActions(const std::list<Action>& actions)
+void CActionsEditorView::addActions(const std::list<Action>& actions, bool lockRedraw)
 {
 	if (actions.empty())
 		return;
 
-	m_listActions.LockWindowUpdate();
-	m_listActions.SetRedraw(FALSE);
+	if (lockRedraw)
+	{
+		m_listActions.LockWindowUpdate();
+		m_listActions.SetRedraw(FALSE);
+	}
 
 	int item = m_listActions.GetLastSelectedItem();
 	if (item == -1)
@@ -466,11 +465,13 @@ void CActionsEditorView::addActions(const std::list<Action>& actions)
 				return;
 
 			long long delay = 0, sumX = 0, sumY = 0;
+			bool allRandomizeDelay = true;
 			for (const auto& action : mousePosChangeActions)
 			{
 				delay += action.delayInMilliseconds;
 				sumX += action.mouseX;
 				sumY += action.mouseY;
+				allRandomizeDelay &= action.randomizeDelay;
 			}
 
 			CString text;
@@ -486,8 +487,16 @@ void CActionsEditorView::addActions(const std::list<Action>& actions)
 				text.Format(L"United: Move mouse(%lld,%lld)", sumX, sumY);
 			}
 
-			item = m_listActions.InsertItem(item + 1, std::to_wstring(delay).c_str());
-			m_listActions.SetItemText(item, Columns::eAction, text.GetString());
+			if (m_actions->enableRandomDelay)
+			{
+				item = m_listActions.InsertItem(item + 1, L"");
+				m_listActions.SetCheck(item, allRandomizeDelay);
+				m_listActions.SetItemText(item, m_columnDelayIndex, std::to_wstring(delay).c_str());
+			}
+			else
+				item = m_listActions.InsertItem(item + 1, std::to_wstring(delay).c_str());
+
+			m_listActions.SetItemText(item, m_columnActionIndex, text.GetString());
 			std::unique_ptr<TableItemType> actionPtr = std::make_unique<TableItemType>(std::move(mousePosChangeActions));
 			m_listActions.SetItemDataPtr(item, actionPtr.release());
 			m_listActions.SelectItem(item);
@@ -527,9 +536,12 @@ void CActionsEditorView::addActions(const std::list<Action>& actions)
 		}
 	}
 
-	m_listActions.UnlockWindowUpdate();
-	m_listActions.SetRedraw(TRUE);
-	m_listActions.Invalidate();
+	if (lockRedraw)
+	{
+		m_listActions.UnlockWindowUpdate();
+		m_listActions.SetRedraw(TRUE);
+		m_listActions.Invalidate();
+	}
 }
 
 void CActionsEditorView::addAction(Action&& action)
@@ -542,8 +554,16 @@ void CActionsEditorView::addAction(Action&& action)
 
 int CActionsEditorView::addAction(int item, Action action)
 {
-	item = m_listActions.InsertItem(item, std::to_wstring(action.delayInMilliseconds).c_str());
-	m_listActions.SetItemText(item, Columns::eAction, action.ToString().c_str());
+	if (m_actions->enableRandomDelay)
+	{
+		item = m_listActions.InsertItem(item, L"");
+		m_listActions.SetCheck(item, action.randomizeDelay);
+		m_listActions.SetItemText(item, m_columnDelayIndex, std::to_wstring(action.delayInMilliseconds).c_str());
+	}
+	else
+		item = m_listActions.InsertItem(item, std::to_wstring(action.delayInMilliseconds).c_str());
+
+	m_listActions.SetItemText(item, m_columnActionIndex, action.ToString().c_str());
 	std::unique_ptr<TableItemType> actionPtr = std::make_unique<TableItemType>(TableItemType{ std::move(action) });
 	m_listActions.SetItemDataPtr(item, actionPtr.release());
 	m_listActions.SelectItem(item);
@@ -641,7 +661,7 @@ void CActionsEditorView::pasteItemsFromClipboard()
 		return;
 
 	m_listActions.ClearSelection();
-	addActions(copiedData.actions);
+	addActions(copiedData.actions, true);
 	onSettingsChanged(true);
 }
 
@@ -696,7 +716,7 @@ void CActionsEditorView::OnBnClickedButtonEditDelay()
 		auto& action = actionPtr->front();
 		action.delayInMilliseconds = newDalay.value();
 
-		m_listActions.SetItemText(*it, Columns::eDelay, text.c_str());
+		m_listActions.SetItemText(*it, m_columnDelayIndex, text.c_str());
 	}
 
 	onSettingsChanged(true);
@@ -768,32 +788,6 @@ void CActionsEditorView::OnBnClickedButtonMoveDown()
 	onSettingsChanged(true);
 }
 
-void CActionsEditorView::OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult)
-{
-	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-
-	if (pNMLV->uChanged & LVIF_STATE)
-	{
-		if ((pNMLV->uNewState & LVIS_SELECTED) != (pNMLV->uOldState & LVIS_SELECTED))
-		{
-			// selection changed
-			updateButtonStates();
-		}
-	}
-
-	*pResult = 0;
-}
-
-void CActionsEditorView::OnEnChangeEditRandomizeDelays()
-{
-	CString text;
-	m_editRandomizeDelays.GetWindowTextW(text);
-	std::wistringstream str(text.GetString());
-	str >> m_actions->randomizeDelays;
-
-	onSettingsChanged(false);
-}
-
 void CActionsEditorView::OnBnClickedCheckUniteMovements()
 {
 	m_actions->showMouseMovementsUnited = m_checkUniteMouseMovements.GetCheck();
@@ -810,7 +804,42 @@ void CActionsEditorView::OnBnClickedCheckUniteMovements()
 	}
 	m_listActions.DeleteAllItems();
 
-	addActions(m_actions->actions);
+	addActions(m_actions->actions, true);
+	onSettingsChanged(false);
+}
+
+void CActionsEditorView::OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	// TODO add checkbox handler
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+
+	if (pNMLV->uChanged & LVIF_STATE)
+	{
+		if ((pNMLV->uNewState & LVIS_SELECTED) != (pNMLV->uOldState & LVIS_SELECTED))
+		{
+			// selection changed
+			updateButtonStates();
+		}
+	}
+
+	*pResult = 0;
+}
+
+void CActionsEditorView::OnBnClickedCheckRandomizeDelay()
+{
+	m_actions->enableRandomDelay = m_checkRandomizeDelay.GetCheck() == BST_CHECKED;
+	initTableContent();
+
+	onSettingsChanged(true);
+}
+
+void CActionsEditorView::OnEnChangeEditRandomizeDelays()
+{
+	CString text;
+	m_editRandomizeDelays.GetWindowTextW(text);
+	std::wistringstream str(text.GetString());
+	str >> m_actions->randomizeDelayMs;
+
 	onSettingsChanged(false);
 }
 
@@ -823,6 +852,13 @@ CActionsEditDlg::CActionsEditDlg(CWnd* pParent, Actions& actions)
 	: CDialogEx(IDD_DIALOG_EDIT_ACTIONS, pParent)
 	, m_actions(actions)
 {}
+
+void CActionsEditDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+
+	DDX_Control(pDX, IDC_EDIT_DESCRIPTION, m_editDescription);
+}
 
 BOOL CActionsEditDlg::OnInitDialog()
 {
@@ -863,9 +899,21 @@ BOOL CActionsEditDlg::OnInitDialog()
 	placeholder->ShowWindow(SW_HIDE);
 	editorView->ShowWindow(SW_SHOW);
 
+	m_editDescription.SetCueBanner(L"Actions description(optional)...");
+	m_editDescription.SetWindowTextW(m_actions.description.c_str());
+
 	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
 
 	return TRUE;
+}
+
+void CActionsEditDlg::OnOK()
+{
+	CString text;
+	m_editDescription.GetWindowTextW(text);
+	m_actions.description = text;
+
+	CDialogEx::OnOK();
 }
 
 std::optional<Actions> CActionsEditDlg::ExecModal(CWnd* pParent, const Actions& currentActions)
@@ -875,4 +923,78 @@ std::optional<Actions> CActionsEditDlg::ExecModal(CWnd* pParent, const Actions& 
 		return std::nullopt;
 
 	return actions;
+}
+
+std::shared_ptr<CWnd> ActionsTableSubItemEditorController::createEditorControl(CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
+{
+	auto* list = dynamic_cast<CListGroupCtrl*>(pList);
+	EXT_ASSERT(list);
+
+	if (pParams->iSubItem == m_editorView->m_columnDelayIndex)
+	{
+		auto edit = std::make_shared<CEditBase>();
+
+		// Don't edit united rows
+		TableItemType* itemData = (TableItemType*)list->GetItemDataPtr(pParams->iItem);
+		if (itemData->size() > 1)
+		{
+			::MessageBox(parentWindow->m_hWnd, L"Stop items uniting and edit them separately", L"Can't edit united items", MB_OK);
+			return nullptr;
+		}
+
+		edit->Create(controls::list::widgets::SubItemEditorControllerBase::getStandartEditorWndStyle() |
+			ES_CENTER | CBS_AUTOHSCROLL,
+			CRect(), parentWindow, 0);
+		edit->UsePositiveDigitsOnly();
+		edit->SetUseOnlyIntegersValue();
+
+		CString curSubItemText = pList->GetItemText(pParams->iItem, pParams->iSubItem);
+		edit->SetWindowTextW(curSubItemText);
+
+		return std::shared_ptr<CWnd>(edit);
+	}
+	else if (pParams->iSubItem == m_editorView->m_columnActionIndex)
+	{
+		// Don't edit united rows
+		TableItemType* itemData = (TableItemType*)list->GetItemDataPtr(pParams->iItem);
+		if (itemData->size() > 1)
+		{
+			::MessageBox(parentWindow->m_hWnd, L"Stop items uniting and edit them separately", L"Can't edit united items", MB_OK);
+			return nullptr;
+		}
+
+		Action& action = itemData->front();
+
+		auto newAction = CAddActionDlg::EditAction(parentWindow, action);
+		if (newAction.has_value())
+		{
+			action = std::move(*newAction);
+			list->SetItemText(pParams->iItem, m_editorView->m_columnActionIndex, action.ToString().c_str());
+			m_editorView->onSettingsChanged(true);
+		}
+	}
+
+	return nullptr;
+}
+
+void ActionsTableSubItemEditorController::onEndEditSubItem(CListCtrl* pList, CWnd* editorControl, const LVSubItemParams* pParams, bool bAcceptResult)
+{
+	ASSERT(pParams->iSubItem == m_editorView->m_columnDelayIndex);
+
+	if (!bAcceptResult)
+		return;
+
+	CString currentEditorText;
+	editorControl->GetWindowTextW(currentEditorText);
+
+	auto* list = dynamic_cast<CListGroupCtrl*>(pList);
+	EXT_ASSERT(list);
+
+	TableItemType* action = (TableItemType*)list->GetItemDataPtr(pParams->iItem);
+	EXT_ASSERT(action->size() == 1);
+
+	action->front().delayInMilliseconds = _wtoi(currentEditorText);
+	m_editorView->onSettingsChanged(true);
+
+	SubItemEditorControllerBase::onEndEditSubItem(pList, editorControl, pParams, bAcceptResult);
 }

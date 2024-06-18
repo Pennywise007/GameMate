@@ -362,7 +362,8 @@ void Actions::Execute() const
 			if (stopToken.stop_requested())
 				return;
 
-			action.ExecuteAction(randomizeDelays);
+			// TODO 
+			//action.ExecuteAction(randomizeDelays);
 		}
 	}
 	catch (const ext::thread::thread_interrupted&)
@@ -418,7 +419,7 @@ void actions_executor::Settings::Execute() const
 }
 
 timer::Settings::Settings()
-{
+{// TODO change settings
 	// Init vk code here to avoid calling UpdateBind before object deserialization
 	showTimerBind.vkCode = pauseTimerBind.vkCode = resetTimerBind.vkCode = VK_F7;
 	pauseTimerBind.extraKeys |= (1u << (unsigned)Bind::ExtraKeys::LCtrl);
