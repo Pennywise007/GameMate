@@ -1,10 +1,10 @@
 #pragma once
 
-#include "UI/ActionEditors/ActionsEditor.h"
+#include "UI/ActionEditors/InputEditor.h"
 
 #include <Controls/MFC/CMFCEditBrowseCtrlEx.h>
 
-class CScriptEditorView : public ActionsEditor
+class CScriptEditorView : public InputEditor
 {
 	DECLARE_DYNCREATE(CScriptEditorView)
 
@@ -18,11 +18,13 @@ protected:
 	DECLARE_MESSAGE_MAP()
 	void DoDataExchange(CDataExchange* pDX) override;
 
-protected: // ActionsEditor
-	bool CanClose() const override;
-	void SetAction(const Action& action) override;
-	Action GetAction() override;
+protected: // InputEditor
+	void PostInit(const std::shared_ptr<IBaseInput>& baseInput) override;
+	std::shared_ptr<IBaseInput> TryFinishDialog() override;
 
 protected:
 	CMFCEditBrowseCtrlEx m_scriptPath;
+
+private:
+	std::shared_ptr<Action> m_action;
 };

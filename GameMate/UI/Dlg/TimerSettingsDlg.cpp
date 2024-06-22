@@ -3,7 +3,7 @@
 
 #include "core/Settings.h"
 
-#include "UI/Dlg/EditBindDlg.h"
+#include "UI/Dlg/InputEditorDlg.h"
 #include "UI/Dlg/TimerSettingsDlg.h"
 
 namespace {
@@ -48,7 +48,7 @@ BOOL CTimerSettings::OnInitDialog()
 	m_backgroundColor.SetColor(timerSettings.backgroundColor);
 	m_backgroundColor.EnableAutomaticButton(L"Default", kDefaultBackgroundColor);
 
-	m_pauseBind = timerSettings.pauseTimerBind;
+	m_pauseBind = timerSettings.startPauseTimerBind;
 	m_staticStartPauseBind.SetWindowTextW(m_pauseBind.ToString().c_str());
 	m_resetBind = timerSettings.resetTimerBind;
 	m_staticResetBind.SetWindowTextW(m_resetBind.ToString().c_str());
@@ -64,7 +64,7 @@ void CTimerSettings::OnOK()
 	timerSettings.displayHours = m_checkDisplayHours.GetCheck() == BST_CHECKED;
 	timerSettings.backgroundColor = m_backgroundColor.GetColor();
 	timerSettings.textColor = m_textColor.GetColor();
-	timerSettings.pauseTimerBind = m_pauseBind;
+	timerSettings.startPauseTimerBind = m_pauseBind;
 	timerSettings.resetTimerBind = m_resetBind;
 
 	CDialogEx::OnOK();
@@ -72,7 +72,7 @@ void CTimerSettings::OnOK()
 
 void CTimerSettings::OnBnClickedButtonChangeStartBind()
 {
-	auto bind = CEditBindDlg::EditBind(this, m_pauseBind);
+	auto bind = CInputEditorDlg::EditBind(this, m_pauseBind);
 	if (!bind.has_value())
 		return;
 
@@ -82,7 +82,7 @@ void CTimerSettings::OnBnClickedButtonChangeStartBind()
 
 void CTimerSettings::OnBnClickedButtonChangeResetBind()
 {
-	auto bind = CEditBindDlg::EditBind(this, m_resetBind);
+	auto bind = CInputEditorDlg::EditBind(this, m_resetBind);
 	if (!bind.has_value())
 		return;
 

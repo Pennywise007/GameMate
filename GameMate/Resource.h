@@ -13,7 +13,7 @@
 #define IDD_DIALOG_ACTIONS_EDIT         134
 #define IDD_DIALOG_EDIT_ACTIONS         134
 #define IDD_DIALOG_BIND_EDIT            137
-#define IDD_DIALOG_EDIT_BIND            137
+#define IDD_DIALOG_INPUT_EDITOR            137
 #define IDB_PNG_CROSSHAIR               143
 #define IDI_ICON1                       144
 #define IDB_PNG_CROSSHAIR_0_16          145
@@ -85,6 +85,7 @@
 #define IDC_MACROSES_GROUP              1014
 #define IDC_EDIT_GAME_NAME              1015
 #define IDC_MACROSES_GROUP2             1015
+#define IDC_MACROSES_GROUP3             1016
 #define IDC_BUTTON_RECORD               1017
 #define IDC_EDIT_ACTION                 1024
 #define IDC_EDIT_RANDOMIZE_DELAYS       1024
@@ -113,8 +114,8 @@
 #define IDC_CHECK_USE                   1038
 #define IDC_CHECK_SHOW_CROSSHAIR        1038
 #define IDC_STATIC_CROSSHAIR_INFO       1039
-#define IDC_CHECK_DISABLE_WIN           1040
 #define IDC_COMBO_CROSSHAIR_SELECTION2  1041
+#define IDC_STATIC_EXE_NAME_INFO        1041
 #define IDC_MFCBUTTON1                  1042
 #define IDC_MFCBUTTON_INPUT_DRIVER_INFO 1042
 #define IDC_MFCBUTTON_SETTINGS          1042
@@ -130,6 +131,7 @@
 #define IDC_BUTTON1                     1048
 #define IDC_BUTTON_MOUSE_POSITION_SELECT 1048
 #define IDC_BUTTON_CHANGE_START_BIND    1048
+#define IDC_BUTTON_ACCIDENTAL_PRESS_ADD_CUSTOM 1048
 #define IDC_MFCLINK1                    1049
 #define IDC_BUTTON_RENAME_CONFIGURATION 1049
 #define IDC_BUTTON_RESET                1049
@@ -169,7 +171,7 @@
 #define IDC_STATIC_                     1090
 #define IDC_STATIC_EDITOR               1090
 #define IDC_MFCEDITBROWSE               1091
-#define IDC_STATIC_BIND_EDITOR_PLACEHOLDER 1092
+#define IDC_STATIC_INPUT_EDITOR_PLACEHOLDER 1092
 #define IDC_STATIC_DESCRIPTION          1093
 #define IDC_STATIC_ACTIONS_EDITOR_PLACEHOLDER 1094
 #define IDC_CHECK_UNITE_MOVEMENTS       1095
@@ -192,6 +194,8 @@
 #define IDC_CHECK_RANDOMIZE_DELAY       1113
 #define IDC_EDIT_DESCRIPTION            1114
 #define IDC_STATIC_DESTRIPTION          1115
+#define IDC_STATIC_ACCIDENTAL           1116
+#define IDC_COMBO_ACCIDENTAL_PRESS      1117
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -209,7 +213,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        198
 #define _APS_NEXT_COMMAND_VALUE         32781
-#define _APS_NEXT_CONTROL_VALUE         1116
+#define _APS_NEXT_CONTROL_VALUE         1118
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

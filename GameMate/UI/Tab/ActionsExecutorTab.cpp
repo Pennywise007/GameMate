@@ -3,7 +3,7 @@
 #include "resource.h"
 
 #include "UI/Tab/ActionsExecutorTab.h"
-#include "UI/Dlg/EditBindDlg.h"
+#include "UI/Dlg/InputEditorDlg.h"
 
 #include "core/Settings.h"
 
@@ -181,7 +181,7 @@ void CActionsExecutorTab::OnBnClickedCheckEnabled()
 void CActionsExecutorTab::OnBnClickedMfcbuttonHotkey()
 {
 	auto& currentBind = ext::get_singleton<Settings>().actions_executor.enableBind;
-	auto bind = CEditBindDlg::EditBind(this, currentBind);
+	auto bind = CInputEditorDlg::EditBind(this, currentBind);
 	if (!bind.has_value() || currentBind.ToString() == bind->ToString())
 		return;
 

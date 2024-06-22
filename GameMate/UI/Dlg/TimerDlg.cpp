@@ -197,20 +197,18 @@ BOOL CTimerDlg::OnInitDialog()
 	const long screenMaxWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 	const long screenMaxHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
-	// Validate saved rect
-	if (timerWindowRect.left >= 0 && timerWindowRect.right <= screenMaxWidth &&
-		timerWindowRect.top >= 0 && timerWindowRect.bottom <= screenMaxHeight &&
-		timerWindowRect.left < timerWindowRect.right && timerWindowRect.top < timerWindowRect.bottom)
-	{
-		MoveWindow(timerWindowRect);
-	}
-
 	const auto& timerSettings = ext::get_singleton<Settings>().timer;
 	m_timerWindow.SetColors(timerSettings.backgroundColor, timerSettings.textColor);
 	m_timerWindow.DisplayHours(timerSettings.displayHours);
 
 	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
 	Layout::SetWindowMinimumSize(*this, kMinimumTimerWindowSize.cx, kMinimumTimerWindowSize.cy);
+
+	// Validate saved rect, TODO: check if visible on current screen
+	if (!timerWindowRect.IsRectEmpty())
+	{
+		MoveWindow(timerWindowRect);
+	}
 
 	CRect timerRect;
 	m_timerWindow.GetWindowRect(timerRect);
@@ -258,7 +256,7 @@ void CTimerDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 
 void CTimerDlg::OnClose()
 {
-	ShowWindow(SW_HIDE);
+	ext::send_event(&ITimerNotifications::OnShowHideTimer);
 	//__super::OnClose();
 }
 
@@ -324,11 +322,13 @@ void CTimerDlg::OnShowHideTimer()
 	}
 
 	ShowWindow(showWindow ? SW_SHOW : SW_HIDE);
-
 }
 
 void CTimerDlg::OnStartOrPauseTimer()
 {
+	if (!IsWindowVisible())
+		ext::send_event(&ITimerNotifications::OnShowHideTimer);
+
 	m_checkStart.SetCheck(m_checkStart.GetCheck() ? BST_UNCHECKED : BST_CHECKED);
 	OnBnClickedCheckStart();
 }
@@ -343,7 +343,7 @@ void CTimerDlg::updateButtonText()
 	const auto& settings = ext::get_singleton<Settings>().timer;
 
 	CString checkText = m_checkStart.GetCheck() == BST_CHECKED ? L"Pause\n" : L"Start\n";
-	m_checkStart.SetWindowTextW(checkText + settings.pauseTimerBind.ToString().c_str());
+	m_checkStart.SetWindowTextW(checkText + settings.startPauseTimerBind.ToString().c_str());
 	m_buttonReset.SetWindowTextW((L"Reset\n" + settings.resetTimerBind.ToString()).c_str());
 }
 

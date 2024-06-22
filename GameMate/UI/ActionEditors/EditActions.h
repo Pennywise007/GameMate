@@ -53,7 +53,7 @@ protected:
 	afx_msg void OnEnChangeEditRandomizeDelays();
 
 private:
-	void initTableContent();
+	void switchRandomizeDelayMode();
 	void startRecording();
 	void stopRecoring();
 	bool canDynamicallyAddRecordedActions() const;
@@ -96,6 +96,8 @@ private: // we add recorded actions after finishing recording just to avoid any 
 	std::mutex m_recordingActionsMutex;
 
 public:
+	bool m_ignoreCheckChanged = false;
+	bool m_ignoreSelectionChanged = false;
 	int m_columnDelayIndex = 0;
 	int m_columnActionIndex = 1;
 	const std::shared_ptr<ActionsTableSubItemEditorController> m_actionsTableSubItemEditor;

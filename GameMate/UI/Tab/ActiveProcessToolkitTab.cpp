@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 
 #include <algorithm>
+#include <map>
 #include <regex>
 
 #include "tlhelp32.h"
@@ -9,7 +10,7 @@
 
 #include "UI/Tab/ActiveProcessToolkitTab.h"
 #include "UI/ActionEditors/EditActions.h"
-#include "UI/Dlg/EditBindDlg.h"
+#include "UI/Dlg/InputEditorDlg.h"
 #include "UI/Dlg/AddingProcessToolkitDlg.h"
 
 #include "core/Crosshairs.h"
@@ -19,7 +20,7 @@
 #include <ext/std/string.h>
 
 #include <Controls/DefaultWindowProc.h>
-#include "Controls/Layout/Layout.h"
+#include <Controls/Layout/Layout.h>
 #include <Controls/Tooltip/ToolTip.h>
 
 using namespace controls::list::widgets;
@@ -30,6 +31,16 @@ enum Columns {
 	eKeybind = 0,
 	eMacros,
 	eRandomizeDelay
+};
+
+const std::map kDefaultIgnoredKeys = {
+	std::pair{ 0, Key(VK_LWIN) },
+	std::pair{ 1, Key(VK_ESCAPE) },
+	std::pair{ 2, Key(VK_TAB) },
+	std::pair{ 3, Key(VK_SHIFT) },
+	std::pair{ 4, Key(VK_CONTROL) },
+	std::pair{ 5, Key(VK_MENU) },
+	std::pair{ 6, Key(VK_CAPITAL) },
 };
 
 } // namespace
@@ -58,11 +69,12 @@ void CActiveProcessToolkitTab::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_CROSSHAIR_SIZE, m_comboboxCrosshairSize);
 	DDX_Control(pDX, IDC_MFCCOLORBUTTON_CROSSHAIR_COLOR, m_colorPickerCrosshairColor);
 	DDX_Control(pDX, IDC_STATIC_CROSSHAIR_INFO, m_staticCrosshairInfo);
-	DDX_Control(pDX, IDC_CHECK_DISABLE_WIN, m_checkDisableWinButton);
 	DDX_Control(pDX, IDC_STATIC_CROSSHAIR_DEMO, m_crosshairDemo);
 	DDX_Control(pDX, IDC_COMBO_CONFIGURATION, m_comboConfigurations);
 	DDX_Control(pDX, IDC_CHECK_ACTIVE_PROCESS_TOOLKIT_ENABLE, m_checkEnabled);
 	DDX_Control(pDX, IDC_BUTTON_ADD_CONFIGURATION, m_buttonAddConfiguration);
+	DDX_Control(pDX, IDC_STATIC_EXE_NAME_INFO, m_staticExeNameInfo);
+	DDX_Control(pDX, IDC_COMBO_ACCIDENTAL_PRESS, m_comboAccidentalPress);
 }
 
 BEGIN_MESSAGE_MAP(CActiveProcessToolkitTab, CDialogEx)
@@ -74,7 +86,6 @@ BEGIN_MESSAGE_MAP(CActiveProcessToolkitTab, CDialogEx)
 	ON_BN_CLICKED(IDC_CHECK_ENABLED, &CActiveProcessToolkitTab::OnBnClickedCheckEnabled)
 	ON_CBN_SELENDOK(IDC_COMBO_EXE_NAME, &CActiveProcessToolkitTab::OnCbnSelendokComboExeName)
 	ON_CBN_SETFOCUS(IDC_COMBO_EXE_NAME, &CActiveProcessToolkitTab::OnCbnSetfocusComboExeName)
-	ON_BN_CLICKED(IDC_CHECK_DISABLE_WIN, &CActiveProcessToolkitTab::OnBnClickedCheckDisableWin)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_MACROS, &CActiveProcessToolkitTab::OnBnClickedButtonAddMacros)
 	ON_BN_CLICKED(IDC_BUTTON_REMOVE_MACROS, &CActiveProcessToolkitTab::OnBnClickedButtonRemoveMacros)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_ACTIONS, &CActiveProcessToolkitTab::OnLvnItemchangedListActions)
@@ -83,6 +94,9 @@ BEGIN_MESSAGE_MAP(CActiveProcessToolkitTab, CDialogEx)
 	ON_BN_CLICKED(IDC_MFCCOLORBUTTON_CROSSHAIR_COLOR, &CActiveProcessToolkitTab::OnBnClickedMfccolorbuttonCrosshairColor)
 	ON_CBN_SELENDOK(IDC_COMBO_CROSSHAIR_SIZE, &CActiveProcessToolkitTab::OnCbnSelendokComboCrosshairSize)
 	ON_CBN_EDITCHANGE(IDC_COMBO_EXE_NAME, &CActiveProcessToolkitTab::OnCbnEditchangeComboExeName)
+	ON_BN_CLICKED(IDC_BUTTON_ACCIDENTAL_PRESS_ADD_CUSTOM, &CActiveProcessToolkitTab::OnBnClickedButtonAccidentalPressAddCustom)
+	ON_CBN_SELCHANGE(IDC_COMBO_ACCIDENTAL_PRESS, &CActiveProcessToolkitTab::OnCbnSelchangeComboAccidentalPress)
+	ON_WM_DESTROY()
 END_MESSAGE_MAP()
 
 BOOL CActiveProcessToolkitTab::OnInitDialog()
@@ -99,26 +113,29 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 	m_buttonAddConfiguration.SetBkColor(RGB(253, 243, 166));
 
 	m_exeName.AllowCustomText();
-	m_exeName.SetCueBanner(L"Enter process name...(example: steam.exe)");
+	m_exeName.SetCueBanner(L"Enter process name...(example: notepad*.exe)");
 
-	controls::SetTooltip(m_checkDisableWinButton,
-		L"If enabled: ignore single press on windows button(every 1s) which prevents game from loosing focus accidentally");
-
-	{
+	auto addInfoIconAndTooltip = [](CStatic& control, CString tooltip) {
 		CRect rect;
-		m_staticCrosshairInfo.GetClientRect(rect);
+		control.GetClientRect(rect);
 		HICON icon;
 		auto res = SUCCEEDED(::LoadIconWithScaleDown(NULL, IDI_INFORMATION, rect.Height(), rect.Height(), &icon));
 		ASSERT(res);
-		m_staticCrosshairInfo.ModifyStyle(0, SS_ICON);
-		m_staticCrosshairInfo.SetIcon(icon);
-
-		controls::SetTooltip(
-			m_staticCrosshairInfo,
-			L"If you want to add your own crosshair put file with name crosshair_X with .png or .ico extension to the folder:\n"
-			L"$GAME_MATE_FOLDER$\\res\n"
-			L"Note: all images bigger than 32x32 will be ignored.");
-	}
+		control.ModifyStyle(0, SS_ICON);
+		control.SetIcon(icon);
+		controls::SetTooltip(control, tooltip);
+	};
+	addInfoIconAndTooltip(m_staticExeNameInfo,
+		L"You can use `*` to match any exe name. For example:\n"
+		L"- `notepad*.exe` will match `notepad++.exe` and `notepad.exe`.\n"
+		L"- `*` will match every exe name.\n"
+		L"Note: if active application exe name matches multiple configurations, the first active match configuration will be used."
+	);
+	addInfoIconAndTooltip(m_staticCrosshairInfo,
+		L"If you want to add your own crosshair put file with name crosshair_X with .png or .ico extension to the folder:\n"
+		L"$GAME_MATE_FOLDER$\\res\n"
+		L"Note: all images bigger than 32x32 will be ignored."
+	);
 
 	m_comboboxCrosshairSize.AddString(L"Small(16x16)");
     m_comboboxCrosshairSize.AddString(L"Medium(24x24)");
@@ -136,7 +153,7 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 	constexpr int kRandomizeDelayColumnWidth = 50;
 	m_listActions.InsertColumn(Columns::eKeybind, L"Key bind", LVCFMT_CENTER, kKeybindColumnWidth);
 	m_listActions.InsertColumn(Columns::eMacros, L"Macros", LVCFMT_CENTER, rect.Width() - kKeybindColumnWidth - kRandomizeDelayColumnWidth);
-	m_listActions.InsertColumn(Columns::eRandomizeDelay, L"Randomize delay(%)", LVCFMT_CENTER, kRandomizeDelayColumnWidth);
+	m_listActions.InsertColumn(Columns::eRandomizeDelay, L"Randomize delay, ms", LVCFMT_CENTER, kRandomizeDelayColumnWidth);
 	m_listActions.SetProportionalResizingColumns({ Columns::eMacros });
 	
 	m_listActions.setSubItemEditorController(Columns::eKeybind,
@@ -147,7 +164,7 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 			ASSERT((int)actionsByBind.size() > pParams->iItem);
 			auto editableActionsIt = std::next(actionsByBind.begin(), pParams->iItem);
 
-			auto bind = CEditBindDlg::EditBind(parentWindow, editableActionsIt->first);
+			auto bind = CInputEditorDlg::EditBind(parentWindow, editableActionsIt->first);
 			if (!bind.has_value())
 				return nullptr;
 
@@ -205,6 +222,14 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 		};
 	m_listActions.setSubItemEditorController(Columns::eMacros, ActionsEdit);
 	m_listActions.setSubItemEditorController(Columns::eRandomizeDelay, ActionsEdit);
+
+	for (auto&& [ind, key] : kDefaultIgnoredKeys)
+	{
+		auto res = m_comboAccidentalPress.InsertString(ind, key.ToString().c_str());
+		EXT_ASSERT(res == ind);
+		m_comboAccidentalPress.SetItemDataPtr(res, new Key(key));
+	}
+	m_comboAccidentalPress.SetCueBanner(L"Select buttons to ignore the first press...");
 
 	UpdateControlsData();
 
@@ -277,7 +302,11 @@ void CActiveProcessToolkitTab::UpdateControlsData()
 	m_exeName.SetWindowTextW(m_configuration->exeName.c_str());
 	// updating control BK color
 	OnCbnEditchangeComboExeName();
-	m_checkDisableWinButton.SetCheck(m_configuration->disableWinButton);
+
+	for (const auto& bind : m_configuration->keysToIgnoreAccidentialPress)
+	{
+		addKeyToIgnore(bind);
+	}
 
 	m_listActions.DeleteAllItems();
 	decltype(m_configuration->actionsByBind) current;
@@ -343,20 +372,26 @@ void CActiveProcessToolkitTab::AddNewActions(const Bind& keybind, Actions&& newA
 	auto item = (int)std::distance(actionsByBind.begin(), it.first);
 
 	item = m_listActions.InsertItem(item, it.first->first.ToString().c_str());
-	std::wstring actions;
-	for (const auto& action : it.first->second.actions) {
-		if (!actions.empty())
-			actions += L" → ";
+	std::wstring actions = it.first->second.description;
+	if (actions.empty())
+	{
+		for (const auto& action : it.first->second.actions) {
+			if (!actions.empty())
+				actions += L" → ";
 
-		if (action.delayInMilliseconds != 0)
-			actions += L"(" + std::to_wstring(action.delayInMilliseconds) + L"ms) ";
+			if (action.delayInMilliseconds != 0)
+				actions += L"(" + std::to_wstring(action.delayInMilliseconds) + L"ms) ";
 
-		actions += action.ToString();
+			actions += action.ToString();
+		}
 	}
 	m_listActions.SetItemText(item, Columns::eMacros, actions.c_str());
 
 	std::wostringstream str;
-	str << it.first->second.randomizeDelayMs; // TODO CHECK
+	if (it.first->second.enableRandomDelay)
+		str << it.first->second.randomizeDelayMs;
+	else
+		str << L'0';
 	m_listActions.SetItemText(item, Columns::eRandomizeDelay, str.str().c_str());
 
 	m_listActions.SelectItem(item);
@@ -520,6 +555,24 @@ void CActiveProcessToolkitTab::InitCrosshairsList()
 	Layout::AnchorWindow(m_comboCrosshairs, *this, { AnchorSide::eTop, AnchorSide::eBottom }, AnchorSide::eBottom, 100);
 }
 
+void CActiveProcessToolkitTab::addKeyToIgnore(const Key& key)
+{
+	CString itemText, bindText = key.ToString().c_str();
+	for (int i = 0, count = m_comboAccidentalPress.GetCount(); i < count; ++i)
+	{
+		m_comboAccidentalPress.GetLBText(i, itemText);
+		if (bindText == itemText)
+		{
+			m_comboAccidentalPress.SetCheck(i, true);
+			return;
+		}
+	}
+
+	auto res = m_comboAccidentalPress.AddString(bindText.GetString());
+	m_comboAccidentalPress.SetItemDataPtr(res, new Key(key));
+	m_comboAccidentalPress.SetCheck(m_comboAccidentalPress.GetCount() - 1, true);
+}
+
 void CActiveProcessToolkitTab::OnOK()
 {
 	// CDialogEx::OnOK();
@@ -528,6 +581,16 @@ void CActiveProcessToolkitTab::OnOK()
 void CActiveProcessToolkitTab::OnCancel()
 {
 	// CDialogEx::OnCancel();
+}
+
+void CActiveProcessToolkitTab::OnDestroy()
+{
+	for (int i = 0, count = m_comboAccidentalPress.GetCount(); i < count; ++i)
+	{
+		std::unique_ptr<Bind> deletter((Bind*)m_comboAccidentalPress.GetItemDataPtr(i));
+	}
+
+	__super::OnDestroy();
 }
 
 void CActiveProcessToolkitTab::OnBnClickedCheckActiveProcessToolkitEnable()
@@ -655,14 +718,6 @@ void CActiveProcessToolkitTab::OnCbnSetfocusComboExeName()
 		runningProcessesNames.emplace(pe32.szExeFile);
 	} while (Process32Next(hProcessSnap, &pe32));
 
-	// Extract exe names which already used in other tabs
-	for (const auto& configuration : ext::get_singleton<Settings>().process_toolkit.processConfigurations)
-	{
-		if (configuration == m_configuration)
-			continue;
-		runningProcessesNames.erase(configuration->exeName);
-	}
-
 	CString currentText;
 	m_exeName.GetWindowText(currentText);
 	m_exeName.ResetContent();
@@ -675,15 +730,9 @@ void CActiveProcessToolkitTab::OnCbnSetfocusComboExeName()
 	m_exeName.AdjustComboBoxToContent();
 }
 
-void CActiveProcessToolkitTab::OnBnClickedCheckDisableWin()
-{
-	m_configuration->disableWinButton = m_checkDisableWinButton.GetCheck() == BST_CHECKED;
-	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
-}
-
 void CActiveProcessToolkitTab::OnBnClickedButtonAddMacros()
 {
-	auto bind = CEditBindDlg::EditBind(this);
+	auto bind = CInputEditorDlg::EditBind(this);
 	if (!bind.has_value())
 		return;
 
@@ -819,6 +868,37 @@ void CActiveProcessToolkitTab::OnCbnSelendokComboCrosshairSize()
 	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
 
 	UpdateDemoCrosshair();
+}
+
+void CActiveProcessToolkitTab::OnBnClickedButtonAccidentalPressAddCustom()
+{
+	auto keyToAdd = CInputEditorDlg::EditKey(this);
+	if (!keyToAdd.has_value())
+		return;
+
+	addKeyToIgnore(keyToAdd.value());
+
+	auto& keys = m_configuration->keysToIgnoreAccidentialPress;
+	auto it = std::find_if(keys.cbegin(), keys.cend(), [code = keyToAdd->vkCode](const auto& a) { return a.vkCode == code; });
+	if (it == keys.cend())
+	{
+		m_configuration->keysToIgnoreAccidentialPress.emplace_back(*keyToAdd);
+		ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+	}
+}
+
+void CActiveProcessToolkitTab::OnCbnSelchangeComboAccidentalPress()
+{
+	m_configuration->keysToIgnoreAccidentialPress.clear();
+	for (int i = 0, count = m_comboAccidentalPress.GetCount(); i < count; ++i)
+	{
+		if (m_comboAccidentalPress.GetCheck(i))
+		{
+			Key* key = (Key*)m_comboAccidentalPress.GetItemDataPtr(i);
+			m_configuration->keysToIgnoreAccidentialPress.emplace_back(*key);
+		}
+	}
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
 }
 
 void CActiveProcessToolkitTab::OnSettingsChanged(ISettingsChanged::ChangedType changedType)

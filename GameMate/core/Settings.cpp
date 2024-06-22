@@ -130,9 +130,24 @@ bool runScriptSilently(const std::wstring& scriptPath) {
 
 } // namespace
 
+std::wstring Key::ToString() const
+{
+	return VkCodeToText(vkCode);
+}
+
+bool Key::IsPressed(WORD _vkCode, bool) const
+{
+	return vkCode == _vkCode;
+}
+
+void Key::UpdateInput(WORD _vkCode, bool)
+{
+	vkCode = _vkCode;
+}
+
 Bind::Bind(WORD vkCode)
 {
-	UpdateBind(vkCode, true);
+	UpdateInput(vkCode, true);
 }
 
 [[nodiscard]] std::wstring Bind::ToString() const
@@ -167,7 +182,7 @@ Bind::Bind(WORD vkCode)
 	return actionString;
 }
 
-void Bind::UpdateBind(WORD _vkCode, bool down)
+void Bind::UpdateInput(WORD _vkCode, bool down)
 {
 	unsigned modifiers = 0;
 
@@ -197,7 +212,7 @@ void Bind::UpdateBind(WORD _vkCode, bool down)
 	extraKeys = modifiers;
 }
 
-bool Bind::IsBindPressed(WORD _vkCode, bool down) const
+[[nodiscard]] bool Bind::IsPressed(WORD _vkCode, bool down) const
 {
 	switch (vkCode)
 	{
@@ -213,19 +228,22 @@ bool Bind::IsBindPressed(WORD _vkCode, bool down) const
 		break;
 	}
 
-	bool pressed = (vkCode == _vkCode);
-
-	for (auto key = unsigned(ExtraKeys::FirstModifierKey), last = unsigned(ExtraKeys::LastModifierKey); key < last; ++key)
+	bool pressed = vkCode == _vkCode;
+	for (auto key = unsigned(ExtraKeys::FirstModifierKey), last = unsigned(ExtraKeys::LastModifierKey); pressed && key < last; ++key)
 	{
-		if (!pressed)
-			return false;
-
 		const bool keyMustbePressed = (extraKeys & (1u << key)) != 0;
 		if (keyMustbePressed)
 			pressed &= InputManager::IsKeyPressed(kExtraKeysTovkCodes.get_value(ExtraKeys(key)));
 	}
 
 	return pressed;
+}
+
+void Action::UpdateInput(WORD _vkCode, bool _down)
+{
+	EXT_ASSERT(type == Type::eKeyOrMouseAction);
+	vkCode = _vkCode;
+	down = _down;
 }
 
 Action Action::NewAction(WORD vkCode, bool down, unsigned delay)
@@ -298,23 +316,22 @@ std::wstring Action::ToString() const
 	}
 }
 
-void Action::ExecuteAction(float delayRandomize) const
+void Action::ExecuteAction(unsigned delayRandomizeInMs) const
 {
-	// TODO improve sleep, take into account processing time
-	if (delayInMilliseconds != 0)
-	{
-		auto randomMultiply = 1.;
-		if (delayRandomize)
-			randomMultiply = (100. - delayRandomize + double(rand() % int(delayRandomize * 2. * 1000.)) / 1000.) / 100.;
+	int sleepDurationInMs = delayInMilliseconds;
+	if (randomizeDelay)
+		sleepDurationInMs = sleepDurationInMs - delayRandomizeInMs + std::rand() % (2 * delayRandomizeInMs);
 
-		auto sleepDurationInMs = std::chrono::milliseconds(long long(delayInMilliseconds * randomMultiply));
-		if (sleepDurationInMs.count() < 100)
+	if (sleepDurationInMs > 0)
+	{
+		if (sleepDurationInMs < 100)
 		{
-			ext::this_thread::sleep_for(sleepDurationInMs);
+			// interruptible_sleep_for doesn't guarantee sleep duration for small sleeps
+			ext::this_thread::sleep_for(std::chrono::milliseconds(sleepDurationInMs));
 			ext::this_thread::interruption_point();
 		}
 		else
-			ext::this_thread::interruptible_sleep_for(sleepDurationInMs);
+			ext::this_thread::interruptible_sleep_for(std::chrono::milliseconds(sleepDurationInMs));
 	}
 
 	switch (type)
@@ -362,8 +379,7 @@ void Actions::Execute() const
 			if (stopToken.stop_requested())
 				return;
 
-			// TODO 
-			//action.ExecuteAction(randomizeDelays);
+			action.ExecuteAction(enableRandomDelay ? randomizeDelayMs : 0);
 		}
 	}
 	catch (const ext::thread::thread_interrupted&)
@@ -419,11 +435,11 @@ void actions_executor::Settings::Execute() const
 }
 
 timer::Settings::Settings()
-{// TODO change settings
+{
 	// Init vk code here to avoid calling UpdateBind before object deserialization
-	showTimerBind.vkCode = pauseTimerBind.vkCode = resetTimerBind.vkCode = VK_F7;
-	pauseTimerBind.extraKeys |= (1u << (unsigned)Bind::ExtraKeys::LCtrl);
-	resetTimerBind.extraKeys |= (1u << (unsigned)Bind::ExtraKeys::LShift);
+	startPauseTimerBind.vkCode = showTimerBind.vkCode = resetTimerBind.vkCode = VK_F7;
+	showTimerBind.extraKeys |= (1u << (unsigned)Bind::ExtraKeys::LShift);
+	resetTimerBind.extraKeys |= (1u << (unsigned)Bind::ExtraKeys::LCtrl);
 }
 
 Settings::Settings()

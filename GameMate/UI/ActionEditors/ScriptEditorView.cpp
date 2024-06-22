@@ -7,23 +7,29 @@
 
 #include "UI/ActionEditors/ScriptEditorView.h"
 
-IMPLEMENT_DYNCREATE(CScriptEditorView, ActionsEditor)
+IMPLEMENT_DYNCREATE(CScriptEditorView, InputEditor)
 
-BEGIN_MESSAGE_MAP(CScriptEditorView, ActionsEditor)
+BEGIN_MESSAGE_MAP(CScriptEditorView, InputEditor)
 END_MESSAGE_MAP()
 
 CScriptEditorView::CScriptEditorView()
-	: ActionsEditor(IDD_VIEW_EDIT_SCRIPT_PATH)
+	: InputEditor(IDD_VIEW_EDIT_SCRIPT_PATH)
 {
 }
 
 void CScriptEditorView::DoDataExchange(CDataExchange* pDX)
 {
-	ActionsEditor::DoDataExchange(pDX);
+	InputEditor::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_MFCEDITBROWSE, m_scriptPath);
 }
 
-bool CScriptEditorView::CanClose() const
+void CScriptEditorView::PostInit(const std::shared_ptr<IBaseInput>& baseInput)
+{
+	m_action = std::dynamic_pointer_cast<Action>(baseInput);
+	m_scriptPath.SetWindowTextW(m_action->scriptPath.c_str());
+}
+
+std::shared_ptr<IBaseInput> CScriptEditorView::TryFinishDialog()
 {
 	CString text;
 	m_scriptPath.GetWindowText(text);
@@ -32,25 +38,11 @@ bool CScriptEditorView::CanClose() const
 	if (!std::filesystem::exists(path) && !std::filesystem::exists(text.GetString()) &&
 		::MessageBox(m_hWnd, L"Script file '" + text + "' not found, continue?", L"Script file not found", MB_YESNO) == IDNO)
 	{
-		return false;
+		return nullptr;
 	}
 
-	return true;
-}
+	m_action->type = Action::Type::eRunScript;
+	m_action->scriptPath = text.GetString();
 
-void CScriptEditorView::SetAction(const Action& action)
-{
-	m_scriptPath.SetWindowTextW(action.scriptPath.c_str());
-}
-
-Action CScriptEditorView::GetAction()
-{
-	CString text;
-	m_scriptPath.GetWindowText(text);
-
-	Action action;
-	action.type = Action::Type::eRunScript;
-	action.scriptPath = text.GetString();
-
-	return action;
+	return m_action;
 }

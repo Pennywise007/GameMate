@@ -14,20 +14,54 @@
 
 constexpr int kNotSetVkCode = -1;
 
+struct IBaseInput
+{
+    virtual ~IBaseInput() = default;
+    // Get text
+    [[nodiscard]] virtual std::wstring ToString() const = 0;
+    // Check if input command was pressed
+    [[nodiscard]] virtual bool IsPressed(WORD vkCode, bool down) const = 0;
+    // Update input
+    virtual void UpdateInput(WORD vkCode, bool down) = 0;
+};
+
+inline int operator<(const IBaseInput& first, const IBaseInput& second)
+{
+    return first.ToString() < second.ToString();
+}
+
+// User key settings
+struct Key : IBaseInput
+{
+    Key() = default;
+    Key(WORD _vkCode) : vkCode(_vkCode) {}
+
+    // Get text
+    [[nodiscard]] std::wstring ToString() const;
+    // Check if bind was pressed
+    [[nodiscard]] bool IsPressed(WORD vkCode, bool down) const override;
+    // Update input
+    void UpdateInput(WORD vkCode, bool down) override;
+
+    REGISTER_SERIALIZABLE_OBJECT();
+
+    DECLARE_SERIALIZABLE_FIELD(int, vkCode, kNotSetVkCode);
+    // Time point when we ignored key for active process
+    std::optional<std::chrono::system_clock::time_point> lastTimeWhenKeyWasIgnored;
+};
+
 // User bind settings
-struct Bind
+struct Bind : IBaseInput
 {
     Bind() = default;
     Bind(WORD vkCode);
 
-    // Comparison operator for map
-    int operator<(const Bind& other) const { return ToString() < other.ToString(); }
-
     // Get text
-    [[nodiscard]] std::wstring ToString() const;
-    void UpdateBind(WORD vkCode, bool down);
-    // Check if bind was pressed
-    bool IsBindPressed(WORD vkCode, bool down) const;
+    [[nodiscard]] std::wstring ToString() const override;
+    // Check if key was pressed
+    [[nodiscard]] bool IsPressed(WORD vkCode, bool down) const override;
+    // Update input
+    void UpdateInput(WORD vkCode, bool down) override;
 
     enum class ExtraKeys
     {
@@ -45,14 +79,14 @@ struct Bind
     };
 
     REGISTER_SERIALIZABLE_OBJECT();
-    DECLARE_SERIALIZABLE_FIELD(unsigned, extraKeys, 0);
     DECLARE_SERIALIZABLE_FIELD(int, vkCode, kNotSetVkCode);
+    DECLARE_SERIALIZABLE_FIELD(unsigned, extraKeys, 0);
 
     static_assert(size_t(ExtraKeys::eScrollUp) < CHAR_BIT * sizeof(decltype(extraKeys)),
         "Bind::extraKeys type is too small to use enum ExtraKeys as flags");
 };
 
-struct Action
+struct Action : IBaseInput
 {
     Action() = default;
     static Action NewAction(WORD vkCode, bool down, unsigned delay);
@@ -61,9 +95,13 @@ struct Action
     static Action NewRunScript(const std::wstring& scriptPath, unsigned delay);
 
     // Get action text
-    [[nodiscard]] std::wstring ToString() const;
+    [[nodiscard]] std::wstring ToString() const override;
+    [[nodiscard]] bool IsPressed(WORD vkCode, bool down) const override { EXT_ASSERT(false); return false; }
+    // Update input
+    void UpdateInput(WORD vkCode, bool down) override;
+
     // Execution action
-    void ExecuteAction(float delayRandomize) const;
+    void ExecuteAction(unsigned delayRandomizeInMs) const;
 
     REGISTER_SERIALIZABLE_OBJECT();
 
@@ -185,7 +223,7 @@ struct ProcessConfiguration
     DECLARE_SERIALIZABLE_FIELD(bool, enabled, true);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, name, L"Configuration name");
     DECLARE_SERIALIZABLE_FIELD(std::wstring, exeName);
-    DECLARE_SERIALIZABLE_FIELD(bool, disableWinButton, false);
+    DECLARE_SERIALIZABLE_FIELD(std::list<Key>, keysToIgnoreAccidentialPress);
     DECLARE_SERIALIZABLE_FIELD(crosshair::Settings, crosshairSettings);
     DECLARE_SERIALIZABLE_FIELD((std::map<Bind, Actions>), actionsByBind);
 };
@@ -223,7 +261,7 @@ struct Settings
 
     REGISTER_SERIALIZABLE_OBJECT();
     DECLARE_SERIALIZABLE_FIELD(Bind, showTimerBind);
-    DECLARE_SERIALIZABLE_FIELD(Bind, pauseTimerBind);
+    DECLARE_SERIALIZABLE_FIELD(Bind, startPauseTimerBind);
     DECLARE_SERIALIZABLE_FIELD(Bind, resetTimerBind);
     // UI
     DECLARE_SERIALIZABLE_FIELD(Rect, windowRect);
@@ -250,7 +288,7 @@ public:
     REGISTER_SERIALIZABLE_OBJECT();
     // General program settings
     DECLARE_SERIALIZABLE_FIELD(bool, showMinimizedBubble, true);
-    DECLARE_SERIALIZABLE_FIELD(bool, tracesEnabled, true);
+    DECLARE_SERIALIZABLE_FIELD(bool, tracesEnabled, false);
     // UI
     DECLARE_SERIALIZABLE_FIELD(InputManager::InputSimulator, inputSimulator, InputManager::InputSimulator::Auto);
     DECLARE_SERIALIZABLE_FIELD(ProgramMode, selectedMode, ProgramMode::eActionExecutor);

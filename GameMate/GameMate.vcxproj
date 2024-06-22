@@ -209,6 +209,7 @@
   <ItemGroup>
     <ClInclude Include="Controls\Button\IconButton\IconButton.h" />
     <ClInclude Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.h" />
+    <ClInclude Include="Controls\ComboBox\CheckCombobox\CheckComboBox.h" />
     <ClInclude Include="Controls\ComboBox\CIconComboBox\IconComboBox.h" />
     <ClInclude Include="Controls\Edit\CEditBase\CEditBase.h" />
     <ClInclude Include="Controls\Edit\SpinEdit\SpinEdit.h" />
@@ -232,14 +233,14 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="UI\ActionEditors\ActionsEditor.h" />
+    <ClInclude Include="UI\ActionEditors\InputEditor.h" />
     <ClInclude Include="UI\ActionEditors\CursorPositionEditorView.h" />
     <ClInclude Include="UI\ActionEditors\EditActions.h" />
     <ClInclude Include="UI\ActionEditors\InputEditorView.h" />
     <ClInclude Include="UI\ActionEditors\ScriptEditorView.h" />
     <ClInclude Include="UI\Dlg\AddActionDlg.h" />
     <ClInclude Include="UI\Dlg\AddingProcessToolkitDlg.h" />
-    <ClInclude Include="UI\Dlg\EditBindDlg.h" />
+    <ClInclude Include="UI\Dlg\InputEditorDlg.h" />
     <ClInclude Include="UI\Dlg\EditValueDlg.h" />
     <ClInclude Include="UI\Dlg\InputSimulatorInfoDlg.h" />
     <ClInclude Include="UI\Dlg\MainDlg.h" />
@@ -256,6 +257,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="Controls\ComboBox\CheckCombobox\CheckComboBox.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -349,14 +356,14 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="UI\ActionEditors\ActionsEditor.cpp" />
+    <ClCompile Include="UI\ActionEditors\InputEditor.cpp" />
     <ClCompile Include="UI\ActionEditors\CursorPositionEditorView.cpp" />
     <ClCompile Include="UI\ActionEditors\EditActions.cpp" />
     <ClCompile Include="UI\ActionEditors\InputEditorView.cpp" />
     <ClCompile Include="UI\ActionEditors\ScriptEditorView.cpp" />
     <ClCompile Include="UI\Dlg\AddActionDlg.cpp" />
     <ClCompile Include="UI\Dlg\AddingProcessToolkitDlg.cpp" />
-    <ClCompile Include="UI\Dlg\EditBindDlg.cpp" />
+    <ClCompile Include="UI\Dlg\InputEditorDlg.cpp" />
     <ClCompile Include="UI\Dlg\EditValueDlg.cpp" />
     <ClCompile Include="UI\Dlg\InputSimulatorInfoDlg.cpp" />
     <ClCompile Include="UI\Dlg\MainDlg.cpp" />

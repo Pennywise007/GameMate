@@ -137,7 +137,7 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
 
     for (auto& program : settings.processConfigurations)
     {
-        if (program->exeName == m_activeProcessName)
+        if (program->exeName == m_activeProcessName) // TODO add * support
         {
             if (program->enabled)
                 m_activeExeConfig = program;
@@ -148,8 +148,6 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
     // add game mode detection
     if (!m_activeExeConfig)
         return;
-
-    m_lastWindowsIgnoreTimePoint.reset();
 
     auto& crossahair = m_activeExeConfig->crosshairSettings;
     if (crossahair.show)
@@ -172,26 +170,26 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
     }
 
     auto& settings = ext::get_singleton<Settings>();
-    if (settings.actions_executor.enableBind.IsBindPressed(vkCode, down))
+    if (settings.actions_executor.enableBind.IsPressed(vkCode, down))
     {
         settings.actions_executor.enabled = !settings.actions_executor.enabled;
         ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
         return false;
     }
 
-    if (settings.timer.showTimerBind.IsBindPressed(vkCode, down))
+    if (settings.timer.showTimerBind.IsPressed(vkCode, down))
     {
         ext::send_event_async(&ITimerNotifications::OnShowHideTimer);
         return false;
     }
 
-    if (settings.timer.pauseTimerBind.IsBindPressed(vkCode, down))
+    if (settings.timer.startPauseTimerBind.IsPressed(vkCode, down))
     {
         ext::send_event_async(&ITimerNotifications::OnStartOrPauseTimer);
         return false;
     }
     
-    if (settings.timer.resetTimerBind.IsBindPressed(vkCode, down))
+    if (settings.timer.resetTimerBind.IsPressed(vkCode, down))
     {
         ext::send_event_async(&ITimerNotifications::OnResetTimer);
         return false;
@@ -201,7 +199,7 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
     {
         for (auto&& [bind, actions] : m_activeExeConfig->actionsByBind)
         {
-            if (bind.IsBindPressed(vkCode, down))
+            if (bind.IsPressed(vkCode, down))
             {
                 m_macrosExecutor.add_task([](Actions actions) { actions.Execute(); }, actions);
                 return true;
@@ -209,25 +207,22 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
         }
 
         // Ignore Windows button press
-        if (m_activeExeConfig->disableWinButton)
+        for (auto& key : m_activeExeConfig->keysToIgnoreAccidentialPress)
         {
-            switch (vkCode)
-            {
-            case VK_LWIN:
-            case VK_RWIN:
-                {
-                    auto now = std::chrono::system_clock::now();
-                    if (m_lastWindowsIgnoreTimePoint.has_value() &&
-                        (now - *m_lastWindowsIgnoreTimePoint) <= std::chrono::seconds(1))
-                        break;
+            if (!key.IsPressed(vkCode, down))
+                continue;
 
-                    if (!down)
-                        m_lastWindowsIgnoreTimePoint = std::move(now);
-                }
-                return true;
-            default:
+            auto now = std::chrono::system_clock::now();
+            if (key.lastTimeWhenKeyWasIgnored.has_value() &&
+                (now - *key.lastTimeWhenKeyWasIgnored) <= std::chrono::seconds(1))
+            {
                 break;
             }
+
+            if (!down)
+                key.lastTimeWhenKeyWasIgnored = std::move(now);
+
+            return true;
         }
     }
 

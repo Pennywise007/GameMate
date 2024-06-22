@@ -47,6 +47,4 @@ private:
     std::shared_ptr<process_toolkit::ProcessConfiguration> m_activeExeConfig;
     // Task id of the saving settings task
     ext::TaskId m_saveSettingsTaskId;
-    // Time point when we ignored Windows button for active process
-    std::optional<std::chrono::system_clock::time_point> m_lastWindowsIgnoreTimePoint;
 };

@@ -3,11 +3,11 @@
 
 #include <optional>
 
-#include "UI/ActionEditors/ActionsEditor.h"
+#include "UI/ActionEditors/InputEditor.h"
 
 class CAddActionDlg : protected CDialogEx
 {
-	CAddActionDlg(CWnd* pParent, Action& currentAction, bool editAction);
+	CAddActionDlg(CWnd* pParent, Action& currentAction, bool addAction);
 	DECLARE_DYNAMIC(CAddActionDlg)
 
 // Dialog Data
@@ -35,8 +35,8 @@ protected:
 	CStatic m_editor;
 
 private:
-	ActionsEditor* m_activeEditor = nullptr;
-	std::vector<ActionsEditor*> m_editors;
+	InputEditor* m_activeEditor = nullptr;
+	std::vector<InputEditor*> m_editors;
 	Action& m_currentAction;
-	const bool m_editAction;
+	const bool m_addAction;
 };

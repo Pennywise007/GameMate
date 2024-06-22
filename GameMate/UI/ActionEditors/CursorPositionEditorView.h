@@ -9,10 +9,10 @@
 #include "Controls/Edit/SpinEdit/SpinEdit.h"
 #include "Controls/ToolWindow/ToolWindow.h"
 
-#include "UI/ActionEditors/ActionsEditor.h"
+#include "UI/ActionEditors/InputEditor.h"
 
 // Base view for mouse editing
-class CMouseMovementEditorView : public ActionsEditor
+class CMouseMovementEditorView : public InputEditor
 {
 protected:
 #ifdef AFX_DESIGN_TIME
@@ -23,13 +23,12 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 	void DoDataExchange(CDataExchange* pDX) override;
-	virtual void OnInitialUpdate() override;
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedButtonMousePositionSelect();
 
-protected: // ActionsEditor
-	virtual void SetAction(const Action& action) override;
-	virtual Action GetAction() override;
+protected: // InputEditor
+	virtual void PostInit(const std::shared_ptr<IBaseInput>& baseInput) override;
+	virtual std::shared_ptr<IBaseInput> TryFinishDialog() override;
 
 private:
 	void updateMousePositionControlsStates();
@@ -51,21 +50,19 @@ protected:
 	CBitmap m_cursorBitmap;
 	process_toolkit::crosshair::CursorReplacingWindow m_cursorReplacingWindow;
 	// Current action
-	Action m_action;
+	std::shared_ptr<Action> m_action;
 };
 
 // Editor of the cursor position
 class CCursorPositionEditorView : public CMouseMovementEditorView
 {
 protected:
-	CCursorPositionEditorView();
+	CCursorPositionEditorView() = default;
 	DECLARE_DYNCREATE(CCursorPositionEditorView)
 
-	void OnInitialUpdate() override;
-
-protected: // ActionsEditor
-	bool CanClose() const override;
-	void SetAction(const Action& action) override;
+protected: // InputEditor
+	void PostInit(const std::shared_ptr<IBaseInput>& baseInput) override;
+	std::shared_ptr<IBaseInput> TryFinishDialog() override;
 };
 
 // Editor of the mouse delta
@@ -75,10 +72,7 @@ protected:
 	CMouseMoveEditorView() = default;
 	DECLARE_DYNCREATE(CMouseMoveEditorView)
 
-	void OnInitialUpdate() override;
-
-protected: // ActionsEditor
-	bool CanClose() const override;
-	void SetAction(const Action& action) override;
-	Action GetAction() override;
+protected: // InputEditor
+	void PostInit(const std::shared_ptr<IBaseInput>& baseInput) override;
+	std::shared_ptr<IBaseInput> TryFinishDialog() override;
 };

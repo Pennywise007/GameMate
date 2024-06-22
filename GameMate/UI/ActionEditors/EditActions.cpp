@@ -2,6 +2,8 @@
 #include "afxdialogex.h"
 #include "resource.h"
 
+#include "core/events.h"
+
 #include "UI/Dlg/AddActionDlg.h"
 #include "UI/ActionEditors/EditActions.h"
 #include "UI/Dlg/EditValueDlg.h"
@@ -16,6 +18,9 @@
 #include <ext/serialization/iserializable.h>
 
 namespace {
+
+constexpr int kRandomDelayColumnWidth = 110;
+constexpr int kDelayColumnWidth = 80;
 
 using MouseRecordMode = Actions::MouseRecordMode;
 // Saved in table item data type
@@ -144,7 +149,33 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 	m_comboMouseRecordMode.InsertString((int)MouseRecordMode::eRecordCursorDeltaWithDirectX, L"Record DirectX cursor delta");
 	m_comboMouseRecordMode.SetCurSel((int)m_actions->mouseRecordMode);
 
-	initTableContent();
+	CRect rect;
+	m_listActions.GetClientRect(rect);
+
+	m_columnDelayIndex = 0;
+	m_columnActionIndex = 1;
+	m_listActions.InsertColumn(m_columnDelayIndex, L"Delay(ms)", LVCFMT_CENTER, kDelayColumnWidth);
+	m_listActions.InsertColumn(m_columnActionIndex, L"Action", LVCFMT_LEFT, rect.Width() - kDelayColumnWidth);
+
+	LVCOLUMN colInfo;
+	colInfo.mask = LVCF_FMT;
+	m_listActions.GetColumn(m_columnDelayIndex, &colInfo);
+	colInfo.fmt |= LVCFMT_FIXED_WIDTH | LVCFMT_CENTER;
+	m_listActions.SetColumn(m_columnDelayIndex, &colInfo);
+
+	// Set editors
+	for (int i = 0; i < 3; ++i)
+	{
+		m_listActions.setSubItemEditorController(i, m_actionsTableSubItemEditor);
+	}
+
+	if (m_actions->enableRandomDelay)
+		switchRandomizeDelayMode();
+	else
+		m_listActions.SetProportionalResizingColumns({ m_columnActionIndex });
+
+	// Adding items to table
+	addActions(m_actions->actions, false);
 
 	updateButtonStates();
 
@@ -160,9 +191,9 @@ void CActionsEditorView::onSettingsChanged(bool changesInActionsList)
 		for (auto item = 0; item < size; ++item)
 		{
 			TableItemType* actionPtr((TableItemType*)m_listActions.GetItemDataPtr(item));
-			for (auto&& action : *actionPtr)
+			for (const auto& action : *actionPtr)
 			{
-				m_actions->actions.emplace_back(std::move(action));
+				m_actions->actions.emplace_back(action);
 			}
 		}
 	}
@@ -222,83 +253,82 @@ BOOL CActionsEditorView::PreTranslateMessage(MSG* pMsg)
 	return CFormView::PreTranslateMessage(pMsg);
 }
 
-void CActionsEditorView::initTableContent()
+void CActionsEditorView::switchRandomizeDelayMode()
 {
-	const auto selection = m_listActions.GetSelectedItems();
-	const auto vertScrolPos = GetScrollPos(SB_VERT);
-
-	m_listActions.LockWindowUpdate();
-	m_listActions.SetRedraw(FALSE);
-
-	m_listActions.DeleteAllItems();
-
-	using controls::list::widgets::ISubItemEditorController;
-	for (int i = 0, countColumns = m_listActions.GetHeaderCtrl()->GetItemCount(); i < countColumns; ++i)
-	{
-		m_listActions.setSubItemEditorController(i, std::shared_ptr<ISubItemEditorController>());
-		m_listActions.DeleteColumn(i);
-	}
-
-	constexpr int kDelayColumnWidth = 80;
-
-	CRect rect;
-	m_listActions.GetClientRect(rect);
-
-	int allColumnWidthExceptAction = kDelayColumnWidth;
-	if (m_actions->enableRandomDelay)
-	{
-		m_listActions.ModifyExtendedStyle(0, LVS_EX_CHECKBOXES);
-
-		constexpr int kRandomDelayColumnWidth = 110;
-		allColumnWidthExceptAction += kRandomDelayColumnWidth;
-		ENSURE(m_listActions.InsertColumn(0, L"Randomize delay", LVCFMT_CENTER, kRandomDelayColumnWidth) == 0);
-
-		m_columnDelayIndex = 1;
-		m_columnActionIndex = 2;
-	}
-	else
+	if (!m_actions->enableRandomDelay)
 	{
 		m_listActions.ModifyExtendedStyle(LVS_EX_CHECKBOXES, 0);
 
 		m_columnDelayIndex = 0;
 		m_columnActionIndex = 1;
+
+		m_listActions.DeleteColumn(0);
 	}
-
-	ENSURE(m_listActions.InsertColumn(m_columnDelayIndex, L"Delay(ms)", LVCFMT_CENTER, kDelayColumnWidth) == m_columnDelayIndex);
-	ASSERT(m_listActions.InsertColumn(m_columnActionIndex, L"Action", LVCFMT_LEFT, rect.Width() - allColumnWidthExceptAction) == m_columnActionIndex);
-
-	m_listActions.setSubItemEditorController(m_columnDelayIndex, m_actionsTableSubItemEditor);
-	m_listActions.setSubItemEditorController(m_columnActionIndex, m_actionsTableSubItemEditor);
-
-	LVCOLUMN colInfo;
-	colInfo.mask = LVCF_FMT;
-	m_listActions.GetColumn(m_columnDelayIndex, &colInfo);
-	colInfo.fmt |= LVCFMT_FIXED_WIDTH | LVCFMT_CENTER;
-	m_listActions.SetColumn(m_columnDelayIndex, &colInfo);
-
-	m_listActions.SetProportionalResizingColumns({ m_columnActionIndex });
-
-	// Adding items to table
-	addActions(m_actions->actions, false);
-	// Restoring selection
-	for (auto i : selection)
+	else
 	{
-		m_listActions.SelectItem(i, false);
+		m_listActions.SetRedraw(FALSE);
+
+		m_ignoreCheckChanged = true;
+		EXT_DEFER(m_ignoreCheckChanged = false);
+
+		m_listActions.ModifyExtendedStyle(0, LVS_EX_CHECKBOXES);
+
+		constexpr int kRandomDelayColumnWidth = 110;
+		ENSURE(m_listActions.InsertColumn(0, L"Randomize delay", LVCFMT_CENTER, kRandomDelayColumnWidth) == 0);
+
+		m_columnDelayIndex = 1;
+		m_columnActionIndex = 2;
+
+		const auto columnsCount = m_listActions.GetHeaderCtrl()->GetItemCount();
+		std::list<int> checkedItems;
+		for (int item = 0, countRows = m_listActions.GetItemCount(); item < countRows; ++item)
+		{
+			const TableItemType* actions = (TableItemType*)m_listActions.GetItemDataPtr(item);
+			EXT_ASSERT(actions);
+
+			bool allActionsChecked = true;
+			for (auto it = actions->cbegin(), end = actions->cend(); allActionsChecked && it != end; ++it)
+			{
+				allActionsChecked &= it->randomizeDelay;
+			}
+			if (allActionsChecked)
+				m_listActions.SetCheck(item, TRUE);
+
+			// move data to the right
+			for (int subItem = columnsCount - 2; subItem >= 0; --subItem)
+			{
+				m_listActions.SetItemText(item, subItem + 1, m_listActions.GetItemText(item, subItem));
+			}
+			m_listActions.SetItemText(item, 0, L"");
+		}
+
+		m_listActions.SetRedraw(TRUE);
+		m_listActions.Invalidate();
 	}
-	// Restoring scroll position
-	SetScrollPos(SB_VERT, vertScrolPos);
 
-	m_listActions.UnlockWindowUpdate();
-	m_listActions.SetRedraw(TRUE);
+	// Restore columns width
+	m_listActions.SetColumnWidth(m_columnDelayIndex, kDelayColumnWidth);
 
-	m_listActions.Invalidate();
+	int allColumnsWidthExceptActions = 0;
+	for (int column = 0, count = m_listActions.GetHeaderCtrl()->GetItemCount(); column < count; ++column)
+	{
+		if (column != m_columnActionIndex)
+			allColumnsWidthExceptActions += m_listActions.GetColumnWidth(column);
+	}
+
+	CRect rect;
+	m_listActions.GetClientRect(rect);
+	m_listActions.SetColumnWidth(m_columnActionIndex, rect.Width() - allColumnsWidthExceptActions);
+	m_listActions.SetProportionalResizingColumns({ m_columnActionIndex });
 }
 
 inline void CActionsEditorView::startRecording()
 {
 	EXT_ASSERT(m_mouseMoveSubscriptionId == -1 && m_keyPressedSubscriptionId == -1 && m_mouseMoveDirectXSubscriptionId == -1);
-	EXT_ASSERT(m_recordedActions.empty());
-	
+	EXT_ASSERT(m_recordedActions.empty() && !m_lastActionTime.has_value());
+
+	ext::send_event(&IKeyHandlerBlocker::OnBlockHandler);
+
 	// Show recording banner if we won't push items to table immediately
 	m_listActions.ShowWindow(canDynamicallyAddRecordedActions() ? SW_SHOW : SW_HIDE);
 	GetDlgItem(IDC_STATIC_RECORDING_OVERLAY)->ShowWindow(canDynamicallyAddRecordedActions() ? SW_HIDE : SW_SHOW);
@@ -342,6 +372,8 @@ inline void CActionsEditorView::startRecording()
 	}
 
 	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkCode, bool isDown) -> bool {
+		const static auto kCurrentProcessId = GetCurrentProcessId();
+		
 		switch (vkCode)
 		{
 		case VK_LBUTTON:
@@ -354,17 +386,31 @@ inline void CActionsEditorView::startRecording()
 			if (window == m_buttonRecord.m_hWnd || (!!GetOwner()->GetDlgItem(IDOK) && window == GetOwner()->GetDlgItem(IDOK)->m_hWnd))
 				return false;
 
-			[[fallthrough]];
+			handleRecordedAction(Action::NewAction(vkCode, isDown, kDelayPlaceholder));
+
+			// allow clicks in other programs except ours
+			if (CWnd* wnd = WindowFromPoint(cursor); wnd)
+			{
+				DWORD dwProcessId;
+				if (GetWindowThreadProcessId(wnd->m_hWnd, &dwProcessId) != 0 && dwProcessId == kCurrentProcessId)
+					return true;
+			}
+
+			return false;
 		}
 		default:
 		{
 			handleRecordedAction(Action::NewAction(vkCode, isDown, kDelayPlaceholder));
 
 			// allow action in other programs except ours
-			auto activeWindow = GetForegroundWindow();
-			return (activeWindow == this ||
-				activeWindow == GetOwner() ||
-				activeWindow == AfxGetMainWnd());
+			if (CWnd* wnd = GetForegroundWindow(); wnd)
+			{
+				DWORD dwProcessId;
+				if (GetWindowThreadProcessId(wnd->m_hWnd, &dwProcessId) != 0 && dwProcessId == kCurrentProcessId)
+					return true;
+			}
+			
+			return false;
 		}
 		}
 	});
@@ -372,6 +418,8 @@ inline void CActionsEditorView::startRecording()
 
 inline void CActionsEditorView::stopRecoring()
 {
+	ext::send_event(&IKeyHandlerBlocker::OnUnblockHandler);
+
 	if (m_keyPressedSubscriptionId != -1)
 		InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
 	if (m_mouseMoveSubscriptionId != -1)
@@ -379,6 +427,7 @@ inline void CActionsEditorView::stopRecoring()
 	if (m_mouseMoveDirectXSubscriptionId != -1)
 		InputManager::RemoveDirectInputMouseMoveHandler(m_mouseMoveDirectXSubscriptionId);
 	m_mouseMoveDirectXSubscriptionId = m_keyPressedSubscriptionId = m_mouseMoveSubscriptionId = -1;
+	m_lastActionTime.reset();
 
 	if (!m_recordedActions.empty())
 	{
@@ -407,6 +456,8 @@ void CActionsEditorView::handleRecordedAction(Action&& action)
 	auto curTime = std::chrono::steady_clock::now();
 
 	std::unique_lock l(m_recordingActionsMutex);
+	if (!m_lastActionTime.has_value())
+		m_lastActionTime = curTime;
 	EXT_ASSERT(curTime >= m_lastActionTime);
 	auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(curTime - *m_lastActionTime).count();
 	m_lastActionTime = std::move(curTime);
@@ -446,11 +497,12 @@ void CActionsEditorView::addActions(const std::list<Action>& actions, bool lockR
 	if (actions.empty())
 		return;
 
+	m_ignoreSelectionChanged = true;
+	EXT_DEFER(m_ignoreSelectionChanged = false);
+	EXT_DEFER(updateButtonStates());
+
 	if (lockRedraw)
-	{
-		m_listActions.LockWindowUpdate();
 		m_listActions.SetRedraw(FALSE);
-	}
 
 	int item = m_listActions.GetLastSelectedItem();
 	if (item == -1)
@@ -538,7 +590,6 @@ void CActionsEditorView::addActions(const std::list<Action>& actions, bool lockR
 
 	if (lockRedraw)
 	{
-		m_listActions.UnlockWindowUpdate();
 		m_listActions.SetRedraw(TRUE);
 		m_listActions.Invalidate();
 	}
@@ -681,17 +732,18 @@ void CActionsEditorView::OnBnClickedButtonRemove()
 	std::vector<int> selectedActions = m_listActions.GetSelectedItems();
 	EXT_ASSERT(!selectedActions.empty());
 
-	m_listActions.LockWindowUpdate();
 	m_listActions.SetRedraw(FALSE);
 
+	m_ignoreSelectionChanged = true;
 	for (auto it = selectedActions.rbegin(), end = selectedActions.rend(); it != end; ++it)
 	{
 		std::unique_ptr<TableItemType> actionPtr((TableItemType*)m_listActions.GetItemDataPtr(*it));
 		m_listActions.DeleteItem(*it);
 	}
+	m_ignoreSelectionChanged = false;
 	m_listActions.SelectItem(selectedActions.back() - int(selectedActions.size()) + 1);
+	updateButtonStates();
 
-	m_listActions.UnlockWindowUpdate();
 	m_listActions.SetRedraw(TRUE);
 	m_listActions.Invalidate();
 
@@ -765,7 +817,6 @@ void CActionsEditorView::OnTimer(UINT_PTR nIDEvent)
 		break;
 	case TimerIds::eRecordingCounter2:
 		m_buttonRecord.SetWindowTextW(L"Stop recording");
-		m_lastActionTime = std::chrono::steady_clock::now();
 		startRecording();
 		break;
 	default:
@@ -810,15 +861,34 @@ void CActionsEditorView::OnBnClickedCheckUniteMovements()
 
 void CActionsEditorView::OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult)
 {
-	// TODO add checkbox handler
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
 
 	if (pNMLV->uChanged & LVIF_STATE)
 	{
-		if ((pNMLV->uNewState & LVIS_SELECTED) != (pNMLV->uOldState & LVIS_SELECTED))
+		if ((pNMLV->uNewState & LVIS_SELECTED) != (pNMLV->uOldState & LVIS_SELECTED) && !m_ignoreSelectionChanged)
 		{
 			// selection changed
 			updateButtonStates();
+		}
+		if (m_actions->enableRandomDelay && pNMLV->uNewState & LVIS_STATEIMAGEMASK && !m_ignoreCheckChanged)
+		{
+			auto newState = pNMLV->uNewState & LVIS_STATEIMAGEMASK;
+			constexpr auto CHECKED_STATE = 0x2000;
+			constexpr auto UNCHECKED_STATE = 0x1000;
+			if ((newState & CHECKED_STATE) != 0 || (newState & UNCHECKED_STATE) != 0)
+			{
+				bool itemWasChecked = newState & CHECKED_STATE;
+				TableItemType* actions = (TableItemType*)m_listActions.GetItemDataPtr(pNMLV->iItem);
+				if (actions)
+				{
+					// We might receive this event during adding items to the table
+					for (auto& action : *actions)
+					{
+						action.randomizeDelay = itemWasChecked;
+					}
+					onSettingsChanged(true);
+				}
+			}
 		}
 	}
 
@@ -828,7 +898,7 @@ void CActionsEditorView::OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pRe
 void CActionsEditorView::OnBnClickedCheckRandomizeDelay()
 {
 	m_actions->enableRandomDelay = m_checkRandomizeDelay.GetCheck() == BST_CHECKED;
-	initTableContent();
+	switchRandomizeDelayMode();
 
 	onSettingsChanged(true);
 }
@@ -871,6 +941,8 @@ BOOL CActionsEditDlg::OnInitDialog()
 	CFormView* pView = (CFormView*)pFrameWnd->CreateView(&ctx);
 	EXT_EXPECT(pView && pView->GetSafeHwnd() != NULL);
 	pView->OnInitialUpdate();
+	pView->ModifyStyle(0, WS_TABSTOP);
+
 	CActionsEditorView* editorView = dynamic_cast<CActionsEditorView*>(pView);
 	EXT_ASSERT(editorView);
 

@@ -16,30 +16,46 @@ constexpr auto kTimerIdKeyTextChage = 2;
 } // namespace
 
 CInputEditorBaseView::CInputEditorBaseView()
-	: ActionsEditor(IDD_VIEW_EDIT_INPUT)
+	: InputEditor(IDD_VIEW_EDIT_INPUT)
 {
 }
 
-void CInputEditorBaseView::DoDataExchange(CDataExchange* pDX)
-{
-	ActionsEditor::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_EDIT_ACTION, m_editAction);
-}
-
-BEGIN_MESSAGE_MAP(CInputEditorBaseView, ActionsEditor)
+BEGIN_MESSAGE_MAP(CInputEditorBaseView, InputEditor)
 	ON_WM_DESTROY()
 	ON_WM_TIMER()
 	ON_WM_SHOWWINDOW()
 END_MESSAGE_MAP()
 
-void CInputEditorBaseView::OnInitialUpdate()
+void CInputEditorBaseView::DoDataExchange(CDataExchange* pDX)
 {
-	ActionsEditor::OnInitialUpdate();
+	InputEditor::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_EDIT_ACTION, m_editAction);
+}
 
-	m_editAction.SetWindowTextW(GetActionText().c_str());
+void CInputEditorBaseView::PostInit(const std::shared_ptr<IBaseInput>& input)
+{
+	m_editableInput = input;
+	m_editAction.SetWindowTextW(GetActionEditText().c_str());
 	m_editAction.HideCaret();
 
+	GetDlgItem(IDC_STATIC_DESCRIPTION)->SetWindowTextW(GetDescription());
+
 	ext::send_event(&IKeyHandlerBlocker::OnBlockHandler);
+}
+
+std::shared_ptr<IBaseInput> CInputEditorBaseView::TryFinishDialog()
+{
+	return m_editableInput;
+}
+
+void CInputEditorBaseView::OnDestroy()
+{
+	KillTimer(kTimerIdActionsSubscription);
+	if (m_keyPressedSubscriptionId != -1)
+		InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
+	InputEditor::OnDestroy();
+
+	ext::send_event(&IKeyHandlerBlocker::OnUnblockHandler);
 }
 
 void CInputEditorBaseView::OnTimer(UINT_PTR nIDEvent)
@@ -86,7 +102,7 @@ void CInputEditorBaseView::OnTimer(UINT_PTR nIDEvent)
 					if (!allowClick())
 						return false;
 				}
-				OnVkCodeAction(vkCode, isDown);
+				m_editableInput->UpdateInput(vkCode, isDown);
 
 				// Set timer to change displayed text because user might hit close button with mouse
 				// and if we change text immediately the user will see Mouse down as a key text which wasn't his last input
@@ -98,47 +114,26 @@ void CInputEditorBaseView::OnTimer(UINT_PTR nIDEvent)
 			}
 			}
 
-			OnVkCodeAction(vkCode, isDown);
-			m_editAction.SetWindowTextW(GetActionText().c_str());
+			m_editableInput->UpdateInput(vkCode, isDown);
+			m_editAction.SetWindowTextW(GetActionEditText().c_str());
 
 			return true;
 		});
 		break;
 	case kTimerIdKeyTextChage:
-		m_editAction.SetWindowTextW(GetActionText().c_str());
+		m_editAction.SetWindowTextW(GetActionEditText().c_str());
 		break;
 	default:
 		ASSERT(FALSE);
 		break;
 	}
 
-	ActionsEditor::OnTimer(nIDEvent);
-}
-
-void CInputEditorBaseView::OnDestroy()
-{
-	KillTimer(kTimerIdActionsSubscription);
-	if (m_keyPressedSubscriptionId != -1)
-		InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
-	ActionsEditor::OnDestroy();
-
-	ext::send_event(&IKeyHandlerBlocker::OnUnblockHandler);
-}
-
-void CInputEditorBaseView::SetAction(const Action& action)
-{
-	m_currentAction = action;
-	m_editAction.SetWindowTextW(GetActionText().c_str());
-}
-
-Action CInputEditorBaseView::GetAction()
-{
-	return m_currentAction;
+	InputEditor::OnTimer(nIDEvent);
 }
 
 void CInputEditorBaseView::OnShowWindow(BOOL bShow, UINT nStatus)
 {
-	ActionsEditor::OnShowWindow(bShow, nStatus);
+	InputEditor::OnShowWindow(bShow, nStatus);
 
 	if (!bShow)
 	{
@@ -151,92 +146,80 @@ void CInputEditorBaseView::OnShowWindow(BOOL bShow, UINT nStatus)
 		SetTimer(kTimerIdActionsSubscription, kSubscribeToActionInMs, nullptr);
 }
 
-IMPLEMENT_DYNCREATE(CActionEditorView, CInputEditorBaseView)
+IMPLEMENT_DYNCREATE(CKeyEditorView, CInputEditorBaseView)
 
-void CActionEditorView::OnInitialUpdate()
+const wchar_t* CKeyEditorView::GetDescription() const
 {
-	CInputEditorBaseView::OnInitialUpdate();
-
-	SetWindowText(L"Action editor");
+	return L"Press mouse button or keyboard key";
 }
 
-std::wstring CActionEditorView::GetActionText() const
+std::wstring CKeyEditorView::GetActionEditText() const
 {
-	if (m_currentAction.vkCode == kNotSetVkCode)
+	if (std::dynamic_pointer_cast<Key>(m_editableInput)->vkCode == kNotSetVkCode)
 		return L"Enter action...";
 	else
-		return m_currentAction.ToString();
+		return m_editableInput->ToString();
 }
 
-void CActionEditorView::OnVkCodeAction(WORD vkCode, bool down)
+std::shared_ptr<IBaseInput> CKeyEditorView::TryFinishDialog()
 {
-	m_currentAction.vkCode = vkCode;
-	m_currentAction.down = down;
-}
-
-bool CActionEditorView::CanClose() const
-{
-	if (m_currentAction.vkCode == kNotSetVkCode)
+	if (std::dynamic_pointer_cast<Key>(m_editableInput)->vkCode == kNotSetVkCode)
 	{
 		::MessageBox(m_hWnd, L"You need to enter action, press any key or mouse button", L"No action selected", MB_OK);
-		return false;
+		return nullptr;
 	}
 
-	return true;
+	return CInputEditorBaseView::TryFinishDialog();
 }
 
 IMPLEMENT_DYNCREATE(CBindEditorView, CInputEditorBaseView)
 
-void CBindEditorView::OnInitialUpdate()
+const wchar_t* CBindEditorView::GetDescription() const
 {
-	CInputEditorBaseView::OnInitialUpdate();
-
-	SetWindowText(L"Bind editor");
-	GetDlgItem(IDC_STATIC_DESCRIPTION)->SetWindowTextW(L"Press mouse or keyboard button");
+	return L"Press mouse button or keyboard key";
 }
 
-std::wstring CBindEditorView::GetActionText() const
+std::wstring CBindEditorView::GetActionEditText() const
 {
-	if (m_currentBind.vkCode == kNotSetVkCode)
+	if (std::dynamic_pointer_cast<Bind>(m_editableInput)->vkCode == kNotSetVkCode)
 		return L"Enter bind...";
 	else
-		return m_currentBind.ToString();
+		return m_editableInput->ToString();
 }
 
-void CBindEditorView::OnVkCodeAction(WORD vkCode, bool down)
+std::shared_ptr<IBaseInput> CBindEditorView::TryFinishDialog()
 {
-	m_currentBind.UpdateBind(vkCode, down);
-}
-
-bool CBindEditorView::CanClose() const
-{
-	if (m_currentBind.vkCode == kNotSetVkCode)
+	if (std::dynamic_pointer_cast<Bind>(m_editableInput)->vkCode == kNotSetVkCode)
 	{
 		::MessageBox(m_hWnd, L"You need to enter bind, press any key or mouse button", L"No bind selected", MB_OK);
-		return false;
+		return nullptr;
 	}
 
-	return true;
+	return CInputEditorBaseView::TryFinishDialog();
 }
 
-void CBindEditorView::SetAction(const Action&)
+IMPLEMENT_DYNCREATE(CActionEditorView, CInputEditorBaseView)
+
+const wchar_t* CActionEditorView::GetDescription() const
 {
-	EXT_ASSERT(false);
+	return L"Press mouse button or keyboard key";
 }
 
-Action CBindEditorView::GetAction()
+std::wstring CActionEditorView::GetActionEditText() const
 {
-	EXT_ASSERT(false);
-	return {};
+	if (std::dynamic_pointer_cast<Action>(m_editableInput)->vkCode == kNotSetVkCode)
+		return L"Enter action...";
+	else
+		return m_editableInput->ToString();
 }
 
-void CBindEditorView::SetBind(Bind bind)
+std::shared_ptr<IBaseInput> CActionEditorView::TryFinishDialog()
 {
-	m_currentBind = bind;
-	m_editAction.SetWindowTextW(GetActionText().c_str());
-}
+	if (std::dynamic_pointer_cast<Action>(m_editableInput)->vkCode == kNotSetVkCode)
+	{
+		::MessageBox(m_hWnd, L"You need to enter action, press any key or mouse button", L"No action selected", MB_OK);
+		return nullptr;
+	}
 
-Bind CBindEditorView::GetBind() const
-{
-	return m_currentBind;
+	return CInputEditorBaseView::TryFinishDialog();
 }

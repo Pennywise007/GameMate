@@ -8,17 +8,17 @@
 
 IMPLEMENT_DYNAMIC(CAddActionDlg, CDialogEx)
 
-CAddActionDlg::CAddActionDlg(CWnd* pParent, Action& currentAction, bool editAction)
+CAddActionDlg::CAddActionDlg(CWnd* pParent, Action& currentAction, bool addAction)
 	: CDialogEx(IDD_DIALOG_ADD_ACTION, pParent)
 	, m_currentAction(currentAction)
-	, m_editAction(editAction)
+	, m_addAction(addAction)
 {
 }
 
 std::optional<Action> CAddActionDlg::EditAction(CWnd* parent, std::optional<Action> currentAction)
 {
 	Action action = currentAction.value_or(Action{});
-	if (CAddActionDlg(parent, action, currentAction.has_value()).DoModal() == IDCANCEL)
+	if (CAddActionDlg(parent, action, !currentAction.has_value()).DoModal() == IDCANCEL)
 		return std::nullopt;
 
 	return action;
@@ -63,11 +63,12 @@ BOOL CAddActionDlg::OnInitDialog()
 		EXT_UNREACHABLE();
 	}
 
+	const auto action = std::make_shared<Action>(m_currentAction);
 	m_editors = {
-		ActionsEditor::CreateEditor(&m_editor, ActionsEditor::Editor::eAction),
-		ActionsEditor::CreateEditor(&m_editor, ActionsEditor::Editor::eCursorPosition),
-		ActionsEditor::CreateEditor(&m_editor, ActionsEditor::Editor::eMouseMove),
-		ActionsEditor::CreateEditor(&m_editor, ActionsEditor::Editor::eScript),
+		InputEditor::CreateEditor(&m_editor, InputEditor::EditorType::eAction, action),
+		InputEditor::CreateEditor(&m_editor, InputEditor::EditorType::eCursorPosition, action),
+		InputEditor::CreateEditor(&m_editor, InputEditor::EditorType::eMouseMove, action),
+		InputEditor::CreateEditor(&m_editor, InputEditor::EditorType::eScript, action),
 	};
 
 	CRect editorRect;
@@ -77,7 +78,6 @@ BOOL CAddActionDlg::OnInitDialog()
 	{
 		editor->ShowWindow(SW_HIDE);
 		editor->MoveWindow(editorRect, FALSE);
-		editor->SetAction(m_currentAction);
 		editor->SetOwner(this);
 
 		editorsMaxWidth = std::max(editorsMaxWidth, editor->GetTotalSize().cx);
@@ -96,7 +96,7 @@ BOOL CAddActionDlg::OnInitDialog()
 
 	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
 
-	if (m_editAction)
+	if (!m_addAction)
 		SetWindowText(L"Edit action");
 
 	return TRUE;
@@ -105,10 +105,12 @@ BOOL CAddActionDlg::OnInitDialog()
 void CAddActionDlg::OnOK()
 {
 	ASSERT(m_activeEditor);
-	if (!m_activeEditor->CanClose())
+
+	auto action = m_activeEditor->TryFinishDialog();
+	if (!action)
 		return;
 
-	m_currentAction = m_activeEditor->GetAction();
+	m_currentAction = *std::dynamic_pointer_cast<Action>(action);
 
 	CDialogEx::OnOK();
 }

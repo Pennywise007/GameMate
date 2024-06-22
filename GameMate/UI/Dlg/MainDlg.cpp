@@ -7,7 +7,7 @@
 #include "UI/Tab/ActiveProcessToolkitTab.h"
 #include "UI/Tab/ActionsExecutorTab.h"
 #include "UI/Dlg/InputSimulatorInfoDlg.h"
-#include "UI/Dlg/EditBindDlg.h"
+#include "UI/Dlg/InputEditorDlg.h"
 
 #include "InputManager.h"
 
@@ -379,7 +379,7 @@ void CMainDlg::OnBnClickedMfcbuttonInputSimulatorInfo()
 void CMainDlg::OnBnClickedMfcbuttonTimerHotkey()
 {
 	auto& currentBind = ext::get_singleton<Settings>().timer.showTimerBind;
-	auto bind = CEditBindDlg::EditBind(this, currentBind);
+	auto bind = CInputEditorDlg::EditBind(this, currentBind);
 	if (!bind.has_value() || currentBind.ToString() == bind->ToString())
 		return;
 
