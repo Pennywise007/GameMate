@@ -36,6 +36,8 @@ constexpr ext::constexpr_map kComboboxIndexesToInputModes=  {
 	std::pair{4, InputManager::InputSimulator::MouClassInputInjection},
 	std::pair{5, InputManager::InputSimulator::SendInput},
 };
+static_assert(!kComboboxIndexesToInputModes.contain_duplicate_keys());
+static_assert(!kComboboxIndexesToInputModes.contain_duplicate_values());
 
 constexpr ext::constexpr_map kDriverNames =
 {
@@ -46,6 +48,9 @@ constexpr ext::constexpr_map kDriverNames =
 	std::pair{ InputManager::InputSimulator::MouClassInputInjection, L"Mou driver" },
 	std::pair{ InputManager::InputSimulator::SendInput, L"Don't use simulator" },
 };
+
+static_assert(!kDriverNames.contain_duplicate_keys());
+static_assert(!kDriverNames.contain_duplicate_values());
 
 static_assert(kComboboxIndexesToInputModes.size() == kDriverNames.size());
 

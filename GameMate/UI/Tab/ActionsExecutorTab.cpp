@@ -7,6 +7,8 @@
 
 #include "core/Settings.h"
 
+#include <ext/reflection/enum.h>
+
 #include <Controls/Layout/Layout.h>
 
 namespace {
@@ -81,6 +83,7 @@ BOOL CActionsExecutorTab::OnInitDialog()
 		m_radioRepeatUntilStop.SetCheck(1);
 		break;
 	default:
+		static_assert(ext::reflection::get_enum_size<actions_executor::RepeatMode>() == 2, "Not handled enum value");
 		EXT_ASSERT(false) << "unknown repeat mode";
 		break;
 	};

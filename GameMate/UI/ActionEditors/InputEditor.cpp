@@ -5,6 +5,8 @@
 #include "UI/ActionEditors/CursorPositionEditorView.h"
 #include "UI/ActionEditors/ScriptEditorView.h"
 
+#include <ext/reflection/enum.h>
+
 namespace {
 
 template <class T>
@@ -53,6 +55,7 @@ InputEditor* InputEditor::CreateEditor(
     case EditorType::eScript:
         return CreateView<CScriptEditorView>(parent, input);
     default:
+        static_assert(ext::reflection::get_enum_size<EditorType>() == 6, "Not handled enum value");
         EXT_UNREACHABLE();
     }
 }

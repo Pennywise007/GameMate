@@ -4,6 +4,8 @@
 
 #include <core/Settings.h>
 
+#include <ext/reflection/enum.h>
+
 #include <Controls/Layout/Layout.h>
 
 IMPLEMENT_DYNAMIC(CAddActionDlg, CDialogEx)
@@ -60,6 +62,7 @@ BOOL CAddActionDlg::OnInitDialog()
 		m_type.SetCurSel(3);
 		break;
 	default:
+		static_assert(ext::reflection::get_enum_size<Action::Type>() == 5, "Not handled enum value");
 		EXT_UNREACHABLE();
 	}
 

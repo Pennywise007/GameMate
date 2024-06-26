@@ -15,6 +15,7 @@
 #include <Controls/Tooltip/ToolTip.h>
 
 #include <ext/core/check.h>
+#include <ext/reflection/enum.h>
 #include <ext/serialization/iserializable.h>
 
 namespace {
@@ -485,6 +486,7 @@ void CActionsEditorView::handleRecordedAction(Action&& action)
 			m_recordedActions.emplace_back(std::move(action));
 			break;
 		default:
+			static_assert(ext::reflection::get_enum_size<Action::Type>() == 5, "Not handled enum value");
 			EXT_UNREACHABLE();
 		}
 	}
@@ -574,6 +576,7 @@ void CActionsEditorView::addActions(const std::list<Action>& actions, bool lockR
 				mousePosChangeActions.emplace_back(action);
 				break;
 			default:
+				static_assert(ext::reflection::get_enum_size<Action::Type>() == 5, "Not handled enum value");
 				EXT_UNREACHABLE();
 			}
 		}
@@ -820,6 +823,7 @@ void CActionsEditorView::OnTimer(UINT_PTR nIDEvent)
 		startRecording();
 		break;
 	default:
+		static_assert(ext::reflection::get_enum_size<TimerIds>() == 3, "Not handled enum value");
 		EXT_ASSERT(false) << "Unknown event id " << nIDEvent;
 		break;
 	}

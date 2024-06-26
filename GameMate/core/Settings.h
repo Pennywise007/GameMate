@@ -6,6 +6,7 @@
 #include <string>
 #include <list>
 #include <optional>
+#include <regex>
 
 #include "InputManager.h"
 
@@ -226,6 +227,8 @@ struct ProcessConfiguration
     DECLARE_SERIALIZABLE_FIELD(std::list<Key>, keysToIgnoreAccidentialPress);
     DECLARE_SERIALIZABLE_FIELD(crosshair::Settings, crosshairSettings);
     DECLARE_SERIALIZABLE_FIELD((std::map<Bind, Actions>), actionsByBind);
+
+    void OnDeserializationFinished(); // TODO
 };
 
 struct Settings

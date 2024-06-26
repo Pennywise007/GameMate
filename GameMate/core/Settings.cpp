@@ -5,6 +5,7 @@
 
 #include <ext/core/check.h>
 #include <ext/constexpr/map.h>
+#include <ext/reflection/enum.h>
 #include <ext/scope/defer.h>
 #include <ext/std/string.h>
 #include <ext/thread/thread.h>
@@ -26,7 +27,9 @@ constexpr ext::constexpr_map kExtraKeysTovkCodes = {
 	std::pair{Bind::ExtraKeys::LWin,	VK_LWIN},
 	std::pair{Bind::ExtraKeys::RWin,	VK_RWIN},
 };
-static_assert(kExtraKeysTovkCodes.size() == size_t(Bind::ExtraKeys::LastModifierKey), "Not all extra keys set");
+static_assert(!kExtraKeysTovkCodes.contain_duplicate_keys());
+static_assert(!kExtraKeysTovkCodes.contain_duplicate_values());
+static_assert(kExtraKeysTovkCodes.size() == ext::reflection::get_enum_size<Bind::ExtraKeys>() - 2, "Not all extra keys set");
 
 std::wstring VkCodeToText(WORD vkCode)
 {
@@ -319,7 +322,7 @@ std::wstring Action::ToString() const
 void Action::ExecuteAction(unsigned delayRandomizeInMs) const
 {
 	int sleepDurationInMs = delayInMilliseconds;
-	if (randomizeDelay)
+	if (delayRandomizeInMs != 0 && randomizeDelay)
 		sleepDurationInMs = sleepDurationInMs - delayRandomizeInMs + std::rand() % (2 * delayRandomizeInMs);
 
 	if (sleepDurationInMs > 0)
@@ -419,6 +422,7 @@ void actions_executor::Settings::Execute() const
 		case RepeatMode::eUntilStopped:
 			break;
 		default:
+			static_assert(ext::reflection::get_enum_size<RepeatMode>() == 2, "Not handled enum value");
 			EXT_ASSERT(false) << "Unknown repeat mode " << int(repeatMode);
 			break;
 		}
