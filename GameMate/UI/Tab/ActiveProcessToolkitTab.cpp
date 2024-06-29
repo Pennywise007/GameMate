@@ -299,7 +299,7 @@ void CActiveProcessToolkitTab::UpdateControlsData()
 	EXT_ASSERT(!!m_configuration);
 
 	m_enabled.SetCheck(m_configuration->enabled);
-	m_exeName.SetWindowTextW(m_configuration->exeName.c_str());
+	m_exeName.SetWindowTextW(m_configuration->GetExeName().c_str());
 	// updating control BK color
 	OnCbnEditchangeComboExeName();
 
@@ -693,7 +693,7 @@ void CActiveProcessToolkitTab::OnCbnSelendokComboExeName()
 	CString text;
 	m_exeName.GetWindowText(text);
 
-	m_configuration->exeName = text;
+	m_configuration->SetExeName(text.GetString());
 
 	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
 }

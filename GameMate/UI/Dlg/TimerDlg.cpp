@@ -193,10 +193,6 @@ BOOL CTimerDlg::OnInitDialog()
 
 	updateButtonText();
 
-	const auto& timerWindowRect = ext::get_singleton<Settings>().timer.windowRect;
-	const long screenMaxWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-	const long screenMaxHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-
 	const auto& timerSettings = ext::get_singleton<Settings>().timer;
 	m_timerWindow.SetColors(timerSettings.backgroundColor, timerSettings.textColor);
 	m_timerWindow.DisplayHours(timerSettings.displayHours);
@@ -204,11 +200,15 @@ BOOL CTimerDlg::OnInitDialog()
 	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
 	Layout::SetWindowMinimumSize(*this, kMinimumTimerWindowSize.cx, kMinimumTimerWindowSize.cy);
 
-	// Validate saved rect, TODO: check if visible on current screen
-	if (!timerWindowRect.IsRectEmpty())
-	{
+	const auto isRectOnCurrentScreen = [](const CRect& rect) {
+		const long screenMaxWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+		const long screenMaxHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+		return CRect().IntersectRect(rect, CRect(0, 0, screenMaxWidth, screenMaxHeight));
+	};
+	const auto& timerWindowRect = timerSettings.windowRect;
+	// Validating saved rect, check if visible on current screen
+	if (!timerWindowRect.IsRectEmpty() && isRectOnCurrentScreen(timerWindowRect))
 		MoveWindow(timerWindowRect);
-	}
 
 	CRect timerRect;
 	m_timerWindow.GetWindowRect(timerRect);

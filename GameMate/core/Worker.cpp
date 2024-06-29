@@ -137,10 +137,9 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
 
     for (auto& program : settings.processConfigurations)
     {
-        if (program->exeName == m_activeProcessName) // TODO add * support
+        if (program->MatchExeName(m_activeProcessName))
         {
-            if (program->enabled)
-                m_activeExeConfig = program;
+            m_activeExeConfig = program;
             break;
         }
     }

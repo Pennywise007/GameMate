@@ -223,12 +223,23 @@ struct ProcessConfiguration
     REGISTER_SERIALIZABLE_OBJECT();
     DECLARE_SERIALIZABLE_FIELD(bool, enabled, true);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, name, L"Configuration name");
-    DECLARE_SERIALIZABLE_FIELD(std::wstring, exeName);
     DECLARE_SERIALIZABLE_FIELD(std::list<Key>, keysToIgnoreAccidentialPress);
     DECLARE_SERIALIZABLE_FIELD(crosshair::Settings, crosshairSettings);
     DECLARE_SERIALIZABLE_FIELD((std::map<Bind, Actions>), actionsByBind);
 
-    void OnDeserializationFinished(); // TODO
+    const std::wstring& GetExeName() const;
+    void SetExeName(const std::wstring& exeName);
+    
+    // Check if givven exe name matches process configuration
+    bool MatchExeName(const std::wstring& exeName) const;
+private:
+    // Notification from serializer that deserialization is done for this object
+    void OnDeserializationEnd();
+
+    DECLARE_SERIALIZABLE_FIELD(std::wstring, exeName);
+
+    // Regular expression to match exe name
+    std::wregex exeNameRegex;
 };
 
 struct Settings
@@ -268,7 +279,7 @@ struct Settings
     DECLARE_SERIALIZABLE_FIELD(Bind, resetTimerBind);
     // UI
     DECLARE_SERIALIZABLE_FIELD(Rect, windowRect);
-    DECLARE_SERIALIZABLE_FIELD(bool, minimizeInterface, false);
+    DECLARE_SERIALIZABLE_FIELD(bool, minimizeInterface, true);
     DECLARE_SERIALIZABLE_FIELD(bool, displayHours, false);
     DECLARE_SERIALIZABLE_FIELD(COLORREF, textColor, RGB(0, 0, 0));
     DECLARE_SERIALIZABLE_FIELD(COLORREF, backgroundColor, GetSysColor(COLOR_3DFACE));

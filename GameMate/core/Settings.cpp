@@ -438,6 +438,41 @@ void actions_executor::Settings::Execute() const
 	}
 }
 
+const std::wstring& process_toolkit::ProcessConfiguration::GetExeName() const
+{
+	return exeName;
+}
+
+void process_toolkit::ProcessConfiguration::SetExeName(const std::wstring& _exeName)
+{
+	exeName = _exeName;
+
+	const std::wregex regexEscapeSymbols(L"[.^$|()\\[\\]{}+?\\\\]");
+	const std::wstring rep(L"\\\\&");
+	CString regexStr = std::regex_replace(exeName.c_str(),
+		regexEscapeSymbols,
+		rep,
+		std::regex_constants::format_sed | std::regex_constants::match_default).c_str();
+	regexStr.Replace(L"*", L".*?");
+
+	exeNameRegex = std::wregex(regexStr, std::regex::icase);
+}
+
+bool process_toolkit::ProcessConfiguration::MatchExeName(const std::wstring& exeName) const
+{
+	if (!enabled)
+		return false;
+
+	std::wsmatch xResults;
+	return std::regex_search(exeName, xResults, exeNameRegex);
+}
+
+void process_toolkit::ProcessConfiguration::OnDeserializationEnd()
+{
+	// We need to update the regex expression
+	SetExeName(exeName);
+}
+
 timer::Settings::Settings()
 {
 	// Init vk code here to avoid calling UpdateBind before object deserialization
