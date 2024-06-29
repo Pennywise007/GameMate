@@ -410,8 +410,7 @@ void CMainDlg::updateDriverInfoButton()
 	switch (ext::get_singleton<Settings>().inputSimulator)
 	{
 	case InputManager::InputSimulator::SendInput:
-		// TODO Warning about cheats detection
-		// warning +=
+		warning = L"Using of the default windows SendInput method can be detected by anti-cheat programs";
 		break;
 	case InputManager::InputSimulator::Razer:
 		break;
@@ -427,8 +426,9 @@ void CMainDlg::updateDriverInfoButton()
 		if (enchancePointerPrecisionIsOff && normalSpeed)
 			break;
 
-		// TODO warn about mouse move problems and ask to change windows mouse speed and disable enchancePointerPrecision
-		// warning +=
+		warning = L"Selected input method has some problem with SetMousePos, if you need to set mouse pos:\n"
+			L"- Disable 'Enchance pointer precision'"
+			L"- Set default mouse speed(10)";
 		break;
 	}
 	}

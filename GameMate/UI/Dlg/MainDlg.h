@@ -50,10 +50,10 @@ private:
 private:
 	HICON m_hIcon;
 	CComboBox m_inputSimulator;
-	CButtonsTabCtrl<CTabControl> m_tabControlModes;
 	CMFCButton m_buttonInputDriverInfo;
 	CButton m_buttonShowTimer;
 	CIconButton m_buttonShowTimerHotkey;
+	CButtonsTabCtrl<CTabControl> m_tabControlModes;
 
 private:
 	CTimerDlg m_timerDlg;
