@@ -13,7 +13,7 @@
 #define IDD_DIALOG_ACTIONS_EDIT         134
 #define IDD_DIALOG_EDIT_ACTIONS         134
 #define IDD_DIALOG_BIND_EDIT            137
-#define IDD_DIALOG_INPUT_EDITOR            137
+#define IDD_DIALOG_INPUT_EDITOR         137
 #define IDB_PNG_CROSSHAIR               143
 #define IDI_ICON1                       144
 #define IDB_PNG_CROSSHAIR_0_16          145

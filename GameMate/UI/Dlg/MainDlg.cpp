@@ -21,6 +21,7 @@
 
 #include <Controls/Layout/Layout.h>
 #include <Controls/TrayHelper/TrayHelper.h>
+#include <Controls/Tooltip/ToolTip.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -70,7 +71,7 @@ void CMainDlg::DoDataExchange(CDataExchange* pDX)
 
 	DDX_Control(pDX, IDC_TABCONTROL_MODES, m_tabControlModes());
 	DDX_Control(pDX, IDC_COMBO_INPUT_DRIVER, m_inputSimulator);
-	DDX_Control(pDX, IDC_MFCBUTTON_INPUT_DRIVER_INFO, m_buttonInputDriverInfo);
+	DDX_Control(pDX, IDC_MFCBUTTON_INPUT_DRIVER_INFO, m_buttonInputSimulatorInfo);
 	DDX_Control(pDX, IDC_CHECK_TIMER, m_buttonShowTimer);
 	DDX_Control(pDX, IDC_MFCBUTTON_TIMER_HOTKEY, m_buttonShowTimerHotkey);
 }
@@ -97,6 +98,8 @@ BOOL CMainDlg::OnInitDialog()
 	auto& settings = ext::get_singleton<Settings>();
 	if (settings.tracesEnabled)
 		ext::get_tracer().Enable();
+
+	m_buttonInputSimulatorInfo.SetImageOffset(7);
 
 	m_tabControlModes.SetDrawSelectedAsWindow();
 	m_tabControlModes.AddTab(L"Actions executor",
@@ -185,7 +188,7 @@ BOOL CMainDlg::OnInitDialog()
 			EXT_EXPECT(settings.inputSimulator != inputMode);
 
 			MessageBox((L"Fail reason: " + std::wstring(err.value()) +
-					   L". Program will use " + kDriverNames.get_value(inputMode)).c_str(),
+					   L". Switching mode to '" + kDriverNames.get_value(inputMode) + L"'").c_str(),
 					   L"Previously selected input simulator is not available",
 					   MB_ICONEXCLAMATION);
 		}
@@ -349,7 +352,7 @@ void CMainDlg::OnCbnSelchangeComboInputDriver()
 		EXT_DUMP_IF(InputManager::SetInputSimulator(newInputMode).has_value());
 
 		MessageBox((L"Fail reason: " + std::wstring(err.value()) +
-				   L". Program will use " + kDriverNames.get_value(newInputMode)).c_str(),
+				   L". Switching mode to '" + kDriverNames.get_value(newInputMode) + L"'").c_str(),
 				   (L"Can't use input simulator " + std::wstring(kDriverNames.get_value(selecetedInputSimulator))).c_str(),
 				   MB_ICONEXCLAMATION);
 
@@ -410,7 +413,7 @@ void CMainDlg::updateDriverInfoButton()
 	switch (ext::get_singleton<Settings>().inputSimulator)
 	{
 	case InputManager::InputSimulator::SendInput:
-		warning = L"Using of the default windows SendInput method can be detected by anti-cheat programs";
+		warning = L"When you don't use any of the simulators all program (key/mouse) input can be detected by anti-cheat programs.\n";
 		break;
 	case InputManager::InputSimulator::Razer:
 		break;
@@ -423,17 +426,27 @@ void CMainDlg::updateDriverInfoButton()
 
 		bool enchancePointerPrecisionIsOff = IntArr[2] == 0;
 		bool normalSpeed = speed == 10;
-		if (enchancePointerPrecisionIsOff && normalSpeed)
-			break;
-
-		warning = L"Selected input method has some problem with SetMousePos, if you need to set mouse pos:\n"
-			L"- Disable 'Enchance pointer precision'"
-			L"- Set default mouse speed(10)";
+		if (!enchancePointerPrecisionIsOff || !normalSpeed)
+		{
+			warning = L"Selected input method has some problem with SetMousePos, if you need to set mouse pos:\n"
+				L"- Disable 'Enchance pointer precision'\n"
+				L"- Set default mouse speed(10)\n";
+		}
 		break;
 	}
 	}
 
-	// TODO if (warning.IsEmpty())...
+	const auto iconSize = 17;
+	const auto iconId = warning.IsEmpty() ? IDI_INFORMATION : IDI_WARNING;
+
+	HICON icon;
+	auto res = SUCCEEDED(::LoadIconWithScaleDown(NULL, iconId, iconSize, iconSize, &icon));
+	EXT_ASSERT(res);
+
+	m_buttonInputSimulatorInfo.SetIcon(icon, RightCenter, iconSize, iconSize);
+
+	warning += L"Press to see more information.";
+	controls::SetTooltip(m_buttonInputSimulatorInfo, warning);
 }
 
 void CMainDlg::updateTimerButton()
