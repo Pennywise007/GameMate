@@ -388,5 +388,11 @@
     <Image Include="res\delay.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\start_recording.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\stop_recording.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>

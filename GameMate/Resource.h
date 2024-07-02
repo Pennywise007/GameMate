@@ -43,8 +43,6 @@
 #define IDB_PNG_CROSSHAIR_8_16          169
 #define IDB_PNG_CROSSHAIR_8_24          170
 #define IDB_PNG_CROSSHAIR_8_32          171
-#define IDI_ICON_START_RECORDING        172
-#define IDI_ICON_STOP_RECORDING         173
 #define IDB_PNG_ARROW_DOWN              174
 #define IDB_PNG_ARROW_UP                175
 #define IDD_DIALOG_INPUT_SIMULATOR      177
@@ -66,6 +64,9 @@
 #define IDD_DIALOG_EDIT_NUMBER          190
 #define IDD_DIALOG_TIMER                193
 #define IDD_DIALOG_TIMER_SETTINGS       195
+#define IDB_PNG1                        198
+#define IDB_PNG_START_RECORDING         198
+#define IDB_PNG_STOP_RECORDING          199
 #define IDC_TABCONTROL_MODES            1000
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
@@ -211,7 +212,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        198
+#define _APS_NEXT_RESOURCE_VALUE        200
 #define _APS_NEXT_COMMAND_VALUE         32781
 #define _APS_NEXT_CONTROL_VALUE         1118
 #define _APS_NEXT_SYMED_VALUE           101

@@ -127,9 +127,7 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 	str << m_actions->randomizeDelayMs;
 	m_editRandomizeDelays.SetWindowTextW(str.str().c_str());
 
-	// TODO find better icons, maybe https://www.iconfinder.com/icons/22947/red_stop_icon?coming-from=related-results
-	m_buttonRecord.SetImageOffset(0);
-	m_buttonRecord.SetIcon(IDI_ICON_START_RECORDING, Alignment::LeftCenter);
+	m_buttonRecord.SetBitmap(IDB_PNG_START_RECORDING, Alignment::LeftCenter);
 
 	m_checkUniteMouseMovements.SetCheck(m_actions->showMouseMovementsUnited);
 
@@ -240,11 +238,11 @@ BOOL CActionsEditorView::PreTranslateMessage(MSG* pMsg)
 				OnBnClickedButtonRemove();
 			break;
 		case 'C':
-			if (InputManager::IsKeyPressed(VK_CONTROL))
+			if (InputManager::IsKeyPressed(VK_LCONTROL) || InputManager::IsKeyPressed(VK_RCONTROL))
 				copyItemsToClipboard();
 			break;
 		case 'V':
-			if (InputManager::IsKeyPressed(VK_CONTROL))
+			if (InputManager::IsKeyPressed(VK_LCONTROL) || InputManager::IsKeyPressed(VK_RCONTROL))
 				pasteItemsFromClipboard();
 			break;
 		}
@@ -714,9 +712,17 @@ void CActionsEditorView::pasteItemsFromClipboard()
 	if (copiedData.actions.empty())
 		return;
 
+	// Insert items after last currently selected item
+	const int lastSelectedtem = m_listActions.GetLastSelectedItem();
 	m_listActions.ClearSelection();
+	if (lastSelectedtem != -1)
+		m_listActions.SelectItem(lastSelectedtem, false);
+
 	addActions(copiedData.actions, true);
 	onSettingsChanged(true);
+
+	if (lastSelectedtem != -1)
+		m_listActions.SelectItem(lastSelectedtem, false, false);
 }
 
 void CActionsEditorView::OnBnClickedButtonAdd()
@@ -793,14 +799,14 @@ void CActionsEditorView::OnBnClickedButtonRecord()
 	{
 		CFormView::SetTimer(TimerIds::eRecordingCounter0, kTimerInterval1Sec, nullptr);
 		m_buttonRecord.SetWindowTextW(L"Recording starts in 3...");
-		m_buttonRecord.SetIcon(IDI_ICON_STOP_RECORDING, Alignment::LeftCenter);
+		m_buttonRecord.SetBitmap(IDB_PNG_STOP_RECORDING, Alignment::LeftCenter);
 	}
 	else
 	{
 		m_buttonRecord.SetWindowTextW(L"Saving actions...");
 		stopRecoring();
 		m_buttonRecord.SetWindowTextW(L"Record actions");
-		m_buttonRecord.SetIcon(IDI_ICON_START_RECORDING, Alignment::LeftCenter);
+		m_buttonRecord.SetBitmap(IDB_PNG_START_RECORDING, Alignment::LeftCenter);
 	}
 }
 

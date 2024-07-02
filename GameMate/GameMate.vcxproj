@@ -415,7 +415,9 @@
     <Image Include="res\GameMate.ico" />
     <Image Include="res\settings.png" />
     <Image Include="res\start_recording.ico" />
+    <Image Include="res\start_recording.png" />
     <Image Include="res\stop_recording.ico" />
+    <Image Include="res\stop_recording.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
