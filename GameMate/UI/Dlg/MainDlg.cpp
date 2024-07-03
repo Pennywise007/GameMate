@@ -224,7 +224,7 @@ BOOL CMainDlg::OnInitDialog()
 	// Don't allow to make our dialog smaller than it is in resource files.
 	CRect rect;
 	GetWindowRect(rect);
-	Layout::SetWindowMinimumSize(*this, 600, rect.Height());
+	Layout::SetWindowMinimumSize(*this, 670, rect.Height());
 	
 	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
 

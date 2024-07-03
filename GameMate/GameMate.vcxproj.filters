@@ -361,16 +361,10 @@
     <Image Include="res\crosshairs\crosshair_8_32.png">
       <Filter>Resource Files\crosshairs</Filter>
     </Image>
-    <Image Include="res\stop_recording.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
     <Image Include="res\arrow_down.png">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\arrow_up.png">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="res\start_recording.ico">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="res\settings.png">

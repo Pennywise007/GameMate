@@ -179,6 +179,7 @@ void CActionsEditorView::Init(Actions& actions, OnSettingsChangedCallback callba
 	updateButtonStates();
 
 	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
+	SetScrollSizes(MM_TEXT, CSize(0, 0));
 }
 
 void CActionsEditorView::onSettingsChanged(bool changesInActionsList)
@@ -985,6 +986,11 @@ BOOL CActionsEditDlg::OnInitDialog()
 	m_editDescription.SetWindowTextW(m_actions.description.c_str());
 
 	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
+
+	Layout::AnchorWindow(*editorView, *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
+	Layout::AnchorWindow(*editorView, *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
+
+	Layout::SetWindowMinimumSize(*this, windowRect.Width(), windowRect.Height());
 
 	return TRUE;
 }
