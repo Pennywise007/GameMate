@@ -40,7 +40,7 @@ protected:
 	afx_msg void OnBnClickedButtonRemoveConfiguration();
 	afx_msg void OnBnClickedCheckEnabled();
 	afx_msg void OnCbnEditchangeComboExeName();
-	afx_msg void OnCbnSelendokComboExeName();
+	afx_msg void OnCbnSelendChangedComboExeName();
 	afx_msg void OnCbnSetfocusComboExeName();
 	afx_msg void OnBnClickedButtonAddMacros();
 	afx_msg void OnBnClickedButtonRemoveMacros();

@@ -35,7 +35,7 @@ inline int operator<(const IBaseInput& first, const IBaseInput& second)
 struct Key : IBaseInput
 {
     Key() = default;
-    Key(WORD _vkCode) : vkCode(_vkCode) {}
+    Key(WORD _vkCode) { vkCode = _vkCode; }
 
     // Get text
     [[nodiscard]] std::wstring ToString() const;
@@ -223,7 +223,7 @@ struct ProcessConfiguration
     REGISTER_SERIALIZABLE_OBJECT();
     DECLARE_SERIALIZABLE_FIELD(bool, enabled, true);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, name, L"Configuration name");
-    DECLARE_SERIALIZABLE_FIELD(std::list<Key>, keysToIgnoreAccidentialPress);
+    DECLARE_SERIALIZABLE_FIELD(std::list<Key>, keysToIgnoreAccidentalPress);
     DECLARE_SERIALIZABLE_FIELD(crosshair::Settings, crosshairSettings);
     DECLARE_SERIALIZABLE_FIELD((std::map<Bind, Actions>), actionsByBind);
 

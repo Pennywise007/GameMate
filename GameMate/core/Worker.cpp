@@ -148,6 +148,8 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
     if (!m_activeExeConfig)
         return;
 
+    EXT_TRACE() << EXT_TRACE_FUNCTION << "active config " << m_activeExeConfig->name;
+
     auto& crossahair = m_activeExeConfig->crosshairSettings;
     if (crossahair.show)
         m_crosshairWindow.AttachCrosshairToWindow(crossahair, m_activeWindow);
@@ -206,7 +208,7 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
         }
 
         // Ignore Windows button press
-        for (auto& key : m_activeExeConfig->keysToIgnoreAccidentialPress)
+        for (auto& key : m_activeExeConfig->keysToIgnoreAccidentalPress)
         {
             if (!key.IsPressed(vkCode, down))
                 continue;

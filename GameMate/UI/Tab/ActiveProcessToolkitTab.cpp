@@ -84,8 +84,12 @@ BEGIN_MESSAGE_MAP(CActiveProcessToolkitTab, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_RENAME_CONFIGURATION, &CActiveProcessToolkitTab::OnBnClickedButtonRenameConfiguration)
 	ON_BN_CLICKED(IDC_BUTTON_REMOVE_CONFIGURATION, &CActiveProcessToolkitTab::OnBnClickedButtonRemoveConfiguration)
 	ON_BN_CLICKED(IDC_CHECK_ENABLED, &CActiveProcessToolkitTab::OnBnClickedCheckEnabled)
-	ON_CBN_SELENDOK(IDC_COMBO_EXE_NAME, &CActiveProcessToolkitTab::OnCbnSelendokComboExeName)
+	// ON_CBN_SELENDOK and ON_CBN_SELENDCANCEL got the same callback for this combobox since user can enter
+	// text and change focus(we receive SELENDCANCEL) and we want to save the value
+	ON_CBN_SELENDOK(IDC_COMBO_EXE_NAME, &CActiveProcessToolkitTab::OnCbnSelendChangedComboExeName)
+	ON_CBN_SELENDCANCEL(IDC_COMBO_EXE_NAME, &CActiveProcessToolkitTab::OnCbnSelendChangedComboExeName)
 	ON_CBN_SETFOCUS(IDC_COMBO_EXE_NAME, &CActiveProcessToolkitTab::OnCbnSetfocusComboExeName)
+	ON_CBN_EDITCHANGE(IDC_COMBO_EXE_NAME, &CActiveProcessToolkitTab::OnCbnEditchangeComboExeName)
 	ON_BN_CLICKED(IDC_BUTTON_ADD_MACROS, &CActiveProcessToolkitTab::OnBnClickedButtonAddMacros)
 	ON_BN_CLICKED(IDC_BUTTON_REMOVE_MACROS, &CActiveProcessToolkitTab::OnBnClickedButtonRemoveMacros)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_ACTIONS, &CActiveProcessToolkitTab::OnLvnItemchangedListActions)
@@ -93,7 +97,6 @@ BEGIN_MESSAGE_MAP(CActiveProcessToolkitTab, CDialogEx)
 	ON_CBN_SELENDOK(IDC_COMBO_CROSSHAIR_SELECTION, &CActiveProcessToolkitTab::OnCbnSelendokComboCrosshairSelection)
 	ON_BN_CLICKED(IDC_MFCCOLORBUTTON_CROSSHAIR_COLOR, &CActiveProcessToolkitTab::OnBnClickedMfccolorbuttonCrosshairColor)
 	ON_CBN_SELENDOK(IDC_COMBO_CROSSHAIR_SIZE, &CActiveProcessToolkitTab::OnCbnSelendokComboCrosshairSize)
-	ON_CBN_EDITCHANGE(IDC_COMBO_EXE_NAME, &CActiveProcessToolkitTab::OnCbnEditchangeComboExeName)
 	ON_BN_CLICKED(IDC_BUTTON_ACCIDENTAL_PRESS_ADD_CUSTOM, &CActiveProcessToolkitTab::OnBnClickedButtonAccidentalPressAddCustom)
 	ON_CBN_SELCHANGE(IDC_COMBO_ACCIDENTAL_PRESS, &CActiveProcessToolkitTab::OnCbnSelchangeComboAccidentalPress)
 	ON_WM_DESTROY()
@@ -303,7 +306,7 @@ void CActiveProcessToolkitTab::UpdateControlsData()
 	// updating control BK color
 	OnCbnEditchangeComboExeName();
 
-	for (const auto& bind : m_configuration->keysToIgnoreAccidentialPress)
+	for (const auto& bind : m_configuration->keysToIgnoreAccidentalPress)
 	{
 		addKeyToIgnore(bind);
 	}
@@ -686,8 +689,9 @@ void CActiveProcessToolkitTab::OnCbnEditchangeComboExeName()
 	m_exeName.SetBkColor(std::move(color));
 }
 
-void CActiveProcessToolkitTab::OnCbnSelendokComboExeName()
+void CActiveProcessToolkitTab::OnCbnSelendChangedComboExeName()
 {
+	// When user select values from combobox OnCbnEditchangeComboExeName is not called
 	OnCbnEditchangeComboExeName();
 
 	CString text;
@@ -878,24 +882,24 @@ void CActiveProcessToolkitTab::OnBnClickedButtonAccidentalPressAddCustom()
 
 	addKeyToIgnore(keyToAdd.value());
 
-	auto& keys = m_configuration->keysToIgnoreAccidentialPress;
+	auto& keys = m_configuration->keysToIgnoreAccidentalPress;
 	auto it = std::find_if(keys.cbegin(), keys.cend(), [code = keyToAdd->vkCode](const auto& a) { return a.vkCode == code; });
 	if (it == keys.cend())
 	{
-		m_configuration->keysToIgnoreAccidentialPress.emplace_back(*keyToAdd);
+		m_configuration->keysToIgnoreAccidentalPress.emplace_back(*keyToAdd);
 		ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
 	}
 }
 
 void CActiveProcessToolkitTab::OnCbnSelchangeComboAccidentalPress()
 {
-	m_configuration->keysToIgnoreAccidentialPress.clear();
+	m_configuration->keysToIgnoreAccidentalPress.clear();
 	for (int i = 0, count = m_comboAccidentalPress.GetCount(); i < count; ++i)
 	{
 		if (m_comboAccidentalPress.GetCheck(i))
 		{
 			Key* key = (Key*)m_comboAccidentalPress.GetItemDataPtr(i);
-			m_configuration->keysToIgnoreAccidentialPress.emplace_back(*key);
+			m_configuration->keysToIgnoreAccidentalPress.emplace_back(*key);
 		}
 	}
 	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);

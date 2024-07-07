@@ -453,18 +453,18 @@ void process_toolkit::ProcessConfiguration::SetExeName(const std::wstring& _exeN
 		regexEscapeSymbols,
 		rep,
 		std::regex_constants::format_sed | std::regex_constants::match_default).c_str();
-	regexStr.Replace(L"*", L".*?");
+	regexStr.Replace(L"*", L".*");
 
 	exeNameRegex = std::wregex(regexStr, std::regex::icase);
 }
 
-bool process_toolkit::ProcessConfiguration::MatchExeName(const std::wstring& exeName) const
+bool process_toolkit::ProcessConfiguration::MatchExeName(const std::wstring& _exeName) const
 {
-	if (!enabled)
+	if (!enabled || exeName.empty())
 		return false;
 
 	std::wsmatch xResults;
-	return std::regex_search(exeName, xResults, exeNameRegex);
+	return std::regex_search(_exeName, xResults, exeNameRegex);
 }
 
 void process_toolkit::ProcessConfiguration::OnDeserializationEnd()
