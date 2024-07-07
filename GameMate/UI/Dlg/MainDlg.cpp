@@ -102,12 +102,12 @@ BOOL CMainDlg::OnInitDialog()
 	m_buttonInputSimulatorInfo.SetImageOffset(7);
 
 	m_tabControlModes.SetDrawSelectedAsWindow();
-	m_tabControlModes.AddTab(L"Actions executor",
-							 std::make_shared<CActionsExecutorTab>(&m_tabControlModes()),
-							 CActionsExecutorTab::IDD);
 	m_tabControlModes.AddTab(L"Active process toolkit",
 							 std::make_shared<CActiveProcessToolkitTab>(&m_tabControlModes()),
 							 CActiveProcessToolkitTab::IDD);
+	m_tabControlModes.AddTab(L"Actions executor",
+							 std::make_shared<CActionsExecutorTab>(&m_tabControlModes()),
+							 CActionsExecutorTab::IDD);
 	m_tabControlModes.SetCurSel(int(settings.selectedMode));
 	m_tabControlModes.AutoResizeTabsToFitFullControlWidth();
 	updateDriverInfoButton();

@@ -295,8 +295,8 @@ public:
     void SaveSettings();
 
     enum class ProgramMode {
+        eActiveProcessToolkit,
         eActionExecutor,
-        eActiveProcessToolkit
     };
 
     REGISTER_SERIALIZABLE_OBJECT();
@@ -305,7 +305,7 @@ public:
     DECLARE_SERIALIZABLE_FIELD(bool, tracesEnabled, false);
     // UI
     DECLARE_SERIALIZABLE_FIELD(InputManager::InputSimulator, inputSimulator, InputManager::InputSimulator::Auto);
-    DECLARE_SERIALIZABLE_FIELD(ProgramMode, selectedMode, ProgramMode::eActionExecutor);
+    DECLARE_SERIALIZABLE_FIELD(ProgramMode, selectedMode, ProgramMode::eActiveProcessToolkit);
     DECLARE_SERIALIZABLE_FIELD(process_toolkit::Settings, process_toolkit);
     DECLARE_SERIALIZABLE_FIELD(actions_executor::Settings, actions_executor);
     DECLARE_SERIALIZABLE_FIELD(timer::Settings, timer);

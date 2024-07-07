@@ -394,7 +394,7 @@ void CActiveProcessToolkitTab::AddNewActions(const Bind& keybind, Actions&& newA
 	if (it.first->second.enableRandomDelay)
 		str << it.first->second.randomizeDelayMs;
 	else
-		str << L'0';
+		str << L'-';
 	m_listActions.SetItemText(item, Columns::eRandomizeDelay, str.str().c_str());
 
 	m_listActions.SelectItem(item);

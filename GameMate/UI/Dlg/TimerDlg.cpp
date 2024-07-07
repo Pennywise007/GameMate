@@ -143,7 +143,6 @@ CString CTimerWindow::getDisplayText() const
 		currentTime += std::chrono::duration_cast<std::chrono::milliseconds>(
 			std::chrono::high_resolution_clock::now() - m_startPoint);
 
-	CString text;
 	auto hours = std::chrono::duration_cast<std::chrono::hours>(currentTime);
 	currentTime -= hours;
 	auto minutes = std::chrono::duration_cast<std::chrono::minutes>(currentTime);
@@ -151,10 +150,11 @@ CString CTimerWindow::getDisplayText() const
 	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(currentTime);
 	currentTime -= seconds;
 	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime);
+	
+	CString text;
 	if (m_displayHours)
-		text.Format(L"%02d:%02d:%02lld.%02lld", hours.count(), minutes.count(), seconds.count(), milliseconds.count() / 100);
-	else
-		text.Format(L"%02d:%02lld.%02lld", minutes.count(), seconds.count(), milliseconds.count() / 100);
+		text.Format(L"%02d:", hours.count());
+	text.Format(L"%s%02d:%02lld.%02lld", text.GetString(), minutes.count(), seconds.count(), milliseconds.count() / 10);
 
 	return text;
 }
