@@ -55,6 +55,20 @@ static_assert(!kDriverNames.contain_duplicate_values());
 
 static_assert(kComboboxIndexesToInputModes.size() == kDriverNames.size());
 
+template <class T>
+[[nodiscard]] CRect add_tab(CTabControl& tab, const wchar_t* tabName)
+{
+	auto wnd = std::make_shared<T>(&tab());
+	wnd->Create(T::IDD, &tab());
+
+	CRect rect;
+	wnd->GetWindowRect(rect);
+
+	tab.AddTab(tabName, std::move(wnd));
+
+	return rect;
+}
+
 } // namespace
 
 CMainDlg::CMainDlg(CWnd* pParent /*=nullptr*/)
@@ -101,13 +115,10 @@ BOOL CMainDlg::OnInitDialog()
 
 	m_buttonInputSimulatorInfo.SetImageOffset(7);
 
+	std::list<CRect> tabRects;
 	m_tabControlModes.SetDrawSelectedAsWindow();
-	m_tabControlModes.AddTab(L"Active process toolkit",
-							 std::make_shared<CActiveProcessToolkitTab>(&m_tabControlModes()),
-							 CActiveProcessToolkitTab::IDD);
-	m_tabControlModes.AddTab(L"Actions executor",
-							 std::make_shared<CActionsExecutorTab>(&m_tabControlModes()),
-							 CActionsExecutorTab::IDD);
+	tabRects.emplace_back(add_tab<CActiveProcessToolkitTab>(m_tabControlModes, L"Active process toolkit"));
+	tabRects.emplace_back(add_tab<CActionsExecutorTab>(m_tabControlModes, L"Actions executor"));
 	m_tabControlModes.SetCurSel(int(settings.selectedMode));
 	m_tabControlModes.AutoResizeTabsToFitFullControlWidth();
 	updateDriverInfoButton();
@@ -118,11 +129,21 @@ BOOL CMainDlg::OnInitDialog()
 		{
 			HMENU hMenu = ::GetSubMenu(LoadMenu(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MENU_TRAY)), 0);
 			ENSURE(hMenu);
-								 
-			if (ext::get_singleton<Settings>().process_toolkit.enabled)
+
+			const auto& settings = ext::get_singleton<Settings>().process_toolkit;
+			if (settings.enabled)
+			{
 				ENSURE(::DeleteMenu(hMenu, ID_MENU_ENABLE_PROCESS_TOOLKIT, MF_BYCOMMAND));
+
+				std::wstring buttonText = L"Disable active process toolkit(" + settings.enableBind.ToString() + L")";
+				ENSURE(::ModifyMenu(hMenu, ID_MENU_DISABLE_PROCESS_TOOLKIT, MF_BYCOMMAND | MF_STRING, ID_MENU_DISABLE_PROCESS_TOOLKIT, buttonText.c_str()));
+			}
 			else
+			{
 				ENSURE(::DeleteMenu(hMenu, ID_MENU_DISABLE_PROCESS_TOOLKIT, MF_BYCOMMAND));
+				std::wstring buttonText = L"Enable active process toolkit(" + settings.enableBind.ToString() + L")";
+				ENSURE(::ModifyMenu(hMenu, ID_MENU_ENABLE_PROCESS_TOOLKIT, MF_BYCOMMAND | MF_STRING, ID_MENU_DISABLE_PROCESS_TOOLKIT, buttonText.c_str()));
+			}
 
 			if (ext::get_tracer().CanTrace(ext::ITracer::Level::eDebug))
 				ENSURE(::DeleteMenu(hMenu, ID_MENU_ENABLE_TRACES, MF_BYCOMMAND));
@@ -216,17 +237,31 @@ BOOL CMainDlg::OnInitDialog()
 	m_timerDlg.Create(CTimerDlg::IDD, GetDesktopWindow());
 	updateTimerButton();
 
-	// Deserialize settings before starting worker to avoid any mouse lags
-	EXT_UNUSED(ext::get_singleton<Settings>());
-	// Starting worker
-	EXT_UNUSED(ext::get_singleton<Worker>());
+
+
+	CRect tabRect;
+	m_tabControlModes.GetTabWindow(0)->GetWindowRect(tabRect);
+
+	CSize maxSize = tabRect.Size();
+	for (const auto& rect : tabRects)
+	{
+		maxSize.cx = std::max<LONG>(maxSize.cx, rect.Width());
+		maxSize.cy = std::max<LONG>(maxSize.cy, rect.Height());
+	}
 
 	// Don't allow to make our dialog smaller than it is in resource files.
 	CRect rect;
 	GetWindowRect(rect);
-	Layout::SetWindowMinimumSize(*this, 670, rect.Height());
-	
+	rect.right += maxSize.cx - tabRect.Width();
+	rect.bottom += maxSize.cy - tabRect.Height();
+
+	Layout::SetWindowMinimumSize(*this, rect.Width(), rect.Height());
 	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
+
+	// Deserialize settings before starting worker to avoid any mouse lags
+	EXT_UNUSED(ext::get_singleton<Settings>());
+	// Starting worker
+	EXT_UNUSED(ext::get_singleton<Worker>());
 
 	return TRUE;
 }

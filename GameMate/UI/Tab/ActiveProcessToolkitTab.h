@@ -12,6 +12,7 @@
 #include <Controls/ComboBox/CIconComboBox/IconComboBox.h>
 #include <Controls/Tables/List/ListGroupCtrl/ListGroupCtrl.h>
 #include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
+#include <Controls/Slider/Slider.h>
 
 class CActiveProcessToolkitTab : public CDialogEx, ext::events::ScopeSubscription<ISettingsChanged>
 {
@@ -51,6 +52,8 @@ protected:
 	afx_msg void OnCbnSelendokComboCrosshairSize();
 	afx_msg void OnBnClickedButtonAccidentalPressAddCustom();
 	afx_msg void OnCbnSelchangeComboAccidentalPress();
+	afx_msg void OnBnClickedCheckChangeBrightness();
+	afx_msg void OnTRBNThumbPosChangingSliderBrightness(NMHDR* pNMHDR, LRESULT* pResult);
 
 private: // ISettingsChanged
 	void OnSettingsChanged(ISettingsChanged::ChangedType changedType) override;
@@ -73,6 +76,9 @@ private: // controls
 	CStatic m_staticExeNameInfo;
 	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listActions;
 	CCheckComboBox m_comboAccidentalPress;
+	CButton m_checkChangeBrightness;
+	CSlider m_brightness;
+	CStatic m_staticBrightnessInfo;
 	CButton m_checkboxShowCrosshair;
 	CIconComboBox m_comboCrosshairs;
 	CStatic m_staticCrosshairInfo;

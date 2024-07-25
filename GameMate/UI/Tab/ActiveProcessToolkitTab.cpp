@@ -14,6 +14,7 @@
 #include "UI/Dlg/AddingProcessToolkitDlg.h"
 
 #include "core/Crosshairs.h"
+#include "core/DisplayBrightnessController.h"
 
 #include <ext/scope/defer.h>
 #include <ext/std/filesystem.h>
@@ -75,6 +76,9 @@ void CActiveProcessToolkitTab::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON_ADD_CONFIGURATION, m_buttonAddConfiguration);
 	DDX_Control(pDX, IDC_STATIC_EXE_NAME_INFO, m_staticExeNameInfo);
 	DDX_Control(pDX, IDC_COMBO_ACCIDENTAL_PRESS, m_comboAccidentalPress);
+	DDX_Control(pDX, IDC_SLIDER_BRIGHTNESS, m_brightness);
+	DDX_Control(pDX, IDC_CHECK_CHANGE_BRIGHTNESS, m_checkChangeBrightness);
+	DDX_Control(pDX, IDC_STATIC_BRIGHTNESS_INFO, m_staticBrightnessInfo);
 }
 
 BEGIN_MESSAGE_MAP(CActiveProcessToolkitTab, CDialogEx)
@@ -100,6 +104,8 @@ BEGIN_MESSAGE_MAP(CActiveProcessToolkitTab, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_ACCIDENTAL_PRESS_ADD_CUSTOM, &CActiveProcessToolkitTab::OnBnClickedButtonAccidentalPressAddCustom)
 	ON_CBN_SELCHANGE(IDC_COMBO_ACCIDENTAL_PRESS, &CActiveProcessToolkitTab::OnCbnSelchangeComboAccidentalPress)
 	ON_WM_DESTROY()
+	ON_BN_CLICKED(IDC_CHECK_CHANGE_BRIGHTNESS, &CActiveProcessToolkitTab::OnBnClickedCheckChangeBrightness)
+	ON_NOTIFY(TRBN_THUMBPOSCHANGING, IDC_SLIDER_BRIGHTNESS, &CActiveProcessToolkitTab::OnTRBNThumbPosChangingSliderBrightness)
 END_MESSAGE_MAP()
 
 BOOL CActiveProcessToolkitTab::OnInitDialog()
@@ -139,6 +145,7 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 		L"$GAME_MATE_FOLDER$\\res\n"
 		L"Note: all images bigger than 32x32 will be ignored."
 	);
+	addInfoIconAndTooltip(m_staticBrightnessInfo, L"");
 
 	m_comboboxCrosshairSize.AddString(L"Small(16x16)");
     m_comboboxCrosshairSize.AddString(L"Medium(24x24)");
@@ -233,6 +240,8 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 		m_comboAccidentalPress.SetItemDataPtr(res, new Key(key));
 	}
 	m_comboAccidentalPress.SetCueBanner(L"Select buttons to ignore the first press...");
+	m_brightness.SetTooltipTextFormat(L"%.lf");
+	m_brightness.SetIncrementStep(1);
 
 	UpdateControlsData();
 
@@ -320,6 +329,10 @@ void CActiveProcessToolkitTab::UpdateControlsData()
 	}
 	GetDlgItem(IDC_BUTTON_REMOVE_MACROS)->EnableWindow(m_listActions.GetSelectedCount() > 0);
 
+	m_checkChangeBrightness.SetCheck(m_configuration->changeBrightness);
+	OnBnClickedCheckChangeBrightness();
+	m_brightness.SetPositions(std::make_pair(m_configuration->brightnessLevel, m_configuration->brightnessLevel));
+
 	auto& crosshair = m_configuration->crosshairSettings;
 	m_checkboxShowCrosshair.SetCheck(crosshair.show);
 	m_comboboxCrosshairSize.EnableWindow(crosshair.show);
@@ -357,11 +370,12 @@ void CActiveProcessToolkitTab::UpdateControlsData()
 
 void CActiveProcessToolkitTab::UpdateEnableButton()
 {
-	const bool enabled = ext::get_singleton<Settings>().process_toolkit.enabled;
+	const auto& settings = ext::get_singleton<Settings>().process_toolkit;
+	const bool enabled = settings.enabled;
 	m_checkEnabled.UseDefaultBkColor(enabled);
 
 	CString buttonText = enabled ? L"Disable" : L"Enable";
-	buttonText += L" active process toolkit(Shift + F8)";
+	buttonText += (L" active process toolkit(" + settings.enableBind.ToString() + L")").c_str();
 	m_checkEnabled.SetWindowTextW(buttonText);
 	m_checkEnabled.SetCheck(enabled ? BST_CHECKED : BST_UNCHECKED);
 }
@@ -903,6 +917,43 @@ void CActiveProcessToolkitTab::OnCbnSelchangeComboAccidentalPress()
 		}
 	}
 	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+}
+
+void CActiveProcessToolkitTab::OnBnClickedCheckChangeBrightness()
+{
+	m_configuration->changeBrightness = m_checkChangeBrightness.GetCheck();
+
+	const bool brightnessControllSupported = DisplayBrightnessController::BrightnessControlAvailable();
+	if (!brightnessControllSupported)
+	{
+		m_checkChangeBrightness.EnableWindow(FALSE);
+		m_brightness.EnableWindow(FALSE);
+	}
+	else
+	{
+		m_checkChangeBrightness.EnableWindow(TRUE);
+		m_brightness.EnableWindow(m_configuration->changeBrightness);
+	}
+
+	CString tooltip;
+	if (!brightnessControllSupported)
+		tooltip = L"Can't find any display which can support brightness control.\n";
+	tooltip += L"This feature works only if you enabled DDC/CI on your HDMI monitor or if you use build-in monitor.";
+	controls::SetTooltip(m_staticBrightnessInfo, tooltip);
+
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+}
+
+void CActiveProcessToolkitTab::OnTRBNThumbPosChangingSliderBrightness(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	NMTRBTHUMBPOSCHANGING* pNMTPC = reinterpret_cast<NMTRBTHUMBPOSCHANGING*>(pNMHDR);
+
+	ASSERT(pNMTPC->nReason == (int)CSlider::TrackMode::TRACK_LEFT);
+	m_configuration->brightnessLevel = pNMTPC->dwPos;
+
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+
+	*pResult = 0;
 }
 
 void CActiveProcessToolkitTab::OnSettingsChanged(ISettingsChanged::ChangedType changedType)

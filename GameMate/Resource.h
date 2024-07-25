@@ -73,6 +73,7 @@
 #define IDC_BUTTON_COPY_TAB             1003
 #define IDC_BUTTON_RENAME_TAB           1003
 #define IDC_SLIDER1                     1004
+#define IDC_SLIDER_BRIGHTNESS           1004
 #define IDC_EDIT_TAB_NAME               1005
 #define IDC_STATIC_TAB_NAME             1006
 #define IDC_COMBO_COPY_TAB_SELECTION    1007
@@ -88,6 +89,7 @@
 #define IDC_MACROSES_GROUP2             1015
 #define IDC_MACROSES_GROUP3             1016
 #define IDC_BUTTON_RECORD               1017
+#define IDC_MACROSES_GROUP4             1017
 #define IDC_EDIT_ACTION                 1024
 #define IDC_EDIT_RANDOMIZE_DELAYS       1024
 #define IDC_EDIT_INTERVAL_MIN           1024
@@ -115,12 +117,15 @@
 #define IDC_CHECK_USE                   1038
 #define IDC_CHECK_SHOW_CROSSHAIR        1038
 #define IDC_STATIC_CROSSHAIR_INFO       1039
+#define IDC_CHECK_CHANGE_BRIGHTNESS     1040
 #define IDC_COMBO_CROSSHAIR_SELECTION2  1041
 #define IDC_STATIC_EXE_NAME_INFO        1041
 #define IDC_MFCBUTTON1                  1042
 #define IDC_MFCBUTTON_INPUT_DRIVER_INFO 1042
 #define IDC_MFCBUTTON_SETTINGS          1042
 #define IDC_MFCBUTTON_HOTKEY            1042
+#define IDC_STATIC_CROSSHAIR_INFO2      1042
+#define IDC_STATIC_BRIGHTNESS_INFO      1042
 #define IDC_BUTTON_MOVE_UP              1043
 #define IDC_MFCBUTTON_TIMER_HOTKEY      1043
 #define IDC_BUTTON_MOVE_UP2             1044

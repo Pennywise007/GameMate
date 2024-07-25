@@ -95,6 +95,9 @@ void ResizeCrosshair(CBitmap& bitmap, const CSize& size)
 AttachableCrosshairWindow* g_crosshairWindow = nullptr;
 
 void CALLBACK WinPosChangedProc(HWINEVENTHOOK hWinEventHook, DWORD event, HWND hwnd, LONG idObject, LONG idChild, DWORD dwEventThread, DWORD dwmsEventTime) {
+    if (idObject != OBJID_WINDOW)
+        return;
+    
     g_crosshairWindow->OnWindowPosChanged(hwnd);
 }
 

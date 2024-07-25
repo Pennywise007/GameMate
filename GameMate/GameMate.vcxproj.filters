@@ -155,6 +155,15 @@
     <ClInclude Include="Resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
+    <ClInclude Include="core\DisplayBrightnessController.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\WinRTMonitorInfo.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Slider\Slider.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\TabControl\TabControl.cpp">
@@ -263,6 +272,15 @@
       <Filter>UI\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\ComboBox\CheckCombobox\CheckComboBox.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="core\WinRTMonitorInfo.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\DisplayBrightnessController.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Slider\Slider.cpp">
       <Filter>UI\Controls</Filter>
     </ClCompile>
   </ItemGroup>

@@ -2,8 +2,9 @@
 #include "psapi.h"
 #include "resource.h"
 
-#include "InputManager.h"
 #include "Crosshairs.h"
+#include "DisplayBrightnessController.h"
+#include "InputManager.h"
 #include "Worker.h"
 
 #include <ext/thread/invoker.h>
@@ -127,7 +128,9 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
 
     if (m_activeExeConfig)
     {
+        ext::get_singleton<DisplayBrightnessController>().RestoreBrightness();
         m_crosshairWindow.RemoveCrosshairWindow();
+
         m_activeExeConfig = nullptr;
     }
 
@@ -150,6 +153,9 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
 
     EXT_TRACE() << EXT_TRACE_FUNCTION << "active config " << m_activeExeConfig->name;
 
+    if (m_activeExeConfig->changeBrightness)
+        ext::get_singleton<DisplayBrightnessController>().SetBrightnessByHWND(m_activeWindow, m_activeExeConfig->brightnessLevel);
+
     auto& crossahair = m_activeExeConfig->crosshairSettings;
     if (crossahair.show)
         m_crosshairWindow.AttachCrosshairToWindow(crossahair, m_activeWindow);
@@ -160,17 +166,16 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
     if (m_keyHandlingBlocked)
         return false;
 
-    // Check if program working mode switched
-    if (vkCode == VK_F9 && !down && InputManager::IsKeyPressed(VK_SHIFT))
-    {
-        auto& settings = ext::get_singleton<Settings>().process_toolkit;
-        settings.enabled = !settings.enabled;
-        ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+    auto& settings = ext::get_singleton<Settings>();
 
+    // Check if any bind was pressed
+    if (settings.process_toolkit.enableBind.IsPressed(vkCode, down))
+    {
+        settings.process_toolkit.enabled = !settings.process_toolkit.enabled;
+        ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
         return false;
     }
 
-    auto& settings = ext::get_singleton<Settings>();
     if (settings.actions_executor.enableBind.IsPressed(vkCode, down))
     {
         settings.actions_executor.enabled = !settings.actions_executor.enabled;
@@ -198,16 +203,7 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
 
     if (!!m_activeExeConfig)
     {
-        for (auto&& [bind, actions] : m_activeExeConfig->actionsByBind)
-        {
-            if (bind.IsPressed(vkCode, down))
-            {
-                m_macrosExecutor.add_task([](Actions actions) { actions.Execute(); }, actions);
-                return true;
-            }
-        }
-
-        // Ignore Windows button press
+        // Ignore accidental press
         for (auto& key : m_activeExeConfig->keysToIgnoreAccidentalPress)
         {
             if (!key.IsPressed(vkCode, down))
@@ -224,6 +220,16 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
                 key.lastTimeWhenKeyWasIgnored = std::move(now);
 
             return true;
+        }
+
+        // Execute binds commands
+        for (auto&& [bind, actions] : m_activeExeConfig->actionsByBind)
+        {
+            if (bind.IsPressed(vkCode, down))
+            {
+                m_macrosExecutor.add_task([](Actions actions) { actions.Execute(); }, actions);
+                return true;
+            }
         }
     }
 

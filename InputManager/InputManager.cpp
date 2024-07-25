@@ -314,6 +314,19 @@ bool InputManager::IsKeyPressed(DWORD vkCode)
 #ifdef DONT_USE_HOOK
     return ::GetKeyState(vkCode) & 0x8000;
 #else
+
+    switch (vkCode)
+    {
+    case VK_SHIFT:
+        return IsKeyPressed(VK_LSHIFT) || IsKeyPressed(VK_RSHIFT);
+    case VK_CONTROL:
+        return IsKeyPressed(VK_LCONTROL) || IsKeyPressed(VK_RCONTROL);
+    case VK_MENU:
+        return IsKeyPressed(VK_LMENU) || IsKeyPressed(VK_RMENU);
+    default:
+        break;
+    }
+
     auto& keyStates = ext::get_singleton<InputManager>().m_keyStates;
     if (vkCode < keyStates.size()) {
         return keyStates[vkCode];

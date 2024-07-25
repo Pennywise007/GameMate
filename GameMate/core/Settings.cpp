@@ -392,7 +392,6 @@ void Actions::Execute() const
 
 actions_executor::Settings::Settings()
 {
-	// Init vk code here to avoid calling UpdateBind before object deserialization
 	enableBind.vkCode = VK_F6;
 }
 
@@ -473,9 +472,16 @@ void process_toolkit::ProcessConfiguration::OnDeserializationEnd()
 	SetExeName(exeName);
 }
 
+process_toolkit::Settings::Settings()
+{
+	// Init vk code here to avoid calling UpdateInput before object deserialization
+	enableBind.vkCode = VK_F8;
+	enableBind.extraKeys |= (1u << (unsigned)Bind::ExtraKeys::LShift);
+}
+
 timer::Settings::Settings()
 {
-	// Init vk code here to avoid calling UpdateBind before object deserialization
+	// Init vk code here to avoid calling UpdateInput before object deserialization
 	startPauseTimerBind.vkCode = showTimerBind.vkCode = resetTimerBind.vkCode = VK_F7;
 	showTimerBind.extraKeys |= (1u << (unsigned)Bind::ExtraKeys::LShift);
 	resetTimerBind.extraKeys |= (1u << (unsigned)Bind::ExtraKeys::LCtrl);

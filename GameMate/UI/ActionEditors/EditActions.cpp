@@ -239,11 +239,11 @@ BOOL CActionsEditorView::PreTranslateMessage(MSG* pMsg)
 				OnBnClickedButtonRemove();
 			break;
 		case 'C':
-			if (InputManager::IsKeyPressed(VK_LCONTROL) || InputManager::IsKeyPressed(VK_RCONTROL))
+			if (InputManager::IsKeyPressed(VK_CONTROL))
 				copyItemsToClipboard();
 			break;
 		case 'V':
-			if (InputManager::IsKeyPressed(VK_LCONTROL) || InputManager::IsKeyPressed(VK_RCONTROL))
+			if (InputManager::IsKeyPressed(VK_CONTROL))
 				pasteItemsFromClipboard();
 			break;
 		}

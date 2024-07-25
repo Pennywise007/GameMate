@@ -216,6 +216,7 @@
     <ClInclude Include="Controls\Layout\Layout.h" />
     <ClInclude Include="Controls\MFC\CMFCColorSelection.h" />
     <ClInclude Include="Controls\MFC\CMFCEditBrowseCtrlEx.h" />
+    <ClInclude Include="Controls\Slider\Slider.h" />
     <ClInclude Include="Controls\SpinButton\SpinButton.h" />
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.h" />
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditorImpl.h" />
@@ -224,9 +225,11 @@
     <ClInclude Include="Controls\TrayHelper\TrayHelper.h" />
     <ClInclude Include="Controls\TabControl\TabControl.h" />
     <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h" />
+    <ClInclude Include="core\DisplayBrightnessController.h" />
     <ClInclude Include="core\events.h" />
     <ClInclude Include="core\Crosshairs.h" />
     <ClInclude Include="core\Settings.h" />
+    <ClInclude Include="core\WinRTMonitorInfo.h" />
     <ClInclude Include="core\Worker.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameMate.h" />
@@ -304,6 +307,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Controls\Slider\Slider.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Controls\SpinButton\SpinButton.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -347,7 +356,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="core\Crosshairs.cpp" />
+    <ClCompile Include="core\DisplayBrightnessController.cpp" />
     <ClCompile Include="core\Settings.cpp" />
+    <ClCompile Include="core\WinRTMonitorInfo.cpp" />
     <ClCompile Include="core\Worker.cpp" />
     <ClCompile Include="GameMate.cpp" />
     <ClCompile Include="pch.cpp">

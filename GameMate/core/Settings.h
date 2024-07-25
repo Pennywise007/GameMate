@@ -223,14 +223,16 @@ struct ProcessConfiguration
     REGISTER_SERIALIZABLE_OBJECT();
     DECLARE_SERIALIZABLE_FIELD(bool, enabled, true);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, name, L"Configuration name");
-    DECLARE_SERIALIZABLE_FIELD(std::list<Key>, keysToIgnoreAccidentalPress);
-    DECLARE_SERIALIZABLE_FIELD(crosshair::Settings, crosshairSettings);
     DECLARE_SERIALIZABLE_FIELD((std::map<Bind, Actions>), actionsByBind);
+    DECLARE_SERIALIZABLE_FIELD(std::list<Key>, keysToIgnoreAccidentalPress);
+    DECLARE_SERIALIZABLE_FIELD(bool, changeBrightness, false);
+    DECLARE_SERIALIZABLE_FIELD(unsigned, brightnessLevel, 100);
+    DECLARE_SERIALIZABLE_FIELD(crosshair::Settings, crosshairSettings);
 
     const std::wstring& GetExeName() const;
     void SetExeName(const std::wstring& exeName);
     
-    // Check if givven exe name matches process configuration
+    // Check if given exe name matches process configuration
     bool MatchExeName(const std::wstring& exeName) const;
 private:
     // Notification from serializer that deserialization is done for this object
@@ -247,9 +249,12 @@ struct Settings
     REGISTER_SERIALIZABLE_OBJECT();
 
     DECLARE_SERIALIZABLE_FIELD(bool, enabled, true);
+    DECLARE_SERIALIZABLE_FIELD(Bind, enableBind);
     DECLARE_SERIALIZABLE_FIELD(int, activeConfiguration, 0);
     DECLARE_SERIALIZABLE_FIELD(std::list<std::shared_ptr<ProcessConfiguration>>, processConfigurations,
         std::make_shared<ProcessConfiguration>());
+
+    Settings();
 };
 
 } // namespace process_toolkit
