@@ -30,6 +30,9 @@
     <Filter Include="UI\InputEditors">
       <UniqueIdentifier>{a996d105-5af1-40ae-909b-5fd56029e287}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI\View">
+      <UniqueIdentifier>{fcc3edc3-6e89-4504-ac80-607de807357f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controls\TabControl\TabControl.h">
@@ -164,6 +167,15 @@
     <ClInclude Include="Controls\Slider\Slider.h">
       <Filter>UI\Controls</Filter>
     </ClInclude>
+    <ClInclude Include="Controls\Splitter\Splitter.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\View\CTableView.h">
+      <Filter>UI\View</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Controls\CenteredLineStatic.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\TabControl\TabControl.cpp">
@@ -281,6 +293,15 @@
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="Controls\Slider\Slider.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Splitter\Splitter.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\View\CTableView.cpp">
+      <Filter>UI\View</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Controls\CenteredLineStatic.cpp">
       <Filter>UI\Controls</Filter>
     </ClCompile>
   </ItemGroup>

@@ -12,7 +12,10 @@
 #include <Controls/ComboBox/CIconComboBox/IconComboBox.h>
 #include <Controls/Tables/List/ListGroupCtrl/ListGroupCtrl.h>
 #include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
+#include <Controls/Splitter/Splitter.h>
 #include <Controls/Slider/Slider.h>
+
+#include "UI/Controls/CenteredLineStatic.h"
 
 class CActiveProcessToolkitTab : public CDialogEx, ext::events::ScopeSubscription<ISettingsChanged>
 {
@@ -46,6 +49,9 @@ protected:
 	afx_msg void OnBnClickedButtonAddMacros();
 	afx_msg void OnBnClickedButtonRemoveMacros();
 	afx_msg void OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnBnClickedButtonAddRemapping();
+	afx_msg void OnBnClickedButtonRemoveRemapping();
+	afx_msg void OnLvnItemchangedListRemapping(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnBnClickedCheckShowCrosshair();
 	afx_msg void OnCbnSelendokComboCrosshairSelection();
 	afx_msg void OnBnClickedMfccolorbuttonCrosshairColor();
@@ -74,7 +80,13 @@ private: // controls
 	CButton m_enabled;
 	ComboWithSearch m_exeName;
 	CStatic m_staticExeNameInfo;
+	CIconButton m_buttonAddMacros;
+	CIconButton m_buttonRemoveMacros;
 	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listActions;
+	CSplitter m_splitterForKeys;
+	CIconButton m_buttonAddRemapping;
+	CIconButton m_buttonRemoveRemapping;
+	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listKeyRemapping;
 	CCheckComboBox m_comboAccidentalPress;
 	CButton m_checkChangeBrightness;
 	CSlider m_brightness;
@@ -90,4 +102,10 @@ private:
 	std::shared_ptr<process_toolkit::ProcessConfiguration> m_configuration;
 	std::list<CBitmap> m_crosshairs;
 	HICON m_demoIcon = nullptr;
+public:
+	CCenteredLineStatic m_groupMacroses;
+	CCenteredLineStatic m_groupRemapping;
+	CCenteredLineStatic m_groupAccidentalPress;
+	CCenteredLineStatic m_groupBrightness;
+	CCenteredLineStatic m_groupCrosshair;
 };

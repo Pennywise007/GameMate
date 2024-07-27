@@ -194,7 +194,7 @@ DisplayBrightnessController::PhysicalMonitors::~PhysicalMonitors() noexcept
     {
         ext::ManageException("Failed to restore original brightness");
     }
-    EXT_DUMP_IF(!DestroyPhysicalMonitors(size(), data())) << "Failed to destroy physical monitors";
+    EXT_DUMP_IF(!DestroyPhysicalMonitors(DWORD(size()), data())) << "Failed to destroy physical monitors";
 }
 
 bool DisplayBrightnessController::PhysicalMonitors::IsSameMonitor(HMONITOR hMonitor) const noexcept
@@ -273,7 +273,7 @@ size_t DisplayBrightnessController::PhysicalMonitors::findInternalDisplayIndex(H
         displayDevice.cb = sizeof(displayDevice);
         for (size_t i = 0; i < physicalMonitorsCount; ++i)
         {
-            if (EnumDisplayDevicesW(monitorInfo.szDevice, i, &displayDevice, 0))
+            if (EnumDisplayDevicesW(monitorInfo.szDevice, DWORD(i), &displayDevice, 0))
             {
                 EXT_TRACE() << EXT_TRACE_FUNCTION
                     << "DeviceID " << displayDevice.DeviceID << "; "

@@ -67,6 +67,7 @@
 #define IDB_PNG1                        198
 #define IDB_PNG_START_RECORDING         198
 #define IDB_PNG_STOP_RECORDING          199
+#define IDD_VIEW_TABLE                  202
 #define IDC_TABCONTROL_MODES            1000
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
@@ -84,12 +85,15 @@
 #define IDC_BUTTON_ADD                  1011
 #define IDC_BUTTON_EDIT                 1012
 #define IDC_BUTTON_REMOVE               1013
-#define IDC_MACROSES_GROUP              1014
+#define IDC_SETTINGS_GROUP              1014
 #define IDC_EDIT_GAME_NAME              1015
 #define IDC_MACROSES_GROUP2             1015
 #define IDC_MACROSES_GROUP3             1016
 #define IDC_BUTTON_RECORD               1017
 #define IDC_MACROSES_GROUP4             1017
+#define IDC_MACROSES_GROUP5             1018
+#define IDC_KEYS_REMAPPING_GROUP        1018
+#define IDC_MACROSES_GROUP              1019
 #define IDC_EDIT_ACTION                 1024
 #define IDC_EDIT_RANDOMIZE_DELAYS       1024
 #define IDC_EDIT_INTERVAL_MIN           1024
@@ -154,6 +158,8 @@
 #define IDC_MFCLINK_RAZER_7             1057
 #define IDC_MFCLINK2                    1058
 #define IDC_LIST_ACTIONS                1059
+#define IDC_LIST_REMAPPINA              1060
+#define IDC_LIST_REMAPPING              1060
 #define IDC_RADIO_REPEAT_UNTIL_STOPPED  1061
 #define IDC_RADIO_REPEAT_TIMES          1062
 #define IDC_EDIT_REPEAT_TIMES           1063
@@ -202,6 +208,11 @@
 #define IDC_STATIC_DESTRIPTION          1115
 #define IDC_STATIC_ACCIDENTAL           1116
 #define IDC_COMBO_ACCIDENTAL_PRESS      1117
+#define IDC_SPLITTER                    1118
+#define IDC_BUTTON_ADD_REMAPPING        1119
+#define IDC_BUTTON_REMOVE_REMAPPING     1120
+#define IDC_TABLE                       1121
+#define IDC_STATIC_GROUP_TITLE          1122
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -217,9 +228,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        200
+#define _APS_NEXT_RESOURCE_VALUE        204
 #define _APS_NEXT_COMMAND_VALUE         32781
-#define _APS_NEXT_CONTROL_VALUE         1118
+#define _APS_NEXT_CONTROL_VALUE         1123
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

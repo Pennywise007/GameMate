@@ -222,6 +222,16 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
             return true;
         }
 
+        // Key remapping
+        for (auto&& [keyToReplace, replacingKey] : m_activeExeConfig->keysRemapping)
+        {
+            if (!keyToReplace.IsPressed(vkCode, down))
+                continue;
+
+            Action::NewAction(replacingKey.vkCode, down, 0).ExecuteAction(0);
+            return true;
+        }
+
         // Execute binds commands
         for (auto&& [bind, actions] : m_activeExeConfig->actionsByBind)
         {

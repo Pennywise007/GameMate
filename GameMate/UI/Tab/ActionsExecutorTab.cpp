@@ -11,15 +11,6 @@
 
 #include <Controls/Layout/Layout.h>
 
-namespace {
-
-enum Columns {
-	eDelay = 0,
-	eAction
-};
-
-} // namespace
-
 IMPLEMENT_DYNAMIC(CActionsExecutorTab, CDialogEx)
 
 CActionsExecutorTab::CActionsExecutorTab(CWnd* pParent)

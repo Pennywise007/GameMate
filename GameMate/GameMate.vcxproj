@@ -218,6 +218,7 @@
     <ClInclude Include="Controls\MFC\CMFCEditBrowseCtrlEx.h" />
     <ClInclude Include="Controls\Slider\Slider.h" />
     <ClInclude Include="Controls\SpinButton\SpinButton.h" />
+    <ClInclude Include="Controls\Splitter\Splitter.h" />
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.h" />
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditorImpl.h" />
     <ClInclude Include="Controls\Tooltip\ToolTip.h" />
@@ -241,6 +242,7 @@
     <ClInclude Include="UI\ActionEditors\EditActions.h" />
     <ClInclude Include="UI\ActionEditors\InputEditorView.h" />
     <ClInclude Include="UI\ActionEditors\ScriptEditorView.h" />
+    <ClInclude Include="UI\Controls\CenteredLineStatic.h" />
     <ClInclude Include="UI\Dlg\AddActionDlg.h" />
     <ClInclude Include="UI\Dlg\AddingProcessToolkitDlg.h" />
     <ClInclude Include="UI\Dlg\InputEditorDlg.h" />
@@ -251,6 +253,7 @@
     <ClInclude Include="UI\Dlg\TimerSettingsDlg.h" />
     <ClInclude Include="UI\Tab\ActionsExecutorTab.h" />
     <ClInclude Include="UI\Tab\ActiveProcessToolkitTab.h" />
+    <ClInclude Include="UI\View\CTableView.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\Button\IconButton\IconButton.cpp">
@@ -319,6 +322,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Controls\Splitter\Splitter.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -372,6 +381,7 @@
     <ClCompile Include="UI\ActionEditors\EditActions.cpp" />
     <ClCompile Include="UI\ActionEditors\InputEditorView.cpp" />
     <ClCompile Include="UI\ActionEditors\ScriptEditorView.cpp" />
+    <ClCompile Include="UI\Controls\CenteredLineStatic.cpp" />
     <ClCompile Include="UI\Dlg\AddActionDlg.cpp" />
     <ClCompile Include="UI\Dlg\AddingProcessToolkitDlg.cpp" />
     <ClCompile Include="UI\Dlg\InputEditorDlg.cpp" />
@@ -382,6 +392,7 @@
     <ClCompile Include="UI\Dlg\TimerSettingsDlg.cpp" />
     <ClCompile Include="UI\Tab\ActionsExecutorTab.cpp" />
     <ClCompile Include="UI\Tab\ActiveProcessToolkitTab.cpp" />
+    <ClCompile Include="UI\View\CTableView.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GameMate.rc" />
