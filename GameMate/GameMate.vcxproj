@@ -245,7 +245,6 @@
     <ClInclude Include="UI\Controls\CenteredLineStatic.h" />
     <ClInclude Include="UI\Dlg\AddActionDlg.h" />
     <ClInclude Include="UI\Dlg\AddingProcessToolkitDlg.h" />
-    <ClInclude Include="UI\Dlg\TableDlg.h" />
     <ClInclude Include="UI\Dlg\InputEditorDlg.h" />
     <ClInclude Include="UI\Dlg\EditValueDlg.h" />
     <ClInclude Include="UI\Dlg\InputSimulatorInfoDlg.h" />
@@ -254,6 +253,7 @@
     <ClInclude Include="UI\Dlg\TimerSettingsDlg.h" />
     <ClInclude Include="UI\Tab\ActionsExecutorTab.h" />
     <ClInclude Include="UI\Tab\ActiveProcessToolkitTab.h" />
+    <ClInclude Include="UI\View\TableView.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controls\Button\IconButton\IconButton.cpp">
@@ -384,7 +384,6 @@
     <ClCompile Include="UI\Controls\CenteredLineStatic.cpp" />
     <ClCompile Include="UI\Dlg\AddActionDlg.cpp" />
     <ClCompile Include="UI\Dlg\AddingProcessToolkitDlg.cpp" />
-    <ClCompile Include="UI\Dlg\TableDlg.cpp" />
     <ClCompile Include="UI\Dlg\InputEditorDlg.cpp" />
     <ClCompile Include="UI\Dlg\EditValueDlg.cpp" />
     <ClCompile Include="UI\Dlg\InputSimulatorInfoDlg.cpp" />
@@ -393,6 +392,7 @@
     <ClCompile Include="UI\Dlg\TimerSettingsDlg.cpp" />
     <ClCompile Include="UI\Tab\ActionsExecutorTab.cpp" />
     <ClCompile Include="UI\Tab\ActiveProcessToolkitTab.cpp" />
+    <ClCompile Include="UI\View\TableView.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="GameMate.rc" />

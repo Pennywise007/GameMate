@@ -17,7 +17,7 @@
 
 #include "UI/Controls/CenteredLineStatic.h"
 
-#include "UI/Dlg/TableDlg.h"
+#include "UI/View/TableView.h"
 
 class CActiveProcessToolkitTab : public CDialogEx, ext::events::ScopeSubscription<ISettingsChanged>
 {
@@ -61,6 +61,7 @@ private: // ISettingsChanged
 	void OnSettingsChanged(ISettingsChanged::ChangedType changedType) override;
 
 private:
+	CTableView* createTableView(CStatic& placeholder);
 	void initMacrosesTable();
 	void initKeyRebindingsTable();
 	void UpdateControlsData();
@@ -101,6 +102,6 @@ private:
 	HICON m_demoIcon = nullptr;
 
 private:
-	CTableDlg m_macrosesDlg = this;
-	CTableDlg m_keyRemappingDlg = this;
+	CTableView* m_macrosesDlg;
+	CTableView* m_keyRemappingDlg;
 };
