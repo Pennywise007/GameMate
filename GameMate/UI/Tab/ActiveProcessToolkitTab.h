@@ -17,6 +17,8 @@
 
 #include "UI/Controls/CenteredLineStatic.h"
 
+#include "UI/Dlg/TableDlg.h"
+
 class CActiveProcessToolkitTab : public CDialogEx, ext::events::ScopeSubscription<ISettingsChanged>
 {
 	DECLARE_DYNAMIC(CActiveProcessToolkitTab)
@@ -46,12 +48,6 @@ protected:
 	afx_msg void OnCbnEditchangeComboExeName();
 	afx_msg void OnCbnSelendChangedComboExeName();
 	afx_msg void OnCbnSetfocusComboExeName();
-	afx_msg void OnBnClickedButtonAddMacros();
-	afx_msg void OnBnClickedButtonRemoveMacros();
-	afx_msg void OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnBnClickedButtonAddRemapping();
-	afx_msg void OnBnClickedButtonRemoveRemapping();
-	afx_msg void OnLvnItemchangedListRemapping(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnBnClickedCheckShowCrosshair();
 	afx_msg void OnCbnSelendokComboCrosshairSelection();
 	afx_msg void OnBnClickedMfccolorbuttonCrosshairColor();
@@ -65,6 +61,8 @@ private: // ISettingsChanged
 	void OnSettingsChanged(ISettingsChanged::ChangedType changedType) override;
 
 private:
+	void initMacrosesTable();
+	void initKeyRebindingsTable();
 	void UpdateControlsData();
 	void UpdateEnableButton();
 
@@ -80,17 +78,16 @@ private: // controls
 	CButton m_enabled;
 	ComboWithSearch m_exeName;
 	CStatic m_staticExeNameInfo;
-	CIconButton m_buttonAddMacros;
-	CIconButton m_buttonRemoveMacros;
-	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listActions;
+	CStatic m_groupMacrosesPlaceholder;
 	CSplitter m_splitterForKeys;
-	CIconButton m_buttonAddRemapping;
-	CIconButton m_buttonRemoveRemapping;
-	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_listKeyRemapping;
+	CStatic m_groupRemappingPlaceholder;
+	CCenteredLineStatic m_groupAccidentalPress;
 	CCheckComboBox m_comboAccidentalPress;
+	CCenteredLineStatic m_groupBrightness;
 	CButton m_checkChangeBrightness;
 	CSlider m_brightness;
 	CStatic m_staticBrightnessInfo;
+	CCenteredLineStatic m_groupCrosshair;
 	CButton m_checkboxShowCrosshair;
 	CIconComboBox m_comboCrosshairs;
 	CStatic m_staticCrosshairInfo;
@@ -102,10 +99,8 @@ private:
 	std::shared_ptr<process_toolkit::ProcessConfiguration> m_configuration;
 	std::list<CBitmap> m_crosshairs;
 	HICON m_demoIcon = nullptr;
-public:
-	CCenteredLineStatic m_groupMacroses;
-	CCenteredLineStatic m_groupRemapping;
-	CCenteredLineStatic m_groupAccidentalPress;
-	CCenteredLineStatic m_groupBrightness;
-	CCenteredLineStatic m_groupCrosshair;
+
+private:
+	CTableDlg m_macrosesDlg = this;
+	CTableDlg m_keyRemappingDlg = this;
 };

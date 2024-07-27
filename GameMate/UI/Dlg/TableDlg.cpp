@@ -1,20 +1,21 @@
 #include "pch.h"
-#include "GameMate.h"
-#include "UI/View/CTableView.h"
+#include "resource.h"
+
+#include "UI/Dlg/TableDlg.h"
 
 #include <Controls/Layout/Layout.h>
 #include <Controls/Tooltip/ToolTip.h>
 
 #include <ext/core/check.h>
 
-IMPLEMENT_DYNAMIC(CTableView, CDialogEx)
+IMPLEMENT_DYNAMIC(CTableDlg, CDialogEx)
 
-CTableView::CTableView(CWnd* parent)
-	: CDialogEx(IDD_VIEW_TABLE, parent)
+CTableDlg::CTableDlg(CWnd* parent)
+	: CDialogEx(IDD_DIALOG_TABLE, parent)
 {
 }
 
-void CTableView::DoDataExchange(CDataExchange* pDX)
+void CTableDlg::DoDataExchange(CDataExchange* pDX)
 {
     CDialogEx::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_TABLE, m_table);
@@ -23,25 +24,30 @@ void CTableView::DoDataExchange(CDataExchange* pDX)
     DDX_Control(pDX, IDC_STATIC_GROUP_TITLE, m_staticTitle);
 }
 
-BEGIN_MESSAGE_MAP(CTableView, CDialogEx)
-    ON_BN_CLICKED(IDC_BUTTON_ADD, &CTableView::OnBnClickedButtonAdd)
-    ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CTableView::OnBnClickedButtonRemove)
-    ON_NOTIFY(LVN_ITEMCHANGED, IDC_TABLE, &CTableView::OnLvnItemchangedTable)
+BEGIN_MESSAGE_MAP(CTableDlg, CDialogEx)
+    ON_BN_CLICKED(IDC_BUTTON_ADD, &CTableDlg::OnBnClickedButtonAdd)
+    ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CTableDlg::OnBnClickedButtonRemove)
+    ON_NOTIFY(LVN_ITEMCHANGED, IDC_TABLE, &CTableDlg::OnLvnItemchangedTable)
 END_MESSAGE_MAP()
 
-BOOL CTableView::PreCreateWindow(CREATESTRUCT& cs)
+BOOL CTableDlg::PreCreateWindow(CREATESTRUCT& cs)
 {
     auto res = CDialogEx::PreCreateWindow(cs);
     cs.dwExStyle &= ~WS_EX_CLIENTEDGE;
     return res;
 }
 
-CListGroupCtrl& CTableView::GetList()
+controls::list::widgets::SubItemsEditor<CListGroupCtrl>& CTableDlg::GetTable()
 {
     return m_table;
 }
 
-BOOL CTableView::OnInitDialog()
+void CTableDlg::UpdateRemoveButtonState()
+{
+    m_buttonRemove.EnableWindow(m_table.GetSelectedCount() > 0);
+}
+
+BOOL CTableDlg::OnInitDialog()
 {
     CDialogEx::OnInitDialog();
 
@@ -50,10 +56,9 @@ BOOL CTableView::OnInitDialog()
     return TRUE;
 }
 
-void CTableView::Init(
+void CTableDlg::Init(
     const wchar_t* title,
     const wchar_t* addButtonToolTip,
-    const wchar_t* deleteButtonToolTip,
     std::function<void()>&& onAddClicked,
     std::function<void()>&& onRemoveClicked)
 {
@@ -65,34 +70,32 @@ void CTableView::Init(
         controls::SetTooltip(button, tooltip);
         };
     initButton(m_buttonAdd, IDB_PNG_ADD, addButtonToolTip);
-    initButton(m_buttonRemove, IDB_PNG_DELETE, deleteButtonToolTip);
+    initButton(m_buttonRemove, IDB_PNG_DELETE, L"Delete selected items");
 
     m_onAddClicked = std::move(onAddClicked);
     m_onRemoveClicked = std::move(onRemoveClicked);
 }
 
-void CTableView::OnBnClickedButtonAdd()
+void CTableDlg::OnBnClickedButtonAdd()
 {
     EXT_EXPECT(!!m_onAddClicked);
     m_onAddClicked();
 }
 
-void CTableView::OnBnClickedButtonRemove()
+void CTableDlg::OnBnClickedButtonRemove()
 {
     EXT_EXPECT(!!m_onRemoveClicked);
     m_onRemoveClicked();
 }
 
-void CTableView::OnLvnItemchangedTable(NMHDR* pNMHDR, LRESULT* pResult)
+void CTableDlg::OnLvnItemchangedTable(NMHDR* pNMHDR, LRESULT* pResult)
 {
     LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     if (pNMLV->uChanged & LVIF_STATE)
     {
         if ((pNMLV->uNewState & LVIS_SELECTED) != (pNMLV->uOldState & LVIS_SELECTED))
-        {
             // selection changed
-            m_buttonRemove.EnableWindow(m_table.GetSelectedCount() > 0);
-        }
+            UpdateRemoveButtonState();
     }
     *pResult = 0;
 }

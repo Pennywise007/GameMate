@@ -2,17 +2,18 @@
 
 #include <functional>
 
-#include <Controls/Tables/List/ListGroupCtrl/ListGroupCtrl.h>
 #include <Controls/Button/IconButton/IconButton.h>
+#include <Controls/Tables/List/ListGroupCtrl/ListGroupCtrl.h>
+#include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
 
 #include "UI/Controls/CenteredLineStatic.h"
 
-class CTableView : public CDialogEx
+class CTableDlg : public CDialogEx
 {
-	DECLARE_DYNAMIC(CTableView)
+	DECLARE_DYNAMIC(CTableDlg)
 
 public:
-	CTableView(CWnd* parent);
+	CTableDlg(CWnd* parent);
 
 public:
 	enum { IDD = IDD_VIEW_TABLE };
@@ -20,11 +21,11 @@ public:
 	void Init(
 		const wchar_t* title,
 		const wchar_t* addButtonToolTip,
-		const wchar_t* deleteButtonToolTip,
 		std::function<void()>&& onAddClicked,
 		std::function<void()>&& onRemoveClicked);
 
-	[[nodiscard]] CListGroupCtrl& GetList();
+	[[nodiscard]] controls::list::widgets::SubItemsEditor<CListGroupCtrl>& GetTable();
+	void UpdateRemoveButtonState();
 
 protected:
 	DECLARE_MESSAGE_MAP()
@@ -36,7 +37,7 @@ protected:
 	afx_msg void OnLvnItemchangedTable(NMHDR* pNMHDR, LRESULT* pResult);
 
 protected:
-	CListGroupCtrl m_table;
+	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_table;
 	CIconButton m_buttonAdd;
 	CIconButton m_buttonRemove;
 	CCenteredLineStatic m_staticTitle;

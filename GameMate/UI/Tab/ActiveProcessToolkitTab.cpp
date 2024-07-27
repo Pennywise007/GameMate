@@ -70,13 +70,9 @@ void CActiveProcessToolkitTab::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_CHECK_ENABLED, m_enabled);
 	DDX_Control(pDX, IDC_COMBO_EXE_NAME, m_exeName);
-	DDX_Control(pDX, IDC_BUTTON_ADD_MACROS, m_buttonAddMacros);
-	DDX_Control(pDX, IDC_BUTTON_REMOVE_MACROS, m_buttonRemoveMacros);
-	DDX_Control(pDX, IDC_LIST_ACTIONS, m_listActions);
+	DDX_Control(pDX, IDC_MACROSES_PLACEHOLDER, m_groupMacrosesPlaceholder);
 	DDX_Control(pDX, IDC_SPLITTER, m_splitterForKeys);
-	DDX_Control(pDX, IDC_BUTTON_ADD_REMAPPING, m_buttonAddRemapping);
-	DDX_Control(pDX, IDC_BUTTON_REMOVE_REMAPPING, m_buttonRemoveRemapping);
-	DDX_Control(pDX, IDC_LIST_REMAPPING, m_listKeyRemapping);
+	DDX_Control(pDX, IDC_KEYS_REMAPPING_PLACEHOLDER, m_groupRemappingPlaceholder);
 	DDX_Control(pDX, IDC_COMBO_CROSSHAIR_SELECTION, m_comboCrosshairs);
 	DDX_Control(pDX, IDC_CHECK_SHOW_CROSSHAIR, m_checkboxShowCrosshair);
 	DDX_Control(pDX, IDC_COMBO_CROSSHAIR_SIZE, m_comboboxCrosshairSize);
@@ -91,8 +87,6 @@ void CActiveProcessToolkitTab::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_SLIDER_BRIGHTNESS, m_brightness);
 	DDX_Control(pDX, IDC_CHECK_CHANGE_BRIGHTNESS, m_checkChangeBrightness);
 	DDX_Control(pDX, IDC_STATIC_BRIGHTNESS_INFO, m_staticBrightnessInfo);
-	DDX_Control(pDX, IDC_MACROSES_GROUP, m_groupMacroses);
-	DDX_Control(pDX, IDC_KEYS_REMAPPING_GROUP, m_groupRemapping);
 	DDX_Control(pDX, IDC_MACROSES_GROUP3, m_groupAccidentalPress);
 	DDX_Control(pDX, IDC_MACROSES_GROUP4, m_groupBrightness);
 	DDX_Control(pDX, IDC_MACROSES_GROUP2, m_groupCrosshair);
@@ -112,12 +106,6 @@ BEGIN_MESSAGE_MAP(CActiveProcessToolkitTab, CDialogEx)
 	ON_CBN_SELENDCANCEL(IDC_COMBO_EXE_NAME, &CActiveProcessToolkitTab::OnCbnSelendChangedComboExeName)
 	ON_CBN_SETFOCUS(IDC_COMBO_EXE_NAME, &CActiveProcessToolkitTab::OnCbnSetfocusComboExeName)
 	ON_CBN_EDITCHANGE(IDC_COMBO_EXE_NAME, &CActiveProcessToolkitTab::OnCbnEditchangeComboExeName)
-	ON_BN_CLICKED(IDC_BUTTON_ADD_MACROS, &CActiveProcessToolkitTab::OnBnClickedButtonAddMacros)
-	ON_BN_CLICKED(IDC_BUTTON_REMOVE_MACROS, &CActiveProcessToolkitTab::OnBnClickedButtonRemoveMacros)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_ACTIONS, &CActiveProcessToolkitTab::OnLvnItemchangedListActions)
-	ON_BN_CLICKED(IDC_BUTTON_ADD_REMAPPING, &CActiveProcessToolkitTab::OnBnClickedButtonAddRemapping)
-	ON_BN_CLICKED(IDC_BUTTON_REMOVE_REMAPPING, &CActiveProcessToolkitTab::OnBnClickedButtonRemoveRemapping)
-	ON_NOTIFY(LVN_ITEMCHANGED, IDC_LIST_REMAPPINA, &CActiveProcessToolkitTab::OnLvnItemchangedListRemapping)
 	ON_BN_CLICKED(IDC_CHECK_SHOW_CROSSHAIR, &CActiveProcessToolkitTab::OnBnClickedCheckShowCrosshair)
 	ON_CBN_SELENDOK(IDC_COMBO_CROSSHAIR_SELECTION, &CActiveProcessToolkitTab::OnCbnSelendokComboCrosshairSelection)
 	ON_BN_CLICKED(IDC_MFCCOLORBUTTON_CROSSHAIR_COLOR, &CActiveProcessToolkitTab::OnBnClickedMfccolorbuttonCrosshairColor)
@@ -128,8 +116,6 @@ BEGIN_MESSAGE_MAP(CActiveProcessToolkitTab, CDialogEx)
 	ON_NOTIFY(TRBN_THUMBPOSCHANGING, IDC_SLIDER_BRIGHTNESS, &CActiveProcessToolkitTab::OnTRBNThumbPosChangingSliderBrightness)
 	ON_WM_SIZE()
 END_MESSAGE_MAP()
-
-#include "UI/View/CTableView.h"
 
 BOOL CActiveProcessToolkitTab::OnInitDialog()
 {
@@ -179,162 +165,8 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 		controls::SetTooltip(m_crosshairDemo, L"Demo of the crosshair");
 	}
 
-	const auto initButton = [](CIconButton& button, UINT bitmapId, const wchar_t* tooltip) {
-		button.SetBitmap(bitmapId, Alignment::CenterCenter);
-		button.SetWindowTextW(L"");
-		controls::SetTooltip(button, tooltip);
-	};
-	initButton(m_buttonAddMacros, IDB_PNG_ADD, L"Add bind");
-	initButton(m_buttonRemoveMacros, IDB_PNG_DELETE, L"Delete selected items");
-	initButton(m_buttonAddRemapping, IDB_PNG_ADD, L"Add remapping key");
-	initButton(m_buttonRemoveRemapping, IDB_PNG_DELETE, L"Delete selected items");
-
-	CRect rect;
-	m_listActions.GetClientRect(rect);
-
-	constexpr int kKeybindColumnWidth = 80;
-	constexpr int kRandomizeDelayColumnWidth = 50;
-	m_listActions.InsertColumn(MacrosesColumns::eKeybind, L"Key bind", LVCFMT_CENTER, kKeybindColumnWidth);
-	m_listActions.InsertColumn(MacrosesColumns::eMacros, L"Macros", LVCFMT_CENTER, rect.Width() - kKeybindColumnWidth - kRandomizeDelayColumnWidth);
-	m_listActions.InsertColumn(MacrosesColumns::eRandomizeDelay, L"Randomize delay, ms", LVCFMT_CENTER, kRandomizeDelayColumnWidth);
-	m_listActions.SetProportionalResizingColumns({ MacrosesColumns::eMacros });
-	
-	m_listActions.setSubItemEditorController(MacrosesColumns::eKeybind,
-		[&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
-		{
-			auto& actionsByBind = m_configuration->actionsByBind;
-
-			ASSERT((int)actionsByBind.size() > pParams->iItem);
-			auto editableActionsIt = std::next(actionsByBind.begin(), pParams->iItem);
-
-			auto bind = CInputEditorDlg::EditBind(parentWindow, editableActionsIt->first);
-			if (!bind.has_value())
-				return nullptr;
-
-			if (auto sameBindIt = actionsByBind.find(bind.value()); sameBindIt != actionsByBind.end())
-			{
-				if (sameBindIt == editableActionsIt)
-					return nullptr;
-
-				if (MessageBox((L"Bind '" + bind->ToString() + L"' already exists, do you want to replace it?").c_str(),
-							   L"This bind already exist", MB_ICONWARNING | MB_OKCANCEL) == IDCANCEL)
-					return nullptr;
-
-				auto sameItem = (int)std::distance(actionsByBind.begin(), sameBindIt);
-				auto actions = std::move(editableActionsIt->second);
-				actionsByBind.erase(editableActionsIt);
-				actionsByBind.erase(sameBindIt);
-				m_listActions.DeleteItem(std::max<int>(pParams->iItem, sameItem));
-				m_listActions.DeleteItem(std::min<int>(pParams->iItem, sameItem));
-
-				AddNewActions(std::move(bind.value()), std::move(actions));
-			}
-			else
-			{
-				auto currentActions = std::move(editableActionsIt->second);
-				actionsByBind.erase(editableActionsIt);
-				m_listActions.DeleteItem(pParams->iItem);
-				AddNewActions(std::move(bind.value()), std::move(currentActions));
-			}
-
-			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
-
-			return nullptr;
-		});
-	const auto actionsEdit = [&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
-		{
-			auto& actionsByBind = m_configuration->actionsByBind;
-
-			ASSERT((int)actionsByBind.size() > pParams->iItem);
-			auto editableActionsIt = std::next(actionsByBind.begin(), pParams->iItem);
-
-			auto actions = CActionsEditDlg::ExecModal(this, editableActionsIt->second);
-			if (!actions.has_value())
-				return nullptr;
-
-			auto bind = editableActionsIt->first;
-
-			actionsByBind.erase(editableActionsIt);
-			m_listActions.DeleteItem(pParams->iItem);
-
-			AddNewActions(std::move(bind), std::move(actions.value()));
-
-			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
-
-			return nullptr;
-		};
-	m_listActions.setSubItemEditorController(MacrosesColumns::eMacros, actionsEdit);
-	m_listActions.setSubItemEditorController(MacrosesColumns::eRandomizeDelay, actionsEdit);
-
-	m_listKeyRemapping.GetClientRect(rect);
-	m_listKeyRemapping.InsertColumn(RebingingColumns::eOriginal, L"Original", LVCFMT_CENTER, rect.Width() / 2);
-	m_listKeyRemapping.InsertColumn(RebingingColumns::eNew, L"New", LVCFMT_CENTER, rect.Width() / 2);
-	m_listKeyRemapping.SetProportionalResizingColumns({ RebingingColumns::eOriginal, RebingingColumns::eNew });
-	const auto keyEdit = [&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
-		{
-			auto& keysRemapping = m_configuration->keysRemapping;
-
-			ASSERT((int)keysRemapping.size() > pParams->iItem);
-			auto editableKeyIt = std::next(keysRemapping.begin(), pParams->iItem);
-
-			const Key& keyToEdit = pParams->iSubItem == RebingingColumns::eOriginal ? editableKeyIt->first : editableKeyIt->second;
-
-			auto keyToAdd = CInputEditorDlg::EditKey(this, keyToEdit);
-			if (!keyToAdd.has_value())
-				return nullptr;
-
-			switch (pParams->iSubItem)
-			{
-			case RebingingColumns::eOriginal:
-			{
-				auto it = keysRemapping.find(keyToAdd.value());
-				if (it != keysRemapping.end())
-				{
-					auto res = MessageBox((L"Key " + keyToAdd.value().ToString() + L" already exist, do you want to replace it?").c_str(),
-						L"Key already exist", MB_YESNO);
-					if (res == IDNO)
-						return nullptr;
-				}
-
-				// Deleting line with old key and replacing text
-				auto newKeyValue = std::move(editableKeyIt->second);
-				keysRemapping.erase(editableKeyIt);
-				m_listKeyRemapping.DeleteItem(pParams->iItem);
-
-				if (it != keysRemapping.end())
-				{
-					it->second = std::move(newKeyValue);
-					int itemIndex = std::distance(keysRemapping.begin(), it);
-					m_listKeyRemapping.SetItemText(itemIndex, RebingingColumns::eNew, it->second.ToString().c_str());
-					m_listKeyRemapping.SelectItem(itemIndex);
-				}
-				else
-				{
-					it = keysRemapping.emplace(std::move(keyToAdd.value()), std::move(newKeyValue)).first;
-					int itemIndex = std::distance(keysRemapping.begin(), it);
-
-					m_listKeyRemapping.InsertItem(itemIndex, it->first.ToString().c_str());
-					m_listKeyRemapping.SetItemText(itemIndex, RebingingColumns::eNew, it->second.ToString().c_str());
-					m_listKeyRemapping.SelectItem(itemIndex);
-				}
-			}
-				break;
-			case RebingingColumns::eNew:
-				editableKeyIt->second = std::move(keyToAdd.value());
-
-				m_listKeyRemapping.SetItemText(pParams->iItem, RebingingColumns::eNew, editableKeyIt->second.ToString().c_str());
-				break;
-			default:
-				static_assert(ext::reflection::get_enum_size<RebingingColumns>() == 2);
-				break;
-			}
-
-			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
-
-			return nullptr;
-		};
-	m_listKeyRemapping.setSubItemEditorController(RebingingColumns::eOriginal, keyEdit);
-	m_listKeyRemapping.setSubItemEditorController(RebingingColumns::eNew, keyEdit);
+	initMacrosesTable();
+	initKeyRebindingsTable();
 
 	for (auto&& [ind, key] : kDefaultIgnoredKeys)
 	{
@@ -346,64 +178,15 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 	m_brightness.SetTooltipTextFormat(L"%.lf");
 	m_brightness.SetIncrementStep(1);
 
+	CRect rect;
+	m_keyRemappingDlg.GetClientRect(rect);
+
 	m_splitterForKeys.AttachSplitterToWindow(*this, CMFCDynamicLayout::MoveHorizontal(100), CMFCDynamicLayout::SizeVertical(100));
-	
-	
-	
-	
-	//m_splitterForKeys.AttachWindow(m_listActions, CMFCDynamicLayout::MoveHorizontal(0), CMFCDynamicLayout::SizeHorizontalAndVertical(100, 100));
-	//m_splitterForKeys.AttachWindow(*GetDlgItem(IDC_MACROSES_GROUP), CMFCDynamicLayout::MoveHorizontal(0), CMFCDynamicLayout::SizeHorizontalAndVertical(100, 100));
-	//Layout::AnchorWindow(*GetDlgItem(IDC_MACROSES_GROUP), m_splitterForKeys, { AnchorSide::eRight }, AnchorSide::eRight, 100);
-
-
-	/*m_splitterForKeys.SetControlBounds(CSplitter::BoundsType::eOffsetFromParentBounds,
+	m_splitterForKeys.SetControlBounds(CSplitter::BoundsType::eOffsetFromParentBounds,
 		CRect(300, CSplitter::kNotSpecified, rect.Width(), CSplitter::kNotSpecified));
-	Layout::AnchorWindow(m_listActions, m_splitterForKeys, { AnchorSide::eRight }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(m_listActions, *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
-	Layout::AnchorWindow(*GetDlgItem(IDC_MACROSES_GROUP), m_splitterForKeys, { AnchorSide::eRight }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(*GetDlgItem(IDC_MACROSES_GROUP), *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
-
-	Layout::AnchorWindow(m_listKeyRemapping, m_splitterForKeys, { AnchorSide::eLeft }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(m_listKeyRemapping, *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(m_listKeyRemapping, *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
-	Layout::AnchorWindow(m_buttonAddRemapping, m_splitterForKeys, { AnchorSide::eLeft, AnchorSide::eRight }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(m_buttonRemoveRemapping, m_splitterForKeys, { AnchorSide::eLeft, AnchorSide::eRight }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(*GetDlgItem(IDC_KEYS_REMAPPING_GROUP), m_splitterForKeys, { AnchorSide::eLeft }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(*GetDlgItem(IDC_KEYS_REMAPPING_GROUP), *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(*GetDlgItem(IDC_KEYS_REMAPPING_GROUP), *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
-	*/
+	
 	UpdateControlsData();
 
-	//GetDlgItem(IDC_MACROSES_GROUP4)->ShowWindow(SW_HIDE);
-
-	m_listActions.ShowWindow(SW_HIDE);
-	m_buttonAddMacros.ShowWindow(SW_HIDE);
-	m_buttonRemoveMacros.ShowWindow(SW_HIDE);
-	GetDlgItem(IDC_MACROSES_GROUP)->ShowWindow(SW_HIDE);
-
-	m_listKeyRemapping.ShowWindow(SW_HIDE);
-	m_buttonAddRemapping.ShowWindow(SW_HIDE);
-	m_buttonRemoveRemapping.ShowWindow(SW_HIDE);
-	GetDlgItem(IDC_KEYS_REMAPPING_GROUP)->ShowWindow(SW_HIDE);
-
-	GetDlgItem(IDC_KEYS_REMAPPING_GROUP)->GetWindowRect(rect);
-	ScreenToClient(rect);
-
-	static CTableView view(this);
-	view.Create(CTableView::IDD, this);
-	view.MoveWindow(rect);
-	view.ShowWindow(SW_SHOW);
-
-	GetDlgItem(IDC_MACROSES_GROUP)->GetWindowRect(rect);
-	ScreenToClient(rect);
-	static CTableView view2(this);
-	view2.Create(CTableView::IDD, this);
-	view2.MoveWindow(rect);
-	view2.ShowWindow(SW_SHOW);
-
-	Layout::AnchorWindow(view2, m_splitterForKeys, { AnchorSide::eRight }, AnchorSide::eLeft, 100);
-	Layout::AnchorWindow(view2, *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(view2, *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
 	/*
 	CCreateContext ctx;
 	ctx.m_pNewViewClass = RUNTIME_CLASS(CTableView);
@@ -435,12 +218,290 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 			Layout::AnchorWindow(m_splitterForKeys, *this, { AnchorSide::eLeft, AnchorSide::eRight }, AnchorSide::eRight, 100);
 		});*/
 
-	Layout::AnchorWindow(view, m_splitterForKeys, { AnchorSide::eLeft }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(view, *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(view, *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
-	//editorView->Init(m_actions, nullptr)
-
 	return TRUE;
+}
+
+void CActiveProcessToolkitTab::initMacrosesTable()
+{
+	m_macrosesDlg.Create(CTableDlg::IDD, this);
+	m_macrosesDlg.Init(L"Macroses", L"Add bind",
+		[&]() {
+			auto bind = CInputEditorDlg::EditBind(this);
+			if (!bind.has_value())
+				return;
+
+			const auto it = m_configuration->actionsByBind.find(bind.value());
+			const bool actionExists = it != m_configuration->actionsByBind.end();
+
+			auto& table = m_macrosesDlg.GetTable();
+			Actions editableActions;
+			if (actionExists)
+			{
+				auto res = MessageBox((L"Do you want to edit action '" + bind->ToString() + L"'?").c_str(), L"Action already has actionsByBind", MB_OKCANCEL | MB_ICONWARNING);
+				if (res == IDCANCEL)
+				{
+					table.ClearSelection();
+					table.SelectItem((int)std::distance(m_configuration->actionsByBind.begin(), it));
+					return;
+				}
+
+				editableActions = it->second;
+			}
+			else {
+				// Adding new item to the table to show user what we adding
+				auto item = table.InsertItem(table.GetItemCount(), bind->ToString().c_str());
+				table.SelectItem(item);
+			}
+
+			auto newActions = CActionsEditDlg::ExecModal(this, editableActions);
+
+			// removing previously added item with bind name
+			if (!actionExists)
+				table.DeleteItem(table.GetItemCount() - 1);
+
+			if (!newActions.has_value())
+				return;
+
+			// removing old copy of edited actionsByBind
+			if (actionExists)
+			{
+				auto sameItem = (int)std::distance(m_configuration->actionsByBind.begin(), it);
+				m_configuration->actionsByBind.erase(it);
+				table.DeleteItem(sameItem);
+			}
+
+			AddNewActions(bind.value(), std::move(newActions.value()));
+
+			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+		},
+		[&]() {
+			auto& table = m_macrosesDlg.GetTable();
+			std::vector<int> selectedActions = table.GetSelectedItems();
+
+			for (auto it = selectedActions.rbegin(), end = selectedActions.rend(); it != end; ++it)
+			{
+				m_configuration->actionsByBind.erase(std::next(m_configuration->actionsByBind.begin(), *it));
+				table.DeleteItem(*it);
+			}
+
+			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+		});
+
+	CRect rect;
+	m_groupMacrosesPlaceholder.GetWindowRect(rect);
+	ScreenToClient(rect);
+
+	m_macrosesDlg.MoveWindow(rect);
+	m_macrosesDlg.ShowWindow(SW_SHOW);
+	m_groupMacrosesPlaceholder.ShowWindow(SW_HIDE);
+
+	auto& list = m_macrosesDlg.GetTable();
+	list.GetClientRect(rect);
+
+	constexpr int kKeybindColumnWidth = 80;
+	constexpr int kRandomizeDelayColumnWidth = 50;
+	list.InsertColumn(MacrosesColumns::eKeybind, L"Key bind", LVCFMT_CENTER, kKeybindColumnWidth);
+	list.InsertColumn(MacrosesColumns::eMacros, L"Macros", LVCFMT_CENTER, rect.Width() - kKeybindColumnWidth - kRandomizeDelayColumnWidth);
+	list.InsertColumn(MacrosesColumns::eRandomizeDelay, L"Randomize delay, ms", LVCFMT_CENTER, kRandomizeDelayColumnWidth);
+	list.SetProportionalResizingColumns({ MacrosesColumns::eMacros });
+
+	list.setSubItemEditorController(MacrosesColumns::eKeybind,
+		[&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
+		{
+			auto& actionsByBind = m_configuration->actionsByBind;
+
+			ASSERT((int)actionsByBind.size() > pParams->iItem);
+			auto editableActionsIt = std::next(actionsByBind.begin(), pParams->iItem);
+
+			auto bind = CInputEditorDlg::EditBind(parentWindow, editableActionsIt->first);
+			if (!bind.has_value())
+				return nullptr;
+
+			if (auto sameBindIt = actionsByBind.find(bind.value()); sameBindIt != actionsByBind.end())
+			{
+				if (sameBindIt == editableActionsIt)
+					return nullptr;
+
+				if (MessageBox((L"Bind '" + bind->ToString() + L"' already exists, do you want to replace it?").c_str(),
+					L"This bind already exist", MB_ICONWARNING | MB_OKCANCEL) == IDCANCEL)
+					return nullptr;
+
+				auto sameItem = (int)std::distance(actionsByBind.begin(), sameBindIt);
+				auto actions = std::move(editableActionsIt->second);
+				actionsByBind.erase(editableActionsIt);
+				actionsByBind.erase(sameBindIt);
+				m_macrosesDlg.GetTable().DeleteItem(std::max<int>(pParams->iItem, sameItem));
+				m_macrosesDlg.GetTable().DeleteItem(std::min<int>(pParams->iItem, sameItem));
+
+				AddNewActions(std::move(bind.value()), std::move(actions));
+			}
+			else
+			{
+				auto currentActions = std::move(editableActionsIt->second);
+				actionsByBind.erase(editableActionsIt);
+				m_macrosesDlg.GetTable().DeleteItem(pParams->iItem);
+				AddNewActions(std::move(bind.value()), std::move(currentActions));
+			}
+
+			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+
+			return nullptr;
+		});
+	const auto actionsEdit = [&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
+		{
+			auto& actionsByBind = m_configuration->actionsByBind;
+
+			ASSERT((int)actionsByBind.size() > pParams->iItem);
+			auto editableActionsIt = std::next(actionsByBind.begin(), pParams->iItem);
+
+			auto actions = CActionsEditDlg::ExecModal(this, editableActionsIt->second);
+			if (!actions.has_value())
+				return nullptr;
+
+			auto bind = editableActionsIt->first;
+
+			actionsByBind.erase(editableActionsIt);
+			m_macrosesDlg.GetTable().DeleteItem(pParams->iItem);
+
+			AddNewActions(std::move(bind), std::move(actions.value()));
+
+			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+
+			return nullptr;
+		};
+
+	list.setSubItemEditorController(MacrosesColumns::eMacros, actionsEdit);
+	list.setSubItemEditorController(MacrosesColumns::eRandomizeDelay, actionsEdit);
+
+	Layout::AnchorWindow(m_macrosesDlg, m_splitterForKeys, { AnchorSide::eRight }, AnchorSide::eLeft, 100);
+	Layout::AnchorWindow(m_macrosesDlg, *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
+}
+
+void CActiveProcessToolkitTab::initKeyRebindingsTable()
+{
+	m_keyRemappingDlg.Create(CTableDlg::IDD, this);
+	m_keyRemappingDlg.Init(L"Keys remapping", L"Add remapping key",
+		[&]() {
+			auto keyToAdd = CInputEditorDlg::EditKey(this);
+			if (!keyToAdd.has_value())
+				return;
+
+			auto& keysRemapping = m_configuration->keysRemapping;
+
+			auto it = keysRemapping.find(keyToAdd.value());
+			if (it != keysRemapping.end())
+			{
+				MessageBox((L"Key " + keyToAdd.value().ToString() + L" already exist").c_str(), L"Key already exist", MB_OK);
+				return;
+			}
+
+			// Deleting line with old key and replacing text
+			it = keysRemapping.emplace(std::move(keyToAdd.value()), std::move(Key(0))).first;
+			int itemIndex = std::distance(keysRemapping.begin(), it);
+
+			auto& table = m_keyRemappingDlg.GetTable();
+			table.InsertItem(itemIndex, it->first.ToString().c_str());
+			table.SetItemText(itemIndex, RebingingColumns::eNew, it->second.ToString().c_str());
+			table.SelectItem(itemIndex);
+			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+		},
+		[&]() {
+			auto& table = m_keyRemappingDlg.GetTable();
+			std::vector<int> selectedActions = table.GetSelectedItems();
+
+			for (auto it = selectedActions.rbegin(), end = selectedActions.rend(); it != end; ++it)
+			{
+				m_configuration->keysRemapping.erase(std::next(m_configuration->keysRemapping.begin(), *it));
+				table.DeleteItem(*it);
+			}
+
+			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+		});
+
+	CRect rect;
+	m_groupRemappingPlaceholder.GetWindowRect(rect);
+	ScreenToClient(rect);
+
+	m_keyRemappingDlg.MoveWindow(rect);
+	m_keyRemappingDlg.ShowWindow(SW_SHOW);
+	m_groupRemappingPlaceholder.ShowWindow(SW_HIDE);
+
+	auto& list = m_keyRemappingDlg.GetTable();
+	list.GetClientRect(rect);
+
+	list.InsertColumn(RebingingColumns::eOriginal, L"Original", LVCFMT_CENTER, rect.Width() / 2);
+	list.InsertColumn(RebingingColumns::eNew, L"New", LVCFMT_CENTER, rect.Width() / 2);
+	list.SetProportionalResizingColumns({ RebingingColumns::eOriginal, RebingingColumns::eNew });
+	const auto keyEdit = [&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
+		{
+			auto& keysRemapping = m_configuration->keysRemapping;
+
+			ASSERT((int)keysRemapping.size() > pParams->iItem);
+			auto editableKeyIt = std::next(keysRemapping.begin(), pParams->iItem);
+
+			const Key& keyToEdit = pParams->iSubItem == RebingingColumns::eOriginal ? editableKeyIt->first : editableKeyIt->second;
+
+			auto keyToAdd = CInputEditorDlg::EditKey(this, keyToEdit);
+			if (!keyToAdd.has_value())
+				return nullptr;
+			auto& list = m_keyRemappingDlg.GetTable();
+
+			switch (pParams->iSubItem)
+			{
+			case RebingingColumns::eOriginal:
+			{
+				auto it = keysRemapping.find(keyToAdd.value());
+				if (it != keysRemapping.end())
+				{
+					auto res = MessageBox((L"Key " + keyToAdd.value().ToString() + L" already exist, do you want to replace it?").c_str(),
+						L"Key already exist", MB_YESNO);
+					if (res == IDNO)
+						return nullptr;
+				}
+
+				// Deleting line with old key and replacing text
+				auto newKeyValue = std::move(editableKeyIt->second);
+				keysRemapping.erase(editableKeyIt);
+				list.DeleteItem(pParams->iItem);
+
+				if (it != keysRemapping.end())
+				{
+					it->second = std::move(newKeyValue);
+					int itemIndex = std::distance(keysRemapping.begin(), it);
+					list.SetItemText(itemIndex, RebingingColumns::eNew, it->second.ToString().c_str());
+					list.SelectItem(itemIndex);
+				}
+				else
+				{
+					it = keysRemapping.emplace(std::move(keyToAdd.value()), std::move(newKeyValue)).first;
+					int itemIndex = std::distance(keysRemapping.begin(), it);
+
+					list.InsertItem(itemIndex, it->first.ToString().c_str());
+					list.SetItemText(itemIndex, RebingingColumns::eNew, it->second.ToString().c_str());
+					list.SelectItem(itemIndex);
+				}
+			}
+			break;
+			case RebingingColumns::eNew:
+				editableKeyIt->second = std::move(keyToAdd.value());
+
+				list.SetItemText(pParams->iItem, RebingingColumns::eNew, editableKeyIt->second.ToString().c_str());
+				break;
+			default:
+				static_assert(ext::reflection::get_enum_size<RebingingColumns>() == 2);
+				break;
+			}
+
+			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+
+			return nullptr;
+		};
+	list.setSubItemEditorController(RebingingColumns::eOriginal, keyEdit);
+	list.setSubItemEditorController(RebingingColumns::eNew, keyEdit);
+
+	Layout::AnchorWindow(m_keyRemappingDlg, m_splitterForKeys, { AnchorSide::eLeft }, AnchorSide::eRight, 100);
+	Layout::AnchorWindow(m_keyRemappingDlg, *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
+	Layout::AnchorWindow(m_keyRemappingDlg, *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
 }
 
 void CActiveProcessToolkitTab::UpdateControlsData()
@@ -457,30 +518,31 @@ void CActiveProcessToolkitTab::UpdateControlsData()
 
 	UpdateEnableButton();
 
-	constexpr UINT notDisalableChilds[] = {
+	constexpr UINT controlIdsToIgnoreVisibilityChange [] = {
 		IDC_CHECK_ACTIVE_PROCESS_TOOLKIT_ENABLE,
 		IDC_STATIC_CONFIGURATION,
 		IDC_COMBO_CONFIGURATION,
 		IDC_BUTTON_ADD_CONFIGURATION,
+		IDC_MACROSES_PLACEHOLDER,
+		IDC_KEYS_REMAPPING_PLACEHOLDER,
 	};
 
 	// Disable editable controls if no configuration selected
-	bool enableStatus = (settings.activeConfiguration != -1) ? TRUE : FALSE;
 	CWnd* pChildWnd = GetWindow(GW_CHILD);
 	while (pChildWnd)
 	{
 		const auto controlId = pChildWnd->GetDlgCtrlID();
 
-		bool canChangeEnableState = true;
-		for (const auto id : notDisalableChilds)
+		bool canChangeVisibilityStatus = true;
+		for (const auto id : controlIdsToIgnoreVisibilityChange)
 		{
 			if (controlId == id)
 			{
-				canChangeEnableState = false;
+				canChangeVisibilityStatus = false;
 				break;
 			}
 		}
-		if (canChangeEnableState)
+		if (canChangeVisibilityStatus)
 			pChildWnd->ShowWindow(!!m_configuration ? SW_SHOW : SW_HIDE);
 
 		// Move to the next child control
@@ -515,23 +577,29 @@ void CActiveProcessToolkitTab::UpdateControlsData()
 		addKeyToIgnore(bind);
 	}
 
-	m_listActions.DeleteAllItems();
-	decltype(m_configuration->actionsByBind) current;
-	std::swap(current, m_configuration->actionsByBind);
-	for (auto&& [bind, actionsByBind] : current)
 	{
-		AddNewActions(bind, std::move(actionsByBind));
+		auto& table = m_macrosesDlg.GetTable();
+		table.DeleteAllItems();
+		decltype(m_configuration->actionsByBind) current;
+		std::swap(current, m_configuration->actionsByBind);
+		for (auto&& [bind, actionsByBind] : current)
+		{
+			AddNewActions(bind, std::move(actionsByBind));
+		}
+		m_macrosesDlg.UpdateRemoveButtonState();
 	}
-	m_buttonRemoveMacros.EnableWindow(m_listActions.GetSelectedCount() > 0);
 
-	int i = 0;
-	m_listKeyRemapping.DeleteAllItems();
-	for (auto&& [originalKey, newKey] : m_configuration->keysRemapping)
 	{
-		auto item = m_listKeyRemapping.InsertItem(i++, originalKey.ToString().c_str());
-		m_listKeyRemapping.SetItemText(item, RebingingColumns::eNew, newKey.ToString().c_str());
+		auto& table = m_keyRemappingDlg.GetTable();
+		table.DeleteAllItems();
+		int i = 0;
+		for (auto&& [originalKey, newKey] : m_configuration->keysRemapping)
+		{
+			auto item = table.InsertItem(i++, originalKey.ToString().c_str());
+			table.SetItemText(item, RebingingColumns::eNew, newKey.ToString().c_str());
+		}
+		m_keyRemappingDlg.UpdateRemoveButtonState();
 	}
-	m_buttonRemoveRemapping.EnableWindow(m_listKeyRemapping.GetSelectedCount() > 0);
 
 	m_checkChangeBrightness.SetCheck(m_configuration->changeBrightness);
 	OnBnClickedCheckChangeBrightness();
@@ -592,7 +660,9 @@ void CActiveProcessToolkitTab::AddNewActions(const Bind& keybind, Actions&& newA
 
 	auto item = (int)std::distance(actionsByBind.begin(), it.first);
 
-	item = m_listActions.InsertItem(item, it.first->first.ToString().c_str());
+	auto& table = m_macrosesDlg.GetTable();
+
+	item = table.InsertItem(item, it.first->first.ToString().c_str());
 	std::wstring actions = it.first->second.description;
 	if (actions.empty())
 	{
@@ -606,16 +676,15 @@ void CActiveProcessToolkitTab::AddNewActions(const Bind& keybind, Actions&& newA
 			actions += action.ToString();
 		}
 	}
-	m_listActions.SetItemText(item, MacrosesColumns::eMacros, actions.c_str());
+	table.SetItemText(item, MacrosesColumns::eMacros, actions.c_str());
 
 	std::wostringstream str;
 	if (it.first->second.enableRandomDelay)
 		str << it.first->second.randomizeDelayMs;
 	else
 		str << L'-';
-	m_listActions.SetItemText(item, MacrosesColumns::eRandomizeDelay, str.str().c_str());
-
-	m_listActions.SelectItem(item);
+	table.SetItemText(item, MacrosesColumns::eRandomizeDelay, str.str().c_str());
+	table.SelectItem(item);
 }
 
 void CActiveProcessToolkitTab::UpdateDemoCrosshair()
@@ -950,135 +1019,6 @@ void CActiveProcessToolkitTab::OnCbnSetfocusComboExeName()
 	m_exeName.SetWindowText(currentText);
 	m_exeName.SetEditSel(0, currentText.GetLength());
 	m_exeName.AdjustComboBoxToContent();
-}
-
-void CActiveProcessToolkitTab::OnBnClickedButtonAddMacros()
-{
-	auto bind = CInputEditorDlg::EditBind(this);
-	if (!bind.has_value())
-		return;
-
-	const auto it = m_configuration->actionsByBind.find(bind.value());
-	const bool actionExists = it != m_configuration->actionsByBind.end();
-
-	Actions editableActions;
-	if (actionExists)
-	{
-		auto res = MessageBox((L"Do you want to edit action '" + bind->ToString() + L"'?").c_str(), L"Action already has actionsByBind", MB_OKCANCEL | MB_ICONWARNING);
-		if (res == IDCANCEL)
-		{
-			m_listActions.ClearSelection();
-			m_listActions.SelectItem((int)std::distance(m_configuration->actionsByBind.begin(), it));
-			return;
-		}
-
-		editableActions = it->second;
-	}
-	else {
-		// Adding new item to the table to show user what we adding
-		auto item = m_listActions.InsertItem(m_listActions.GetItemCount(), bind->ToString().c_str());
-		m_listActions.SelectItem(item);
-	}
-
-	auto newActions = CActionsEditDlg::ExecModal(this, editableActions);
-
-	// removing previously added item with bind name
-	if (!actionExists)
-		m_listActions.DeleteItem(m_listActions.GetItemCount() - 1);
-
-	if (!newActions.has_value())
-		return;
-
-	// removing old copy of edited actionsByBind
-	if (actionExists)
-	{
-		auto sameItem = (int)std::distance(m_configuration->actionsByBind.begin(), it);
-		m_configuration->actionsByBind.erase(it);
-		m_listActions.DeleteItem(sameItem);
-	}
-
-	AddNewActions(bind.value(), std::move(newActions.value()));
-
-	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
-}
-
-void CActiveProcessToolkitTab::OnBnClickedButtonRemoveMacros()
-{
-	std::vector<int> selectedActions = m_listActions.GetSelectedItems();
-
-	for (auto it = selectedActions.rbegin(), end = selectedActions.rend(); it != end; ++it)
-	{
-		m_configuration->actionsByBind.erase(std::next(m_configuration->actionsByBind.begin(), *it));
-		m_listActions.DeleteItem(*it);
-	}
-
-	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
-}
-
-void CActiveProcessToolkitTab::OnLvnItemchangedListActions(NMHDR* pNMHDR, LRESULT* pResult)
-{
-	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-	if (pNMLV->uChanged & LVIF_STATE)
-	{
-		if ((pNMLV->uNewState & LVIS_SELECTED) != (pNMLV->uOldState & LVIS_SELECTED))
-		{
-			// selection changed
-			m_buttonRemoveMacros.EnableWindow(m_listActions.GetSelectedCount() > 0);
-		}
-	}
-	*pResult = 0;
-}
-
-void CActiveProcessToolkitTab::OnBnClickedButtonAddRemapping()
-{
-	auto keyToAdd = CInputEditorDlg::EditKey(this);
-	if (!keyToAdd.has_value())
-		return;
-
-	auto& keysRemapping = m_configuration->keysRemapping;
-
-	auto it = keysRemapping.find(keyToAdd.value());
-	if (it != keysRemapping.end())
-	{
-		MessageBox((L"Key " + keyToAdd.value().ToString() + L" already exist").c_str(), L"Key already exist", MB_OK);
-		return;
-	}
-
-	// Deleting line with old key and replacing text
-	it = keysRemapping.emplace(std::move(keyToAdd.value()), std::move(Key(0))).first;
-	int itemIndex = std::distance(keysRemapping.begin(), it);
-
-	m_listKeyRemapping.InsertItem(itemIndex, it->first.ToString().c_str());
-	m_listKeyRemapping.SetItemText(itemIndex, RebingingColumns::eNew, it->second.ToString().c_str());
-	m_listKeyRemapping.SelectItem(itemIndex);
-	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
-}
-
-void CActiveProcessToolkitTab::OnBnClickedButtonRemoveRemapping()
-{
-	std::vector<int> selectedActions = m_listKeyRemapping.GetSelectedItems();
-
-	for (auto it = selectedActions.rbegin(), end = selectedActions.rend(); it != end; ++it)
-	{
-		m_configuration->keysRemapping.erase(std::next(m_configuration->keysRemapping.begin(), *it));
-		m_listKeyRemapping.DeleteItem(*it);
-	}
-
-	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
-}
-
-void CActiveProcessToolkitTab::OnLvnItemchangedListRemapping(NMHDR* pNMHDR, LRESULT* pResult)
-{
-	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
-	if (pNMLV->uChanged & LVIF_STATE)
-	{
-		if ((pNMLV->uNewState & LVIS_SELECTED) != (pNMLV->uOldState & LVIS_SELECTED))
-		{
-			// selection changed
-			m_buttonRemoveRemapping.EnableWindow(m_listKeyRemapping.GetSelectedCount() > 0);
-		}
-	}
-	*pResult = 0;
 }
 
 void CActiveProcessToolkitTab::OnBnClickedCheckShowCrosshair()

@@ -18,9 +18,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="UI\Dlg">
-      <UniqueIdentifier>{2e226266-b6aa-4ad7-9f82-3a7819c3b774}</UniqueIdentifier>
-    </Filter>
     <Filter Include="UI\Tab">
       <UniqueIdentifier>{23df115c-d132-4b60-ba99-b7474afdab18}</UniqueIdentifier>
     </Filter>
@@ -30,14 +27,11 @@
     <Filter Include="UI\InputEditors">
       <UniqueIdentifier>{a996d105-5af1-40ae-909b-5fd56029e287}</UniqueIdentifier>
     </Filter>
-    <Filter Include="UI\View">
-      <UniqueIdentifier>{fcc3edc3-6e89-4504-ac80-607de807357f}</UniqueIdentifier>
+    <Filter Include="UI\Dlg">
+      <UniqueIdentifier>{2e226266-b6aa-4ad7-9f82-3a7819c3b774}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Controls\TabControl\TabControl.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
     <ClInclude Include="targetver.h">
       <Filter>Base</Filter>
     </ClInclude>
@@ -50,39 +44,6 @@
     <ClInclude Include="pch.h">
       <Filter>Base</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditorImpl.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\Edit\CEditBase\CEditBase.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\Edit\SpinEdit\SpinEdit.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\SpinButton\SpinButton.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\Tooltip\ToolTip.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\TrayHelper\TrayHelper.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\ComboBox\CIconComboBox\IconComboBox.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\Layout\Layout.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
     <ClInclude Include="core\Crosshairs.h">
       <Filter>core</Filter>
     </ClInclude>
@@ -92,17 +53,8 @@
     <ClInclude Include="core\Worker.h">
       <Filter>core</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\Button\IconButton\IconButton.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
     <ClInclude Include="core\events.h">
       <Filter>core</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\MFC\CMFCEditBrowseCtrlEx.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\ToolWindow\ToolWindow.h">
-      <Filter>UI\Controls</Filter>
     </ClInclude>
     <ClInclude Include="UI\Dlg\AddActionDlg.h">
       <Filter>UI\Dlg</Filter>
@@ -149,12 +101,6 @@
     <ClInclude Include="UI\Dlg\TimerSettingsDlg.h">
       <Filter>UI\Dlg</Filter>
     </ClInclude>
-    <ClInclude Include="Controls\MFC\CMFCColorSelection.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
-    <ClInclude Include="Controls\ComboBox\CheckCombobox\CheckComboBox.h">
-      <Filter>UI\Controls</Filter>
-    </ClInclude>
     <ClInclude Include="Resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
@@ -164,58 +110,76 @@
     <ClInclude Include="core\WinRTMonitorInfo.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="UI\Controls\CenteredLineStatic.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Edit\CEditBase\CEditBase.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\ComboBox\CheckCombobox\CheckComboBox.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\MFC\CMFCColorSelection.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\MFC\CMFCEditBrowseCtrlEx.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Button\IconButton\IconButton.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\ComboBox\CIconComboBox\IconComboBox.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Layout\Layout.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
     <ClInclude Include="Controls\Slider\Slider.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\SpinButton\SpinButton.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Edit\SpinEdit\SpinEdit.h">
       <Filter>UI\Controls</Filter>
     </ClInclude>
     <ClInclude Include="Controls\Splitter\Splitter.h">
       <Filter>UI\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="UI\View\CTableView.h">
-      <Filter>UI\View</Filter>
-    </ClInclude>
-    <ClInclude Include="UI\Controls\CenteredLineStatic.h">
+    <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.h">
       <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditorImpl.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\TabControl\TabControl.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\Tooltip\ToolTip.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\ToolWindow\ToolWindow.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="Controls\TrayHelper\TrayHelper.h">
+      <Filter>UI\Controls</Filter>
+    </ClInclude>
+    <ClInclude Include="UI\Dlg\TableDlg.h">
+      <Filter>UI\Dlg</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Controls\TabControl\TabControl.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Base</Filter>
     </ClCompile>
     <ClCompile Include="GameMate.cpp">
       <Filter>Base</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\Edit\CEditBase\CEditBase.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\Edit\SpinEdit\SpinEdit.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\SpinButton\SpinButton.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\Tooltip\ToolTip.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\TrayHelper\TrayHelper.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\ComboBox\CIconComboBox\IconComboBox.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\Layout\Layout.cpp">
-      <Filter>UI\Controls</Filter>
     </ClCompile>
     <ClCompile Include="core\Crosshairs.cpp">
       <Filter>core</Filter>
@@ -225,15 +189,6 @@
     </ClCompile>
     <ClCompile Include="core\Worker.cpp">
       <Filter>core</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\Button\IconButton\IconButton.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\MFC\CMFCEditBrowseCtrlEx.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\ToolWindow\ToolWindow.cpp">
-      <Filter>UI\Controls</Filter>
     </ClCompile>
     <ClCompile Include="UI\Dlg\AddActionDlg.cpp">
       <Filter>UI\Dlg</Filter>
@@ -280,29 +235,71 @@
     <ClCompile Include="UI\Dlg\TimerSettingsDlg.cpp">
       <Filter>UI\Dlg</Filter>
     </ClCompile>
-    <ClCompile Include="Controls\MFC\CMFCColorSelection.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
-    <ClCompile Include="Controls\ComboBox\CheckCombobox\CheckComboBox.cpp">
-      <Filter>UI\Controls</Filter>
-    </ClCompile>
     <ClCompile Include="core\WinRTMonitorInfo.cpp">
       <Filter>core</Filter>
     </ClCompile>
     <ClCompile Include="core\DisplayBrightnessController.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="UI\Controls\CenteredLineStatic.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Edit\CEditBase\CEditBase.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\ComboBox\CheckCombobox\CheckComboBox.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\MFC\CMFCColorSelection.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\MFC\CMFCEditBrowseCtrlEx.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\ComboBox\CComboBoxWithSearch\ComboWithSearch.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Button\IconButton\IconButton.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\ComboBox\CIconComboBox\IconComboBox.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Layout\Layout.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
     <ClCompile Include="Controls\Slider\Slider.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\SpinButton\SpinButton.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Edit\SpinEdit\SpinEdit.cpp">
       <Filter>UI\Controls</Filter>
     </ClCompile>
     <ClCompile Include="Controls\Splitter\Splitter.cpp">
       <Filter>UI\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="UI\View\CTableView.cpp">
-      <Filter>UI\View</Filter>
-    </ClCompile>
-    <ClCompile Include="UI\Controls\CenteredLineStatic.cpp">
+    <ClCompile Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.cpp">
       <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\TabControl\TabControl.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\Tooltip\ToolTip.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\ToolWindow\ToolWindow.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="Controls\TrayHelper\TrayHelper.cpp">
+      <Filter>UI\Controls</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Dlg\TableDlg.cpp">
+      <Filter>UI\Dlg</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

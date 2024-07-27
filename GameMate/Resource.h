@@ -67,7 +67,7 @@
 #define IDB_PNG1                        198
 #define IDB_PNG_START_RECORDING         198
 #define IDB_PNG_STOP_RECORDING          199
-#define IDD_VIEW_TABLE                  202
+#define IDD_DIALOG_TABLE                202
 #define IDC_TABCONTROL_MODES            1000
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
@@ -92,8 +92,8 @@
 #define IDC_BUTTON_RECORD               1017
 #define IDC_MACROSES_GROUP4             1017
 #define IDC_MACROSES_GROUP5             1018
-#define IDC_KEYS_REMAPPING_GROUP        1018
-#define IDC_MACROSES_GROUP              1019
+#define IDC_KEYS_REMAPPING_PLACEHOLDER  1018
+#define IDC_MACROSES_PLACEHOLDER        1019
 #define IDC_EDIT_ACTION                 1024
 #define IDC_EDIT_RANDOMIZE_DELAYS       1024
 #define IDC_EDIT_INTERVAL_MIN           1024
