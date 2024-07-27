@@ -428,8 +428,9 @@ void CActiveProcessToolkitTab::initKeyRebindingsTable()
 			const Key& keyToEdit = pParams->iSubItem == RebingingColumns::eOriginal ? editableKeyIt->first : editableKeyIt->second;
 
 			auto keyToAdd = CInputEditorDlg::EditKey(this, keyToEdit);
-			if (!keyToAdd.has_value())
+			if (!keyToAdd.has_value() || keyToAdd->ToString() == keyToEdit.ToString())
 				return nullptr;
+
 			auto& list = m_keyRemappingDlg->GetTable();
 
 			switch (pParams->iSubItem)
