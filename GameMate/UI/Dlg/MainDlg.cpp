@@ -237,8 +237,6 @@ BOOL CMainDlg::OnInitDialog()
 	m_timerDlg.Create(CTimerDlg::IDD, GetDesktopWindow());
 	updateTimerButton();
 
-
-
 	CRect tabRect;
 	m_tabControlModes.GetTabWindow(0)->GetWindowRect(tabRect);
 
