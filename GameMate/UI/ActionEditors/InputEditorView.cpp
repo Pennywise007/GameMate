@@ -66,58 +66,62 @@ void CInputEditorBaseView::OnTimer(UINT_PTR nIDEvent)
 	{
 	case kTimerIdActionsSubscription:
 		m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkCode, bool isDown) -> bool {
-			auto owner = GetOwner();
-			if (owner != GetForegroundWindow())
-				return false;
+			bool res = false;
+			ext::InvokeMethod([&]() {
+				auto owner = GetOwner();
+				if (owner != GetForegroundWindow())
+					return;
 
-			switch (vkCode)
-			{
-			case VK_LBUTTON:
-			{
-				CPoint cursor;
-				::GetCursorPos(&cursor);
-
-				if (auto window = CWnd::FromHandle(::WindowFromPoint(cursor)); window)
+				switch (vkCode)
 				{
-					wchar_t className[64];
-					GetClassName(window->m_hWnd, className, 64);
+				case VK_LBUTTON:
+				{
+					CPoint cursor;
+					::GetCursorPos(&cursor);
 
-					// Don't store click on parent controls like OK button or combobox with mode switchers
-					const auto allowClick = [&]()
+					if (auto window = CWnd::FromHandle(::WindowFromPoint(cursor)); window)
 					{
-						if (std::wstring_view(className) == L"ComboLBox")
-							return true;
-						if (window->GetParent() != owner)
-							return true;
-						// Allow click on dialog or statics
-						for (const auto* cl : { RUNTIME_CLASS(CDialog), RUNTIME_CLASS(CFormView), RUNTIME_CLASS(CStatic) })
-						{
-							if (window->IsKindOf(cl))
-								return true;
-						}
+						wchar_t className[64];
+						GetClassName(window->m_hWnd, className, 64);
 
-						return false;
-					};
+						// Don't store click on parent controls like OK button or combobox with mode switchers
+						const auto allowClick = [&]()
+							{
+								if (std::wstring_view(className) == L"ComboLBox")
+									return true;
+								if (window->GetParent() != owner)
+									return true;
+								// Allow click on dialog or statics
+								for (const auto* cl : { RUNTIME_CLASS(CDialog), RUNTIME_CLASS(CFormView), RUNTIME_CLASS(CStatic) })
+								{
+									if (window->IsKindOf(cl))
+										return true;
+								}
 
-					if (!allowClick())
-						return false;
+								return false;
+							};
+
+						if (!allowClick())
+							return;
+					}
+					m_editableInput->UpdateInput(vkCode, isDown);
+
+					// Set timer to change displayed text because user might hit close button with mouse
+					// and if we change text immediately the user will see Mouse down as a key text which wasn't his last input
+					KillTimer(kTimerIdKeyTextChage);
+					SetTimer(kTimerIdKeyTextChage, 50, nullptr);
+
+					m_editAction.HideCaret();
+					return;
 				}
+				}
+
 				m_editableInput->UpdateInput(vkCode, isDown);
+				m_editAction.SetWindowTextW(GetActionEditText().c_str());
+				res = true;
+			});
 
-				// Set timer to change displayed text because user might hit close button with mouse
-				// and if we change text immediately the user will see Mouse down as a key text which wasn't his last input
-				KillTimer(kTimerIdKeyTextChage);
-				SetTimer(kTimerIdKeyTextChage, 50, nullptr);
-
-				m_editAction.HideCaret();
-				return false;
-			}
-			}
-
-			m_editableInput->UpdateInput(vkCode, isDown);
-			m_editAction.SetWindowTextW(GetActionEditText().c_str());
-
-			return true;
+			return res;
 		});
 		break;
 	case kTimerIdKeyTextChage:

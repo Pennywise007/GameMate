@@ -14,15 +14,15 @@ class CActionsExecutorTab : public CDialogEx, ext::events::ScopeSubscription<ISe
 	DECLARE_DYNAMIC(CActionsExecutorTab)
 
 public:
-	CActionsExecutorTab(CWnd* pParent);   // standard constructor
+	CActionsExecutorTab(CWnd* pParent);
 
 	enum { IDD = IDD_DIALOG_ACTIONS_EXECUTOR };
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	virtual void OnOK();
-	virtual void OnCancel();
-	virtual BOOL OnInitDialog();
+	virtual void DoDataExchange(CDataExchange* pDX) override;
+	virtual void OnOK() override;
+	virtual void OnCancel() override;
+	virtual BOOL OnInitDialog() override;
 	afx_msg void OnEnChangeEditIntervalMin();
 	afx_msg void OnEnChangeEditIntervalSec();
 	afx_msg void OnEnChangeEditIntervalMillisec();

@@ -337,17 +337,17 @@ inline void CActionsEditorView::startRecording()
 	{
 	case MouseRecordMode::eRecordCursorPosition:
 	case MouseRecordMode::eRecordCursorDelta:
-		m_mouseMoveSubscriptionId = InputManager::AddMouseMoveHandler([&](const POINT& position, const POINT& delta) {
+		m_mouseMoveSubscriptionId = InputManager::AddMouseMoveHandler([&, recordMode = m_actions->mouseRecordMode](const POINT& position, const POINT& delta) {
 			if (delta.x == 0 && delta.y == 0)
 				return;
 
-			switch (m_actions->mouseRecordMode)
+			switch (recordMode)
 			{
 			case MouseRecordMode::eRecordCursorPosition:
-				handleRecordedAction(Action::NewMousePosition(position.x, position.y, kDelayPlaceholder));
+				handleRecordedActionAsync(Action::NewMousePosition(position.x, position.y, kDelayPlaceholder));
 				break;
 			case MouseRecordMode::eRecordCursorDelta:
-				handleRecordedAction(Action::NewMouseMove(delta.x, delta.y, kDelayPlaceholder, false));
+				handleRecordedActionAsync(Action::NewMouseMove(delta.x, delta.y, kDelayPlaceholder, false));
 				break;
 			default:
 				EXT_UNREACHABLE();
@@ -356,7 +356,7 @@ inline void CActionsEditorView::startRecording()
 		break;
 	case MouseRecordMode::eRecordCursorDeltaWithDirectX:
 		m_mouseMoveDirectXSubscriptionId = InputManager::AddDirectInputMouseMoveHandler(AfxGetInstanceHandle(), [&](const POINT& delta) {
-			handleRecordedAction(Action::NewMouseMove(delta.x, delta.y, kDelayPlaceholder, true));
+			handleRecordedActionAsync(Action::NewMouseMove(delta.x, delta.y, kDelayPlaceholder, true));
 		});
 
 		if (m_mouseMoveDirectXSubscriptionId == -1)
@@ -371,22 +371,20 @@ inline void CActionsEditorView::startRecording()
 		break;
 	}
 
+	const static auto kCurrentProcessId = GetCurrentProcessId();
 	m_keyPressedSubscriptionId = InputManager::AddKeyOrMouseHandler([&](WORD vkCode, bool isDown) -> bool {
-		const static auto kCurrentProcessId = GetCurrentProcessId();
-		
 		switch (vkCode)
 		{
 		case VK_LBUTTON:
 		{
-			CPoint cursor;
-			::GetCursorPos(&cursor);
+			CPoint cursor = InputManager::GetMousePosition();
 
 			// Process stop recording and OK click
 			auto window = ::WindowFromPoint(cursor);
 			if (window == m_buttonRecord.m_hWnd || (!!GetOwner()->GetDlgItem(IDOK) && window == GetOwner()->GetDlgItem(IDOK)->m_hWnd))
 				return false;
 
-			handleRecordedAction(Action::NewAction(vkCode, isDown, kDelayPlaceholder));
+			handleRecordedActionAsync(Action::NewAction(vkCode, isDown, kDelayPlaceholder));
 
 			// allow clicks in other programs except ours
 			if (CWnd* wnd = WindowFromPoint(cursor); wnd)
@@ -400,7 +398,7 @@ inline void CActionsEditorView::startRecording()
 		}
 		default:
 		{
-			handleRecordedAction(Action::NewAction(vkCode, isDown, kDelayPlaceholder));
+			handleRecordedActionAsync(Action::NewAction(vkCode, isDown, kDelayPlaceholder));
 
 			// allow action in other programs except ours
 			if (CWnd* wnd = GetForegroundWindow(); wnd)
@@ -448,9 +446,9 @@ bool CActionsEditorView::canDynamicallyAddRecordedActions() const
 	return m_actions->showMouseMovementsUnited || m_actions->mouseRecordMode == MouseRecordMode::eNoMouseMovements;
 }
 
-void CActionsEditorView::handleRecordedAction(Action&& action)
+void CActionsEditorView::handleRecordedActionAsync(Action&& action)
 {
-	EXT_ASSERT(action.delayInMilliseconds == kDelayPlaceholder) << "Delay should be added in this funcion";
+	EXT_ASSERT(action.delayInMilliseconds == kDelayPlaceholder) << "Delay should be added in this function";
 	EXT_DEFER(EXT_ASSERT(action.delayInMilliseconds != kDelayPlaceholder) << "Delay placeholder expected to be replaced");
 
 	auto curTime = std::chrono::steady_clock::now();
@@ -464,33 +462,35 @@ void CActionsEditorView::handleRecordedAction(Action&& action)
 
 	action.delayInMilliseconds = (unsigned)delay;
 
-	// If we record mouse movements we can receive 3 mouse move event in 1 ms and to avoid delays we will add them in a table after finishing the recording
-	if (canDynamicallyAddRecordedActions())
-	{
-		switch (action.type)
+	ext::InvokeMethodAsync([&, action]() {
+		// If we record mouse movements we can receive 3 mouse move event in 1 ms and to avoid delays we will add them in a table after finishing the recording
+		if (canDynamicallyAddRecordedActions())
 		{
-		case Action::Type::eKeyOrMouseAction:
-			// If we recorded some mouse movements, add them to the table before our action
-			if (!m_recordedActions.empty())
+			switch (action.type)
 			{
-				addActions(m_recordedActions, true);
-				m_recordedActions.clear();
+			case Action::Type::eKeyOrMouseAction:
+				// If we recorded some mouse movements, add them to the table before our action
+				if (!m_recordedActions.empty())
+				{
+					addActions(m_recordedActions, true);
+					m_recordedActions.clear();
+				}
+				addAction(std::move(action));
+				break;
+			case Action::Type::eCursorPosition:
+			case Action::Type::eMouseMove:
+			case Action::Type::eMouseMoveDirectInput:
+				EXT_ASSERT(m_recordedActions.empty() || m_recordedActions.back().type == action.type);
+				m_recordedActions.emplace_back(std::move(action));
+				break;
+			default:
+				static_assert(ext::reflection::get_enum_size<Action::Type>() == 5, "Not handled enum value");
+				EXT_UNREACHABLE();
 			}
-			addAction(std::move(action));
-			break;
-		case Action::Type::eCursorPosition:
-		case Action::Type::eMouseMove:
-		case Action::Type::eMouseMoveDirectInput:
-			EXT_ASSERT(m_recordedActions.empty() || m_recordedActions.back().type == action.type);
-			m_recordedActions.emplace_back(std::move(action));
-			break;
-		default:
-			static_assert(ext::reflection::get_enum_size<Action::Type>() == 5, "Not handled enum value");
-			EXT_UNREACHABLE();
 		}
-	}
-	else
-		m_recordedActions.emplace_back(std::move(action));
+		else
+			m_recordedActions.emplace_back(std::move(action));
+	});
 }
 
 void CActionsEditorView::addActions(const std::list<Action>& actions, bool lockRedraw)
@@ -597,7 +597,7 @@ void CActionsEditorView::addActions(const std::list<Action>& actions, bool lockR
 	}
 }
 
-void CActionsEditorView::addAction(Action&& action)
+void CActionsEditorView::addAction(Action action)
 {
 	int item = m_listActions.GetLastSelectedItem() + 1;
 	if (item == 0)

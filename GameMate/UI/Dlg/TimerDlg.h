@@ -50,8 +50,10 @@ public:
 
 	enum { IDD = IDD_DIALOG_TIMER };
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX) override;    // DDX/DDV support
+	virtual void DoDataExchange(CDataExchange* pDX) override;
 	virtual BOOL OnInitDialog() override;
+	virtual void OnOK() override;
+	virtual void OnCancel() override;
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
@@ -74,8 +76,8 @@ private:
 	void minimizeInterface();
 
 private:
-	CButton m_checkStart;
-	CButton m_buttonReset;
+	CIconButton m_checkStart;
+	CIconButton m_buttonReset;
 	CIconButton m_buttonTimerSettings;
 	CTimerWindow m_timerWindow;
 

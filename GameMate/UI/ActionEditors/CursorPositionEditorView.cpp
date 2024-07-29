@@ -80,15 +80,16 @@ void CMouseMovementEditorView::OnBnClickedButtonMousePositionSelect()
 		{
 		case VK_LBUTTON:
 		{
-			auto cursor = InputManager::GetMousePosition();
-			m_action->mouseX = cursor.x;
-			m_action->mouseY = cursor.y;
-			updateMousePositionControlsStates();
+			ext::InvokeMethod([&, cursor = InputManager::GetMousePosition()]() {
+				m_action->mouseX = cursor.x;
+				m_action->mouseY = cursor.y;
+				updateMousePositionControlsStates();
+			});
 			[[fallthrough]];
 		}
 		case VK_ESCAPE:
 		{
-			ext::InvokeMethodAsync([&]() {
+			ext::InvokeMethod([&]() {
 				InputManager::RemoveKeyOrMouseHandler(m_keyPressedSubscriptionId);
 				m_keyPressedSubscriptionId = -1;
 				InputManager::RemoveMouseMoveHandler(m_mouseMoveSubscriptionId);
@@ -105,8 +106,12 @@ void CMouseMovementEditorView::OnBnClickedButtonMousePositionSelect()
 
 		return false;
 	});
-	m_mouseMoveSubscriptionId = InputManager::AddMouseMoveHandler([&](const POINT& position, const POINT&) {
-		syncCrosshairWindowWithCursor();
+	m_mouseMoveSubscriptionId = InputManager::AddMouseMoveHandler([&](const POINT& position, const POINT& delta) {
+		if (delta.x == 0 && delta.y == 0)
+			return;
+		ext::InvokeMethodAsync([&]() {
+			syncCrosshairWindowWithCursor();
+		});
 	});
 
 	syncCrosshairWindowWithCursor();
@@ -120,10 +125,6 @@ std::shared_ptr<IBaseInput> CMouseMovementEditorView::TryFinishDialog()
 
 	m_editMousePositionY.GetWindowTextW(text);
 	m_action->mouseY = text.IsEmpty() ? 0 : std::stol(text.GetString());
-
-	EXT_EXPECT(m_action->type == Action::Type::eCursorPosition ||
-		m_action->type == Action::Type::eMouseMove ||
-		m_action->type == Action::Type::eMouseMoveDirectInput) << "Action type not filled in delivered classes";
 
 	return m_action;
 }

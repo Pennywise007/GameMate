@@ -28,13 +28,16 @@ BEGIN_MESSAGE_MAP(CTableDlg, CDialogEx)
     ON_BN_CLICKED(IDC_BUTTON_ADD, &CTableDlg::OnBnClickedButtonAdd)
     ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CTableDlg::OnBnClickedButtonRemove)
     ON_NOTIFY(LVN_ITEMCHANGED, IDC_TABLE, &CTableDlg::OnLvnItemchangedTable)
-    ON_WM_WINDOWPOSCHANGED()
     ON_WM_ERASEBKGND()
+    ON_WM_WINDOWPOSCHANGED()
 END_MESSAGE_MAP()
 
 BOOL CTableDlg::OnInitDialog()
 {
     CDialogEx::OnInitDialog();
+
+    m_buttonAdd.UseCustomBackgroundDraw(true);
+    m_buttonRemove.UseCustomBackgroundDraw(true);
 
     LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
 
@@ -95,33 +98,50 @@ void CTableDlg::OnLvnItemchangedTable(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = 0;
 }
 
-void CTableDlg::OnWindowPosChanged(WINDOWPOS* lpwndpos)
-{
-    CDialogEx::OnWindowPosChanged(lpwndpos);
-    // Fixing flickering
-    RedrawWindow();
-}
-
 BOOL CTableDlg::OnEraseBkgnd(CDC* pDC)
 {
-    // Sometimes we can see artifacts on the right and left side from the table, just draw background there
+    // Fill COLOR_3DFACE everywhere except child controls client areas
     CRect rect;
     GetClientRect(rect);
 
-    CRect tableRect;
-    m_table.GetWindowRect(tableRect);
-    ScreenToClient(tableRect);
-    rect.left = tableRect.right + 1;
+    CRgn clientRgn;
+    clientRgn.CreateRectRgnIndirect(rect);
 
-    CRect titleRect;
-    m_staticTitle.GetClientRect(titleRect);
-    ScreenToClient(titleRect);
-    rect.top = titleRect.bottom + 1;
+    for (CWnd* pChild = GetWindow(GW_CHILD); pChild != nullptr; pChild = pChild->GetNextWindow())
+    {
+        if (pChild->IsWindowVisible())
+        {
+            CRect ctrlRect;
+            pChild->GetWindowRect(ctrlRect);
+            ScreenToClient(ctrlRect);
 
-    pDC->FillSolidRect(rect, ::GetSysColor(COLOR_3DFACE));
-    rect.left = 0;
-    rect.right = tableRect.left - 1;
+            CRgn ctrlRgn;
+            ctrlRgn.CreateRectRgnIndirect(ctrlRect);
+            clientRgn.CombineRgn(&clientRgn, &ctrlRgn, RGN_DIFF);
+            ctrlRgn.DeleteObject();
+        }
+    }
+
+    CBrush brush(::GetSysColor(COLOR_3DFACE));
+    pDC->FillRgn(&clientRgn, &brush);
+    clientRgn.DeleteObject();
 
     return TRUE;
 }
 
+void CTableDlg::OnWindowPosChanged(WINDOWPOS* lpwndpos)
+{
+    CDialogEx::OnWindowPosChanged(lpwndpos);
+    // Sometimes we see artifacts on controls because of custom OnEraseBackground, redraw window to fix it
+    RedrawWindow();
+}
+
+void CTableDlg::OnOK()
+{
+    // CDialogEx::OnOK();
+}
+
+void CTableDlg::OnCancel()
+{
+    // CDialogEx::OnCancel();
+}

@@ -332,6 +332,10 @@ void CMainDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	switch (nID)
 	{
 	case SC_MINIMIZE:
+		// Ignore double clicks on icon in the taskbar
+		if (lParam == 0)
+			break;
+
 		// hide our app window
 		ShowWindow(SW_MINIMIZE);
 		ShowWindow(SW_HIDE);
@@ -430,7 +434,7 @@ void CMainDlg::OnBnClickedMfcbuttonTimerHotkey()
 void CMainDlg::OnBnClickedCheckTimer()
 {
 	m_buttonShowTimer.SetCheck(m_buttonShowTimer.GetCheck() == BST_CHECKED ? BST_UNCHECKED : BST_CHECKED);
-	ext::send_event_async(&ITimerNotifications::OnShowHideTimer);
+	ext::send_event(&ITimerNotifications::OnShowHideTimer);
 }
 
 void CMainDlg::OnShowHideTimer()

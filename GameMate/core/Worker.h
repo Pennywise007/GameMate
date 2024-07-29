@@ -1,6 +1,11 @@
 #pragma once
 
+#include <atomic>
 #include <chrono>
+#include <functional>
+#include <map>
+#include <memory>
+#include <mutex>
 #include <optional>
 
 #include "events.h"
@@ -28,9 +33,10 @@ private: // IKeyHandlerBlocker
 
 private:
     bool OnKeyOrMouseEvent(WORD mouseVkCode, bool down);
+    void updateKeyBindings();
 
 private:
-    bool m_keyHandlingBlocked = false;
+    std::atomic_bool m_keyHandlingBlocked = false;
     int m_keyMauseHandlerId = -1;
     // Active window changed hook
     HWINEVENTHOOK m_activeWindowHook = nullptr;
@@ -43,8 +49,12 @@ private:
     // process name from GetForegroundWindow and with protected processes
     HWND m_activeWindow = nullptr;
     std::wstring m_activeProcessName;
+    // Mutex for key press information
+    std::mutex m_dataMutex;
+    // Callbacks for each key bind
+    std::map<Bind, std::function<void()>> m_keyBindingsCallbacks;
     // Active window program configuration
-    std::shared_ptr<process_toolkit::ProcessConfiguration> m_activeExeConfig;
+    std::optional<process_toolkit::ProcessConfiguration> m_activeWindowConfiguration;
     // Task id of the saving settings task
     ext::TaskId m_saveSettingsTaskId;
 };

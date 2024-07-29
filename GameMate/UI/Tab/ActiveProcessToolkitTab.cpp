@@ -114,7 +114,6 @@ BEGIN_MESSAGE_MAP(CActiveProcessToolkitTab, CDialogEx)
 	ON_CBN_SELCHANGE(IDC_COMBO_ACCIDENTAL_PRESS, &CActiveProcessToolkitTab::OnCbnSelchangeComboAccidentalPress)
 	ON_BN_CLICKED(IDC_CHECK_CHANGE_BRIGHTNESS, &CActiveProcessToolkitTab::OnBnClickedCheckChangeBrightness)
 	ON_NOTIFY(TRBN_THUMBPOSCHANGING, IDC_SLIDER_BRIGHTNESS, &CActiveProcessToolkitTab::OnTRBNThumbPosChangingSliderBrightness)
-	ON_WM_SIZE()
 END_MESSAGE_MAP()
 
 BOOL CActiveProcessToolkitTab::OnInitDialog()

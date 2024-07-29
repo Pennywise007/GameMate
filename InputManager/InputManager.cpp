@@ -10,7 +10,7 @@
 #include <ext/core/tracer.h>
 #include <ext/constexpr/map.h>
 
-// #define DONT_USE_HOOK
+#define DONT_USE_HOOK
 
 namespace {
 
@@ -154,42 +154,58 @@ std::optional<InputManager::Error> InputManager::SetInputSimulator(InputSimulato
 
 InputManager::InputManager()
 #ifdef DONT_USE_HOOK
-    : m_keyboardHook(nullptr)
-    , m_mouseHook(nullptr)
+{}
 #else
-    : m_keyboardHook(SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, nullptr, 0))
-    , m_mouseHook(SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, nullptr, 0))
-#endif
+    : m_hooksThread([]() {
+        auto stopToken = ext::this_thread::get_stop_token();
+
+        const HHOOK keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, NULL, 0);
+        const HHOOK mouseHook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, NULL, 0);
+
+        try
+        {
+            EXT_EXPECT(keyboardHook) << EXT_TRACE_FUNCTION << "Failed to set keyboard hook, err " << GetLastError();
+            EXT_EXPECT(mouseHook) << EXT_TRACE_FUNCTION << "Failed to set mouse hook, err " << GetLastError();
+        }
+        catch (...)
+        {
+            if (keyboardHook)
+                UnhookWindowsHookEx(keyboardHook);
+            if (mouseHook)
+                UnhookWindowsHookEx(mouseHook);
+
+            ext::ManageException(EXT_TRACE_FUNCTION);
+            return;
+        }
+            
+        MSG msg;
+        while (!stopToken.stop_requested())
+        {
+            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
+
+        UnhookWindowsHookEx(keyboardHook);
+        UnhookWindowsHookEx(mouseHook);
+    })
 {
-#ifndef DONT_USE_HOOK
     for (size_t i = 0; i < m_keyStates.size(); ++i)
     {
         m_keyStates[i] = ::GetKeyState(int(i)) & 0x8000;
     }
 
-    ::GetCursorPos(&m_mousePosition);
-
-    try
-    {
-        EXT_EXPECT(m_keyboardHook) << EXT_TRACE_FUNCTION << "Failed to set keyboard hook, err " << GetLastError();
-        EXT_EXPECT(m_mouseHook) << EXT_TRACE_FUNCTION << "Failed to set mouse hook, err " << GetLastError();
-    }
-    catch (...)
-    {
-        if (m_keyboardHook)
-            UnhookWindowsHookEx(m_keyboardHook);
-        if (m_mouseHook)
-            UnhookWindowsHookEx(m_mouseHook);
-        throw;
-    }
-#endif
+    POINT curPos;
+    ::GetCursorPos(&curPos);
+    m_mousePosition = std::move(curPos);
 }
+#endif // not DONT_USE_HOOK
 
 InputManager::~InputManager()
 {
 #ifndef DONT_USE_HOOK
-    UnhookWindowsHookEx(m_keyboardHook);
-    UnhookWindowsHookEx(m_mouseHook);
+    m_hooksThread.interrupt_and_join();
 #endif
     IbSendDestroy();
 }
@@ -297,15 +313,17 @@ bool InputManager::OnKeyOrMouseEvent(WORD vkCode, bool isPressed)
 
 void InputManager::UpdateMousePosition(LONG x, LONG y)
 {
+    POINT prevPos = m_mousePosition;
+    POINT newPos = POINT(x, y);
     const POINT delta = {
-        x - m_mousePosition.x,
-        y - m_mousePosition.y
+        x - prevPos.x,
+        y - prevPos.y
     };
-    m_mousePosition = POINT(x, y);
+    m_mousePosition = newPos;
 
     for (auto&& [_, callback] : m_onMouseMoveEvents)
     {
-        callback(m_mousePosition, delta);
+        callback(newPos, delta);
     }
 }
 

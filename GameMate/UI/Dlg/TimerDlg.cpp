@@ -215,6 +215,8 @@ BOOL CTimerDlg::OnInitDialog()
 	ScreenToClient(timerRect);
 	m_timerOffsetFromWindow = timerRect.TopLeft();
 
+	m_checkStart.UseCustomBackgroundDraw(true);
+
 	return TRUE;
 }
 
@@ -252,6 +254,23 @@ void CTimerDlg::OnShowWindow(BOOL bShow, UINT nStatus)
 	}
 	else
 		KillTimer(kHideTimerId);
+}
+
+void CTimerDlg::OnOK()
+{
+	// Click on selected button
+	if (CWnd* pFocusedWnd = GetFocus(); pFocusedWnd && pFocusedWnd->IsKindOf(RUNTIME_CLASS(CButton)))
+		pFocusedWnd->SendMessage(BM_CLICK);
+	else
+		// we have only buttons
+		ASSERT(false);
+	// __super::OnOK();
+}
+
+void CTimerDlg::OnCancel()
+{
+	ext::send_event(&ITimerNotifications::OnShowHideTimer);
+	// __super::OnCancel();
 }
 
 void CTimerDlg::OnClose()
@@ -306,7 +325,7 @@ void CTimerDlg::OnBnClickedMfcbuttonTimerSettigns()
 		KillTimer(kHideTimerId);
 		showFullInterface();
 	}
-	ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eTimer);
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eTimer);
 }
 
 void CTimerDlg::OnShowHideTimer()

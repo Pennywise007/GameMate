@@ -6,7 +6,6 @@
 
 BEGIN_MESSAGE_MAP(CCenteredLineStatic, CStatic)
     ON_WM_PAINT()
-    ON_WM_SIZE()
     ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
@@ -40,21 +39,16 @@ void CCenteredLineStatic::OnPaint()
 
     int lineY = yCenter;
 
+    constexpr int lineOffset = 5;
     // Draw lines
     dc.MoveTo(rect.left, lineY);
-    dc.LineTo(textLeft - 5, lineY);
+    dc.LineTo(textLeft - lineOffset, lineY);
 
-    dc.MoveTo(textLeft + textSize.cx + 5, lineY);
+    dc.MoveTo(textLeft + textSize.cx + lineOffset, lineY);
     dc.LineTo(rect.right, lineY);
 
     // Draw text
     dc.TextOut(textLeft, textTop, text);
-}
-
-void CCenteredLineStatic::OnSize(UINT nType, int cx, int cy)
-{
-    CWnd::OnSize(nType, cx, cy);
-    RedrawWindow();
 }
 
 BOOL CCenteredLineStatic::OnEraseBkgnd(CDC* pDC)

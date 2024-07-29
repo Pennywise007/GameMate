@@ -244,7 +244,7 @@ void Bind::UpdateInput(WORD _vkCode, bool down)
 
 void Action::UpdateInput(WORD _vkCode, bool _down)
 {
-	EXT_ASSERT(type == Type::eKeyOrMouseAction);
+	type = Type::eKeyOrMouseAction;
 	vkCode = _vkCode;
 	down = _down;
 }

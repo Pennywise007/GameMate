@@ -1,11 +1,14 @@
 #pragma once
 #include <array>
+#include <atomic>
 #include <functional>
 #include <map>
 #include <optional>
 #include <windows.h>
 
 #include <ext/core/singleton.h>
+
+#include <ext/thread/thread.h>
 
 class InputManager
 {
@@ -68,13 +71,12 @@ private:
     void UpdateMousePosition(LONG x, LONG y);
 
 private:
-    const HHOOK m_keyboardHook;
-    const HHOOK m_mouseHook;
-
     bool m_extractInjectedEvents = false;
-    POINT m_mousePosition = { 0, 0 };
-    std::array<bool, 256> m_keyStates;
+    std::atomic<POINT> m_mousePosition = POINT{ 0, 0 };
+    std::array<std::atomic_bool, 256> m_keyStates;
 
     std::map<unsigned, OnKeyOrMouseCallback> m_onKeyOrMouseEvents;
     std::map<unsigned, OnMouseMoveCallback> m_onMouseMoveEvents;
+
+    ext::thread m_hooksThread;
 };

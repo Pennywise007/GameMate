@@ -57,9 +57,9 @@ private:
 	void startRecording();
 	void stopRecoring();
 	bool canDynamicallyAddRecordedActions() const;
-	void handleRecordedAction(Action&& action);
+	void handleRecordedActionAsync(Action&& action);
 	void addActions(const std::list<Action>& actions, bool lockRedraw);
-	void addAction(Action&& action);
+	void addAction(Action action);
 	int addAction(int item, Action action);
 	void updateButtonStates();
 	void copyItemsToClipboard();

@@ -126,12 +126,13 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
     m_activeWindow = hWnd;
     m_activeProcessName = processName;
 
-    if (m_activeExeConfig)
+    std::scoped_lock l(m_dataMutex);
+    if (m_activeWindowConfiguration.has_value())
     {
         ext::get_singleton<DisplayBrightnessController>().RestoreBrightness();
         m_crosshairWindow.RemoveCrosshairWindow();
 
-        m_activeExeConfig = nullptr;
+        m_activeWindowConfiguration.reset();
     }
 
     auto& settings = ext::get_singleton<Settings>().process_toolkit;
@@ -142,21 +143,20 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
     {
         if (program->MatchExeName(m_activeProcessName))
         {
-            m_activeExeConfig = program;
+            m_activeWindowConfiguration = *program;
             break;
         }
     }
 
-    // add game mode detection
-    if (!m_activeExeConfig)
+    if (!m_activeWindowConfiguration.has_value())
         return;
 
-    EXT_TRACE() << EXT_TRACE_FUNCTION << "active config " << m_activeExeConfig->name;
+    EXT_TRACE() << EXT_TRACE_FUNCTION << "active config " << m_activeWindowConfiguration->name;
 
-    if (m_activeExeConfig->changeBrightness)
-        ext::get_singleton<DisplayBrightnessController>().SetBrightnessByHWND(m_activeWindow, m_activeExeConfig->brightnessLevel);
+    if (m_activeWindowConfiguration->changeBrightness)
+        ext::get_singleton<DisplayBrightnessController>().SetBrightnessByHWND(m_activeWindow, m_activeWindowConfiguration->brightnessLevel);
 
-    auto& crossahair = m_activeExeConfig->crosshairSettings;
+    auto& crossahair = m_activeWindowConfiguration->crosshairSettings;
     if (crossahair.show)
         m_crosshairWindow.AttachCrosshairToWindow(crossahair, m_activeWindow);
 }
@@ -166,84 +166,114 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
     if (m_keyHandlingBlocked)
         return false;
 
-    auto& settings = ext::get_singleton<Settings>();
-
-    // Check if any bind was pressed
-    if (settings.process_toolkit.enableBind.IsPressed(vkCode, down))
+    std::scoped_lock l(m_dataMutex);
+    // Execute program callbacks
+    for (auto&& [key, callback] : m_keyBindingsCallbacks)
     {
-        settings.process_toolkit.enabled = !settings.process_toolkit.enabled;
-        ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
-        return false;
-    }
-
-    if (settings.actions_executor.enableBind.IsPressed(vkCode, down))
-    {
-        settings.actions_executor.enabled = !settings.actions_executor.enabled;
-        ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
-        return false;
-    }
-
-    if (settings.timer.showTimerBind.IsPressed(vkCode, down))
-    {
-        ext::send_event_async(&ITimerNotifications::OnShowHideTimer);
-        return false;
-    }
-
-    if (settings.timer.startPauseTimerBind.IsPressed(vkCode, down))
-    {
-        ext::send_event_async(&ITimerNotifications::OnStartOrPauseTimer);
-        return false;
-    }
-    
-    if (settings.timer.resetTimerBind.IsPressed(vkCode, down))
-    {
-        ext::send_event_async(&ITimerNotifications::OnResetTimer);
-        return false;
-    }
-
-    if (!!m_activeExeConfig)
-    {
-        // Ignore accidental press
-        for (auto& key : m_activeExeConfig->keysToIgnoreAccidentalPress)
+        if (key.IsPressed(vkCode, down))
         {
-            if (!key.IsPressed(vkCode, down))
-                continue;
+            callback();
+            return false;
+        }
+    }
 
-            auto now = std::chrono::system_clock::now();
-            if (key.lastTimeWhenKeyWasIgnored.has_value() &&
-                (now - *key.lastTimeWhenKeyWasIgnored) <= std::chrono::seconds(1))
-            {
-                break;
-            }
+    if (!m_activeWindowConfiguration.has_value())
+        return false;
 
-            if (!down)
-                key.lastTimeWhenKeyWasIgnored = std::move(now);
+    // Ignore accidental press
+    for (auto& key : m_activeWindowConfiguration->keysToIgnoreAccidentalPress)
+    {
+        if (!key.IsPressed(vkCode, down))
+            continue;
 
-            return true;
+        auto now = std::chrono::system_clock::now();
+        if (key.lastTimeWhenKeyWasIgnored.has_value() &&
+            (now - *key.lastTimeWhenKeyWasIgnored) <= std::chrono::seconds(1))
+        {
+            break;
         }
 
-        // Key remapping
-        for (auto&& [keyToReplace, replacingKey] : m_activeExeConfig->keysRemapping)
-        {
-            if (!keyToReplace.IsPressed(vkCode, down))
-                continue;
+        if (!down)
+            key.lastTimeWhenKeyWasIgnored = std::move(now);
 
-            Action::NewAction(replacingKey.vkCode, down, 0).ExecuteAction(0);
+        return true;
+    }
+
+    // Key remapping
+    for (auto&& [keyToReplace, replacingKey] : m_activeWindowConfiguration->keysRemapping)
+    {
+        if (!keyToReplace.IsPressed(vkCode, down))
+            continue;
+
+        Action::NewAction(replacingKey.vkCode, down, 0).ExecuteAction(0);
+        return true;
+    }
+
+    // Execute binds commands
+    for (auto&& [bind, actions] : m_activeWindowConfiguration->actionsByBind)
+    {
+        if (bind.IsPressed(vkCode, down))
+        {
+            m_macrosExecutor.add_task([](Actions actions) { actions.Execute(); }, actions);
             return true;
-        }
-
-        // Execute binds commands
-        for (auto&& [bind, actions] : m_activeExeConfig->actionsByBind)
-        {
-            if (bind.IsPressed(vkCode, down))
-            {
-                m_macrosExecutor.add_task([](Actions actions) { actions.Execute(); }, actions);
-                return true;
-            }
         }
     }
 
     return false;
+}
+
+void Worker::updateKeyBindings()
+{
+    auto& settings = ext::get_singleton<Settings>();
+    decltype(m_keyBindingsCallbacks) bindings = {
+        {
+            settings.process_toolkit.enableBind,
+            []() {
+                ext::InvokeMethodAsync([]() {
+                    auto& settings = ext::get_singleton<Settings>();
+                    settings.process_toolkit.enabled = !settings.process_toolkit.enabled;
+                    ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+                });
+            }
+        },
+        {
+            settings.actions_executor.enableBind,
+            []() {
+                ext::InvokeMethodAsync([]() {
+                    auto& settings = ext::get_singleton<Settings>();
+                    settings.actions_executor.enabled = !settings.actions_executor.enabled;
+                    ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
+                });
+            }
+        },
+        {
+            settings.timer.showTimerBind,
+            []() {
+                ext::InvokeMethodAsync([]() {
+                    ext::send_event(&ITimerNotifications::OnShowHideTimer);
+                });
+            }
+        },
+        {
+            settings.timer.startPauseTimerBind,
+            []() {
+                ext::InvokeMethodAsync([]() {
+                    ext::send_event(&ITimerNotifications::OnStartOrPauseTimer);
+                });
+            }
+        },
+        {
+            settings.timer.resetTimerBind,
+            []() {
+                ext::InvokeMethodAsync([]() {
+                    ext::send_event(&ITimerNotifications::OnResetTimer);
+                });
+            }
+        },
+    };
+
+    std::scoped_lock l(m_dataMutex);
+    m_keyBindingsCallbacks = std::move(bindings);
 }
 
 void Worker::OnSettingsChanged(ISettingsChanged::ChangedType changedType)
@@ -258,6 +288,16 @@ void Worker::OnSettingsChanged(ISettingsChanged::ChangedType changedType)
                 ext::get_singleton<Settings>().SaveSettings();
             });
         }, std::chrono::system_clock::now() + std::chrono::seconds(5));
+
+    // There might be change in our binds, update them
+    switch (changedType)
+    {
+    case ISettingsChanged::ChangedType::eProcessToolkit:
+    case ISettingsChanged::ChangedType::eActionsExecutor:
+    case ISettingsChanged::ChangedType::eTimer:
+        updateKeyBindings();
+        break;
+    }
 
     switch (changedType)
     {
@@ -278,7 +318,7 @@ void Worker::OnSettingsChanged(ISettingsChanged::ChangedType changedType)
                         ext::InvokeMethodAsync([]() {
                             // Changing UI enable button state
                             ext::get_singleton<Settings>().actions_executor.enabled = false;
-                            ext::send_event_async(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
+                            ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
                         });
                 }, settings);
             }
