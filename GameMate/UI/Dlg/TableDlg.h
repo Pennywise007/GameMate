@@ -8,15 +8,15 @@
 
 #include "UI/Controls/CenteredLineStatic.h"
 
-class CTableView : public CFormView
+class CTableDlg : public CDialogEx
 {
-	DECLARE_DYNCREATE(CTableView)
+	DECLARE_DYNAMIC(CTableDlg)
 
-#ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_VIEW_TABLE };
-#endif
+public:
+	CTableDlg(CWnd* pParent);
 
-	CTableView();
+	enum { IDD = IDD_DIALOG_TABLE };
+
 public:
 	void Init(
 		const wchar_t* title,
@@ -29,9 +29,8 @@ public:
 
 protected:
 	DECLARE_MESSAGE_MAP()
-	virtual void DoDataExchange(CDataExchange* pDX);
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	virtual void OnInitialUpdate();
+	virtual void DoDataExchange(CDataExchange* pDX) override;
+	virtual BOOL OnInitDialog() override;
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnBnClickedButtonAdd();
 	afx_msg void OnBnClickedButtonRemove();
@@ -46,5 +45,4 @@ protected:
 
 	std::function<void()> m_onAddClicked;
 	std::function<void()> m_onRemoveClicked;
-public:
 };

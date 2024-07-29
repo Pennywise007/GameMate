@@ -1,65 +1,57 @@
 #include "pch.h"
 #include "resource.h"
 
-#include "TableView.h"
+#include "TableDlg.h"
 
 #include <Controls/Layout/Layout.h>
 #include <Controls/Tooltip/ToolTip.h>
 
 #include <ext/core/check.h>
 
-IMPLEMENT_DYNCREATE(CTableView, CFormView)
+IMPLEMENT_DYNAMIC(CTableDlg, CDialogEx)
 
-CTableView::CTableView()
-	: CFormView(IDD_VIEW_TABLE)
+CTableDlg::CTableDlg(CWnd* pParent)
+	: CDialogEx(IDD_DIALOG_TABLE, pParent)
 {
 }
 
-void CTableView::DoDataExchange(CDataExchange* pDX)
+void CTableDlg::DoDataExchange(CDataExchange* pDX)
 {
-    CFormView::DoDataExchange(pDX);
+    CDialogEx::DoDataExchange(pDX);
     DDX_Control(pDX, IDC_TABLE, m_table);
     DDX_Control(pDX, IDC_BUTTON_ADD, m_buttonAdd);
     DDX_Control(pDX, IDC_BUTTON_REMOVE, m_buttonRemove);
     DDX_Control(pDX, IDC_STATIC_GROUP_TITLE, m_staticTitle);
 }
 
-BEGIN_MESSAGE_MAP(CTableView, CFormView)
-    ON_BN_CLICKED(IDC_BUTTON_ADD, &CTableView::OnBnClickedButtonAdd)
-    ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CTableView::OnBnClickedButtonRemove)
-    ON_NOTIFY(LVN_ITEMCHANGED, IDC_TABLE, &CTableView::OnLvnItemchangedTable)
+BEGIN_MESSAGE_MAP(CTableDlg, CDialogEx)
+    ON_BN_CLICKED(IDC_BUTTON_ADD, &CTableDlg::OnBnClickedButtonAdd)
+    ON_BN_CLICKED(IDC_BUTTON_REMOVE, &CTableDlg::OnBnClickedButtonRemove)
+    ON_NOTIFY(LVN_ITEMCHANGED, IDC_TABLE, &CTableDlg::OnLvnItemchangedTable)
     ON_WM_WINDOWPOSCHANGED()
     ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
-BOOL CTableView::PreCreateWindow(CREATESTRUCT& cs)
+BOOL CTableDlg::OnInitDialog()
 {
-    auto res = CFormView::PreCreateWindow(cs);
-    cs.dwExStyle &= ~WS_EX_CLIENTEDGE;
-    return res;
-}
-
-void CTableView::OnInitialUpdate()
-{
-    CFormView::OnInitialUpdate();
-
-    m_buttonAdd.UseCustomBackgroundDraw(true);
-    m_buttonRemove.UseCustomBackgroundDraw(true);
+    CDialogEx::OnInitDialog();
 
     LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
+
+    return TRUE;
 }
 
-controls::list::widgets::SubItemsEditor<CListGroupCtrl>& CTableView::GetTable()
+controls::list::widgets::SubItemsEditor<CListGroupCtrl>& CTableDlg::GetTable()
 {
     return m_table;
 }
 
-void CTableView::UpdateRemoveButtonState()
+void CTableDlg::UpdateRemoveButtonState()
 {
     m_buttonRemove.EnableWindow(m_table.GetSelectedCount() > 0);
 }
 
-void CTableView::Init(
+void CTableDlg::Init(
     const wchar_t* title,
     const wchar_t* addButtonToolTip,
     std::function<void()>&& onAddClicked,
@@ -79,19 +71,19 @@ void CTableView::Init(
     m_onRemoveClicked = std::move(onRemoveClicked);
 }
 
-void CTableView::OnBnClickedButtonAdd()
+void CTableDlg::OnBnClickedButtonAdd()
 {
     EXT_EXPECT(!!m_onAddClicked);
     m_onAddClicked();
 }
 
-void CTableView::OnBnClickedButtonRemove()
+void CTableDlg::OnBnClickedButtonRemove()
 {
     EXT_EXPECT(!!m_onRemoveClicked);
     m_onRemoveClicked();
 }
 
-void CTableView::OnLvnItemchangedTable(NMHDR* pNMHDR, LRESULT* pResult)
+void CTableDlg::OnLvnItemchangedTable(NMHDR* pNMHDR, LRESULT* pResult)
 {
     LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
     if (pNMLV->uChanged & LVIF_STATE)
@@ -103,16 +95,16 @@ void CTableView::OnLvnItemchangedTable(NMHDR* pNMHDR, LRESULT* pResult)
     *pResult = 0;
 }
 
-void CTableView::OnWindowPosChanged(WINDOWPOS* lpwndpos)
+void CTableDlg::OnWindowPosChanged(WINDOWPOS* lpwndpos)
 {
-    CFormView::OnWindowPosChanged(lpwndpos);
+    CDialogEx::OnWindowPosChanged(lpwndpos);
     // Fixing flickering
     RedrawWindow();
 }
 
-BOOL CTableView::OnEraseBkgnd(CDC* pDC)
+BOOL CTableDlg::OnEraseBkgnd(CDC* pDC)
 {
-    // Sometimes we can see artifacts on right side from the table, just draw background there
+    // Sometimes we can see artifacts on the right and left side from the table, just draw background there
     CRect rect;
     GetClientRect(rect);
 
@@ -127,6 +119,9 @@ BOOL CTableView::OnEraseBkgnd(CDC* pDC)
     rect.top = titleRect.bottom + 1;
 
     pDC->FillSolidRect(rect, ::GetSysColor(COLOR_3DFACE));
+    rect.left = 0;
+    rect.right = tableRect.left - 1;
 
     return TRUE;
 }
+

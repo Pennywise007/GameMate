@@ -179,7 +179,7 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 	m_brightness.SetIncrementStep(1);
 
 	CRect rect;
-	m_keyRemappingDlg->GetClientRect(rect);
+	m_keyRemappingDlg.GetClientRect(rect);
 
 	m_splitterForKeys.AttachSplitterToWindow(*this, CMFCDynamicLayout::MoveHorizontal(100), CMFCDynamicLayout::SizeVertical(100));
 	m_splitterForKeys.SetControlBounds(CSplitter::BoundsType::eOffsetFromParentBounds,
@@ -190,41 +190,24 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 	return TRUE;
 }
 
-CTableView* CActiveProcessToolkitTab::createTableView(CStatic& placeholder)
+void CActiveProcessToolkitTab::createTableDlg(CTableDlg& view, CStatic& placeholder)
 {
-	CCreateContext  ctx;
-	// members we do not use, so set them to null
-	ctx.m_pNewViewClass = RUNTIME_CLASS(CTableView);
-	ctx.m_pNewDocTemplate = NULL;
-	ctx.m_pLastView = NULL;
-	ctx.m_pCurrentFrame = NULL;
-
-	CFrameWnd* pFrameWnd = (CFrameWnd*)this;
-	CFormView* pView = (CFormView*)pFrameWnd->CreateView(&ctx);
-	EXT_EXPECT(pView && pView->GetSafeHwnd() != NULL) << "Failed to create";
-
-	auto* view = dynamic_cast<CTableView*>(pView);
-	EXT_EXPECT(view) << "Failed to create";
+	view.Create(CTableDlg::IDD, this);
 
 	CRect rect;
 	placeholder.GetWindowRect(rect);
 	ScreenToClient(rect);
 
-	pView->MoveWindow(rect);
-	pView->ModifyStyle(0, WS_TABSTOP);
-	pView->OnInitialUpdate();
-	pView->SetScrollSizes(MM_TEXT, CSize{});
-
-	pView->ShowWindow(SW_NORMAL);
+	view.MoveWindow(rect);
+	view.ModifyStyle(0, WS_TABSTOP);
+	view.ShowWindow(SW_NORMAL);
 	placeholder.ShowWindow(SW_HIDE);
-
-	return view;
 }
 
 void CActiveProcessToolkitTab::initMacrosesTable()
 {
-	m_macrosesDlg = createTableView(m_groupMacrosesPlaceholder);
-	m_macrosesDlg->Init(L"Macroses", L"Add bind",
+	createTableDlg(m_macrosesDlg, m_groupMacrosesPlaceholder);
+	m_macrosesDlg.Init(L"Macroses", L"Add bind",
 		[&]() {
 			auto bind = CInputEditorDlg::EditBind(this);
 			if (!bind.has_value())
@@ -233,7 +216,7 @@ void CActiveProcessToolkitTab::initMacrosesTable()
 			const auto it = m_configuration->actionsByBind.find(bind.value());
 			const bool actionExists = it != m_configuration->actionsByBind.end();
 
-			auto& table = m_macrosesDlg->GetTable();
+			auto& table = m_macrosesDlg.GetTable();
 			Actions editableActions;
 			if (actionExists)
 			{
@@ -275,7 +258,7 @@ void CActiveProcessToolkitTab::initMacrosesTable()
 			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
 		},
 		[&]() {
-			auto& table = m_macrosesDlg->GetTable();
+			auto& table = m_macrosesDlg.GetTable();
 			std::vector<int> selectedActions = table.GetSelectedItems();
 
 			for (auto it = selectedActions.rbegin(), end = selectedActions.rend(); it != end; ++it)
@@ -288,7 +271,7 @@ void CActiveProcessToolkitTab::initMacrosesTable()
 		});
 
 	CRect rect;
-	auto& list = m_macrosesDlg->GetTable();
+	auto& list = m_macrosesDlg.GetTable();
 	list.GetClientRect(rect);
 
 	constexpr int kKeybindColumnWidth = 80;
@@ -323,8 +306,8 @@ void CActiveProcessToolkitTab::initMacrosesTable()
 				auto actions = std::move(editableActionsIt->second);
 				actionsByBind.erase(editableActionsIt);
 				actionsByBind.erase(sameBindIt);
-				m_macrosesDlg->GetTable().DeleteItem(std::max<int>(pParams->iItem, sameItem));
-				m_macrosesDlg->GetTable().DeleteItem(std::min<int>(pParams->iItem, sameItem));
+				m_macrosesDlg.GetTable().DeleteItem(std::max<int>(pParams->iItem, sameItem));
+				m_macrosesDlg.GetTable().DeleteItem(std::min<int>(pParams->iItem, sameItem));
 
 				AddNewActions(std::move(bind.value()), std::move(actions));
 			}
@@ -332,7 +315,7 @@ void CActiveProcessToolkitTab::initMacrosesTable()
 			{
 				auto currentActions = std::move(editableActionsIt->second);
 				actionsByBind.erase(editableActionsIt);
-				m_macrosesDlg->GetTable().DeleteItem(pParams->iItem);
+				m_macrosesDlg.GetTable().DeleteItem(pParams->iItem);
 				AddNewActions(std::move(bind.value()), std::move(currentActions));
 			}
 
@@ -354,7 +337,7 @@ void CActiveProcessToolkitTab::initMacrosesTable()
 			auto bind = editableActionsIt->first;
 
 			actionsByBind.erase(editableActionsIt);
-			m_macrosesDlg->GetTable().DeleteItem(pParams->iItem);
+			m_macrosesDlg.GetTable().DeleteItem(pParams->iItem);
 
 			AddNewActions(std::move(bind), std::move(actions.value()));
 
@@ -366,14 +349,14 @@ void CActiveProcessToolkitTab::initMacrosesTable()
 	list.setSubItemEditorController(MacrosesColumns::eMacros, actionsEdit);
 	list.setSubItemEditorController(MacrosesColumns::eRandomizeDelay, actionsEdit);
 
-	Layout::AnchorWindow(*m_macrosesDlg, m_splitterForKeys, { AnchorSide::eRight }, AnchorSide::eLeft, 100);
-	Layout::AnchorWindow(*m_macrosesDlg, *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
+	Layout::AnchorWindow(m_macrosesDlg, m_splitterForKeys, { AnchorSide::eRight }, AnchorSide::eLeft, 100);
+	Layout::AnchorWindow(m_macrosesDlg, *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
 }
 
 void CActiveProcessToolkitTab::initKeyRebindingsTable()
 {
-	m_keyRemappingDlg = createTableView(m_groupRemappingPlaceholder);
-	m_keyRemappingDlg->Init(L"Keys remapping", L"Add remapping key",
+	createTableDlg(m_keyRemappingDlg, m_groupRemappingPlaceholder);
+	m_keyRemappingDlg.Init(L"Keys remapping", L"Add remapping key",
 		[&]() {
 			auto keyToAdd = CInputEditorDlg::EditKey(this);
 			if (!keyToAdd.has_value())
@@ -392,14 +375,14 @@ void CActiveProcessToolkitTab::initKeyRebindingsTable()
 			it = keysRemapping.emplace(std::move(keyToAdd.value()), std::move(Key(0))).first;
 			int itemIndex = std::distance(keysRemapping.begin(), it);
 
-			auto& table = m_keyRemappingDlg->GetTable();
+			auto& table = m_keyRemappingDlg.GetTable();
 			table.InsertItem(itemIndex, it->first.ToString().c_str());
 			table.SetItemText(itemIndex, RebingingColumns::eNew, it->second.ToString().c_str());
 			table.SelectItem(itemIndex);
 			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
 		},
 		[&]() {
-			auto& table = m_keyRemappingDlg->GetTable();
+			auto& table = m_keyRemappingDlg.GetTable();
 			std::vector<int> selectedActions = table.GetSelectedItems();
 
 			for (auto it = selectedActions.rbegin(), end = selectedActions.rend(); it != end; ++it)
@@ -411,7 +394,7 @@ void CActiveProcessToolkitTab::initKeyRebindingsTable()
 			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
 		});
 
-	auto& list = m_keyRemappingDlg->GetTable();
+	auto& list = m_keyRemappingDlg.GetTable();
 	CRect rect;
 	list.GetClientRect(rect);
 
@@ -431,7 +414,7 @@ void CActiveProcessToolkitTab::initKeyRebindingsTable()
 			if (!keyToAdd.has_value() || keyToAdd->ToString() == keyToEdit.ToString())
 				return nullptr;
 
-			auto& list = m_keyRemappingDlg->GetTable();
+			auto& list = m_keyRemappingDlg.GetTable();
 
 			switch (pParams->iSubItem)
 			{
@@ -486,9 +469,9 @@ void CActiveProcessToolkitTab::initKeyRebindingsTable()
 	list.setSubItemEditorController(RebingingColumns::eOriginal, keyEdit);
 	list.setSubItemEditorController(RebingingColumns::eNew, keyEdit);
 
-	Layout::AnchorWindow(*m_keyRemappingDlg, m_splitterForKeys, { AnchorSide::eLeft }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(*m_keyRemappingDlg, *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
-	Layout::AnchorWindow(*m_keyRemappingDlg, *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
+	Layout::AnchorWindow(m_keyRemappingDlg, m_splitterForKeys, { AnchorSide::eLeft }, AnchorSide::eRight, 100);
+	Layout::AnchorWindow(m_keyRemappingDlg, *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
+	Layout::AnchorWindow(m_keyRemappingDlg, *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
 }
 
 void CActiveProcessToolkitTab::UpdateControlsData()
@@ -565,7 +548,7 @@ void CActiveProcessToolkitTab::UpdateControlsData()
 	}
 
 	{
-		auto& table = m_macrosesDlg->GetTable();
+		auto& table = m_macrosesDlg.GetTable();
 		table.DeleteAllItems();
 		decltype(m_configuration->actionsByBind) current;
 		std::swap(current, m_configuration->actionsByBind);
@@ -573,11 +556,11 @@ void CActiveProcessToolkitTab::UpdateControlsData()
 		{
 			AddNewActions(bind, std::move(actionsByBind));
 		}
-		m_macrosesDlg->UpdateRemoveButtonState();
+		m_macrosesDlg.UpdateRemoveButtonState();
 	}
 
 	{
-		auto& table = m_keyRemappingDlg->GetTable();
+		auto& table = m_keyRemappingDlg.GetTable();
 		table.DeleteAllItems();
 		int i = 0;
 		for (auto&& [originalKey, newKey] : m_configuration->keysRemapping)
@@ -585,7 +568,7 @@ void CActiveProcessToolkitTab::UpdateControlsData()
 			auto item = table.InsertItem(i++, originalKey.ToString().c_str());
 			table.SetItemText(item, RebingingColumns::eNew, newKey.ToString().c_str());
 		}
-		m_keyRemappingDlg->UpdateRemoveButtonState();
+		m_keyRemappingDlg.UpdateRemoveButtonState();
 	}
 
 	m_checkChangeBrightness.SetCheck(m_configuration->changeBrightness);
@@ -647,7 +630,7 @@ void CActiveProcessToolkitTab::AddNewActions(const Bind& keybind, Actions&& newA
 
 	auto item = (int)std::distance(actionsByBind.begin(), it.first);
 
-	auto& table = m_macrosesDlg->GetTable();
+	auto& table = m_macrosesDlg.GetTable();
 
 	item = table.InsertItem(item, it.first->first.ToString().c_str());
 	std::wstring actions = it.first->second.description;

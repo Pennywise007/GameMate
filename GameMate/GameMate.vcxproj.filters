@@ -30,9 +30,6 @@
     <Filter Include="UI\Dlg">
       <UniqueIdentifier>{2e226266-b6aa-4ad7-9f82-3a7819c3b774}</UniqueIdentifier>
     </Filter>
-    <Filter Include="UI\View">
-      <UniqueIdentifier>{00d83c1b-655b-482b-abd3-ffa11fddd8f7}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="targetver.h">
@@ -173,8 +170,8 @@
     <ClInclude Include="Controls\TrayHelper\TrayHelper.h">
       <Filter>UI\Controls</Filter>
     </ClInclude>
-    <ClInclude Include="UI\View\TableView.h">
-      <Filter>UI\View</Filter>
+    <ClInclude Include="UI\Dlg\TableDlg.h">
+      <Filter>UI\Dlg</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -301,8 +298,8 @@
     <ClCompile Include="Controls\TrayHelper\TrayHelper.cpp">
       <Filter>UI\Controls</Filter>
     </ClCompile>
-    <ClCompile Include="UI\View\TableView.cpp">
-      <Filter>UI\View</Filter>
+    <ClCompile Include="UI\Dlg\TableDlg.cpp">
+      <Filter>UI\Dlg</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

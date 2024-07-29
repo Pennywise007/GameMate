@@ -55,16 +55,16 @@ static_assert(!kDriverNames.contain_duplicate_values());
 
 static_assert(kComboboxIndexesToInputModes.size() == kDriverNames.size());
 
-template <class T>
+template <class Type>
 [[nodiscard]] CRect add_tab(CTabControl& tab, const wchar_t* tabName)
 {
-	auto wnd = std::make_shared<T>(&tab());
-	wnd->Create(T::IDD, &tab());
+	auto wnd = std::make_shared<Type>(&tab());
+	wnd->Create(Type::IDD, &tab());
 
 	CRect rect;
 	wnd->GetWindowRect(rect);
 
-	tab.AddTab(tabName, std::move(wnd));
+	tab.AddTab(tabName, wnd);
 
 	return rect;
 }
@@ -114,14 +114,14 @@ BOOL CMainDlg::OnInitDialog()
 		ext::get_tracer().Enable();
 
 	m_buttonInputSimulatorInfo.SetImageOffset(7);
-
+	updateDriverInfoButton();
+	
 	std::list<CRect> tabRects;
 	m_tabControlModes.SetDrawSelectedAsWindow();
 	tabRects.emplace_back(add_tab<CActiveProcessToolkitTab>(m_tabControlModes, L"Active process toolkit"));
 	tabRects.emplace_back(add_tab<CActionsExecutorTab>(m_tabControlModes, L"Actions executor"));
 	m_tabControlModes.SetCurSel(int(settings.selectedMode));
 	m_tabControlModes.AutoResizeTabsToFitFullControlWidth();
-	updateDriverInfoButton();
 
 	CTrayHelper::Instance().addTrayIcon(
 		m_hIcon, L"Game mate",
@@ -256,8 +256,6 @@ BOOL CMainDlg::OnInitDialog()
 	Layout::SetWindowMinimumSize(*this, rect.Width(), rect.Height());
 	LayoutLoader::ApplyLayoutFromResource(*this, m_lpszTemplateName);
 
-	// Deserialize settings before starting worker to avoid any mouse lags
-	EXT_UNUSED(ext::get_singleton<Settings>());
 	// Starting worker
 	EXT_UNUSED(ext::get_singleton<Worker>());
 

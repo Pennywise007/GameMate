@@ -67,7 +67,7 @@
 #define IDB_PNG1                        198
 #define IDB_PNG_START_RECORDING         198
 #define IDB_PNG_STOP_RECORDING          199
-#define IDD_VIEW_TABLE                  202
+#define IDD_DIALOG_TABLE                202
 #define IDC_TABCONTROL_MODES            1000
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
