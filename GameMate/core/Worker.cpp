@@ -172,7 +172,9 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
     {
         if (key.IsPressed(vkCode, down))
         {
-            callback();
+            ext::InvokeMethod([&callback]() {
+                callback();
+            });
             return false;
         }
     }
@@ -193,7 +195,7 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
             break;
         }
 
-        if (!down)
+        if (down)
             key.lastTimeWhenKeyWasIgnored = std::move(now);
 
         return true;
@@ -229,46 +231,30 @@ void Worker::updateKeyBindings()
         {
             settings.process_toolkit.enableBind,
             []() {
-                ext::InvokeMethodAsync([]() {
-                    auto& settings = ext::get_singleton<Settings>();
-                    settings.process_toolkit.enabled = !settings.process_toolkit.enabled;
-                    ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
-                });
+                auto& settings = ext::get_singleton<Settings>();
+                settings.process_toolkit.enabled = !settings.process_toolkit.enabled;
+                ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
             }
         },
         {
             settings.actions_executor.enableBind,
             []() {
-                ext::InvokeMethodAsync([]() {
-                    auto& settings = ext::get_singleton<Settings>();
-                    settings.actions_executor.enabled = !settings.actions_executor.enabled;
-                    ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
-                });
+                auto& settings = ext::get_singleton<Settings>();
+                settings.actions_executor.enabled = !settings.actions_executor.enabled;
+                ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutorEnableChanged);
             }
         },
         {
             settings.timer.showTimerBind,
-            []() {
-                ext::InvokeMethodAsync([]() {
-                    ext::send_event(&ITimerNotifications::OnShowHideTimer);
-                });
-            }
+            []() { ext::send_event(&ITimerNotifications::OnShowHideTimer); }
         },
         {
             settings.timer.startPauseTimerBind,
-            []() {
-                ext::InvokeMethodAsync([]() {
-                    ext::send_event(&ITimerNotifications::OnStartOrPauseTimer);
-                });
-            }
+            []() { ext::send_event(&ITimerNotifications::OnStartOrPauseTimer); }
         },
         {
             settings.timer.resetTimerBind,
-            []() {
-                ext::InvokeMethodAsync([]() {
-                    ext::send_event(&ITimerNotifications::OnResetTimer);
-                });
-            }
+            []() { ext::send_event(&ITimerNotifications::OnResetTimer); }
         },
     };
 
