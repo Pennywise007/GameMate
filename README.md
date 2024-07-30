@@ -3,28 +3,49 @@
 </p>
 <h1 align="center">GameMate</h1>
 
-GameMate is a powerful Windows application designed to enhance your productivity and gaming experience. It allows you to customize key bindings for different applications, add a crosshair overlay for games, block accidental key presses, track your time efficiently, and automate complex sequences of actions.
+GameMate is a powerful Windows application that enhance your productivity and gaming experience. It allows you to customize key bindings for different applications, add a crosshair overlay, block accidental key presses, track your time efficiently, set custom brightness for each app and automate complex sequences of actions.
 
 ## Features
 
-Advanced Action Automation: Create complex automation sequences that go beyond simple clicks. Include mouse movements, key presses, and script executions to automate repetitive tasks in any application.
+<details><summary>Key Bindings/Macroses</summary>
 
-Per-Application features:
+  Assign unique key bindings for each application, create complex automation sequences that go beyond simple clicks. Include mouse movements, key presses, and script executions to automate repetitive tasks in any application. For example, you can set up a series of actions for Notepad using the key '8', and configure different actions for Excel using the same key, without any interference.
+  
+  https://github.com/user-attachments/assets/865d2540-cb84-415b-b37a-d6ea31118188
 
-- Key Bindings: Assign unique key bindings for each application. record multiple keys or mouse actions for each bind. For example, you can set up a series of actions for Notepad using the key '8', and configure different actions for Excel using the same key, without any interference.
+</details>
 
-- Crosshair Overlay: Display a crosshair in the center of the screen when a specified application (like a game) is active. Ensure you always have a precise aim.
+<details><summary>Crosshair Overlay</summary>
 
-- Accidental Key Press Blocker: Specify a list of keys to be blocked to prevent accidental presses in each application. For instance, disable the Windows key while playing a game to avoid disruptions.
+  Display a crosshair in the center of the screen when a specified application(game) is active. Ensure you always have a precise aim.
+  
+  https://github.com/user-attachments/assets/bd4ad49d-d50b-4d55-95f3-1fa449b3f712
 
-- Key remapping. Some apps doesn't allow you to override default key bindings. For example in some games you will crouch on `C` key, while in the others you will use `Ctrl`. You can easily unify it now, check example on remapping  `WASD` keys to `YGHJ`:
+</details>
 
+<details><summary>Accidental Key Press Blocker</summary>
+  ]Specify a list of keys to be blocked to prevent accidental presses in each application. For instance, disable the Windows key while playing a game to avoid disruptions.
+</details>
 
-- Brightness control: allows to set custom brightness to each application. An external monitor must have DDC/CI enabled.
-![GameMate](./media/ddcci.jpg)
+<details><summary>Key remapping</summary>
+  Some apps doesn't allow you to override default key bindings. For example in some games you will crouch on `C` key, while in the others you will use `Ctrl`. You can easily unify it now, check example on remapping  `WASD` keys to `YGHJ`:
+  
+  https://github.com/user-attachments/assets/dafea1c8-a5c5-41ba-a923-618d5d2d321f
 
-Timer: Start a timer to monitor how long some action takes.
+</details>
 
+<details><summary>Brightness control</summary>
+  Allows to set custom brightness to each application. An external monitor must have DDC/CI enabled.
+  ![GameMate](./media/ddcci.jpg)
+  
+  https://github.com/user-attachments/assets/93cbf688-1a25-4bdd-bbc8-22b83f841b16
+
+</details>
+
+<details><summary>Timer</summary>
+  Start a timer to monitor how long some action takes.
+
+</details>
 
 ## Build
 
