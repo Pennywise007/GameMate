@@ -24,7 +24,7 @@ GameMate is a powerful Windows application that enhance your productivity and ga
 </details>
 
 <details><summary>Accidental Key Press Blocker</summary>
-  ]Specify a list of keys to be blocked to prevent accidental presses in each application. For instance, disable the Windows key while playing a game to avoid disruptions.
+  Specify a list of keys to be blocked to prevent accidental presses in each application. For instance, disable the Windows key while playing a game to avoid disruptions.
 </details>
 
 <details><summary>Key remapping</summary>
@@ -47,7 +47,15 @@ GameMate is a powerful Windows application that enhance your productivity and ga
 
 </details>
 
+## Download
+
+Go to [releases](https://github.com/Pennywise007/GameMate/releases) and downloaded the latest one.
+
 ## Build
 
 1. Run `prerequisites.bat` to load submodules and build dependencies.
 2. Open `GameMate.sln` with Visual Studio and build.
+
+## Recognitions
+
+Special thanks to [@Chaoses-Ib](https://github.com/Chaoses-Ib) for the collaboration and amazing [IbInputSimulator](https://github.com/Chaoses-Ib/IbInputSimulator)
