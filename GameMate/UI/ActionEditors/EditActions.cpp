@@ -378,9 +378,10 @@ inline void CActionsEditorView::startRecording()
 		case VK_LBUTTON:
 		{
 			CPoint cursor = InputManager::GetMousePosition();
+			::ScreenToClient(m_hWnd, &cursor);
 
 			// Process stop recording and OK click
-			auto window = ::WindowFromPoint(cursor);
+			auto window = ChildWindowFromPointEx(m_hWnd, cursor, CWP_SKIPINVISIBLE);
 			if (window == m_buttonRecord.m_hWnd || (!!GetOwner()->GetDlgItem(IDOK) && window == GetOwner()->GetDlgItem(IDOK)->m_hWnd))
 				return false;
 

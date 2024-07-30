@@ -475,6 +475,9 @@ void CActiveProcessToolkitTab::initKeyRebindingsTable()
 
 void CActiveProcessToolkitTab::UpdateControlsData()
 {
+	SetRedraw(FALSE);
+	EXT_DEFER(SetRedraw(TRUE); RedrawWindow());
+
 	auto& settings = ext::get_singleton<Settings>().process_toolkit;
 
 	if (settings.activeConfiguration != -1)
@@ -541,6 +544,7 @@ void CActiveProcessToolkitTab::UpdateControlsData()
 	// updating control BK color
 	OnCbnEditchangeComboExeName();
 
+	m_comboAccidentalPress.SelectAll(false);
 	for (const auto& bind : m_configuration->keysToIgnoreAccidentalPress)
 	{
 		addKeyToIgnore(bind);

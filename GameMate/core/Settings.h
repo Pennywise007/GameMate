@@ -224,11 +224,7 @@ struct ProcessConfiguration
     DECLARE_SERIALIZABLE_FIELD(bool, enabled, true);
     DECLARE_SERIALIZABLE_FIELD(std::wstring, name, L"Configuration name");
     DECLARE_SERIALIZABLE_FIELD((std::map<Bind, Actions>), actionsByBind);
-    DECLARE_SERIALIZABLE_FIELD((std::map<Key, Key>), keysRemapping,
-        std::make_pair(Key('Y'), Key('W')),
-        std::make_pair(Key('G'), Key('A')),
-        std::make_pair(Key('H'), Key('S')),
-        std::make_pair(Key('J'), Key('D')));
+    DECLARE_SERIALIZABLE_FIELD((std::map<Key, Key>), keysRemapping);
     DECLARE_SERIALIZABLE_FIELD(std::list<Key>, keysToIgnoreAccidentalPress);
     DECLARE_SERIALIZABLE_FIELD(bool, changeBrightness, false);
     DECLARE_SERIALIZABLE_FIELD(unsigned, brightnessLevel, 100);
