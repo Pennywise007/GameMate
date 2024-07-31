@@ -36,6 +36,7 @@ GameMate is a powerful Windows application that enhance your productivity and ga
 
 <details><summary>Brightness control</summary>
   Allows to set custom brightness to each application. An external monitor must have DDC/CI enabled.
+  
   ![GameMate](./media/ddcci.jpg)
   
   https://github.com/user-attachments/assets/93cbf688-1a25-4bdd-bbc8-22b83f841b16
