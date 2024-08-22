@@ -111,6 +111,8 @@ Worker::Worker()
     EXT_DUMP_IF(!GetProcessName(currentActiveWindow, currentActiveProcessName)) << "Failed to get active window process name," <<
         " most likely active window is our process and we should be able to get it's name";
     OnForegroundChanged(currentActiveWindow, currentActiveProcessName);
+
+    updateKeyBindings();
 }
 
 Worker::~Worker()
@@ -172,7 +174,7 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
     {
         if (key.IsPressed(vkCode, down))
         {
-            ext::InvokeMethod([&callback]() {
+            ext::InvokeMethodAsync([&callback]() {
                 callback();
             });
             return false;

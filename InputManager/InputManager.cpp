@@ -157,8 +157,6 @@ InputManager::InputManager()
 {}
 #else
     : m_hooksThread([]() {
-        auto stopToken = ext::this_thread::get_stop_token();
-
         const HHOOK keyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, NULL, 0);
         const HHOOK mouseHook = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, NULL, 0);
 
@@ -177,14 +175,12 @@ InputManager::InputManager()
             ext::ManageException(EXT_TRACE_FUNCTION);
             return;
         }
-            
+
         MSG msg;
-        while (!stopToken.stop_requested())
+        while (GetMessage(&msg, NULL, 0, 0))
         {
-            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
         }
 
         UnhookWindowsHookEx(keyboardHook);
@@ -205,6 +201,8 @@ InputManager::InputManager()
 InputManager::~InputManager()
 {
 #ifndef DONT_USE_HOOK
+    DWORD dwThreadId = GetThreadId(m_hooksThread.native_handle());
+    PostThreadMessage(dwThreadId, WM_QUIT, 0, 0);
     m_hooksThread.interrupt_and_join();
 #endif
     IbSendDestroy();
