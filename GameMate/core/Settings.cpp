@@ -375,18 +375,51 @@ void Action::ExecuteAction(unsigned delayRandomizeInMs) const
 void Actions::Execute() const
 {
 	auto stopToken = ext::this_thread::get_stop_token();
-	try
+	for (auto it = actions.begin(), end = actions.end(); it != end; ++it)
 	{
-		for (const auto& action : actions)
-		{
-			if (stopToken.stop_requested())
-				return;
+		bool interrupted = stopToken.stop_requested();
 
-			action.ExecuteAction(enableRandomDelay ? randomizeDelayMs : 0);
+		try
+		{
+			if (!interrupted)
+				it->ExecuteAction(enableRandomDelay ? randomizeDelayMs : 0);
 		}
-	}
-	catch (const ext::thread::thread_interrupted&)
-	{
+		catch (const ext::thread::thread_interrupted&)
+		{
+			interrupted = true;
+		}
+
+		if (!interrupted)
+			continue;
+
+		// if actions executor got stopped and some button was pressed and not released, we need to release it
+		std::unordered_set<int> pressedKeys;
+		for (auto prevActionsIt = actions.begin(); prevActionsIt != it; ++prevActionsIt)
+		{
+			if (prevActionsIt->type != Action::Type::eKeyOrMouseAction)
+				continue;
+
+			switch (prevActionsIt->vkCode)
+			{
+			case InputManager::VK_MOUSE_WHEEL:
+			case InputManager::VK_MOUSE_HWHEEL:
+				break;
+			default:
+				if (prevActionsIt->down)
+					pressedKeys.emplace(prevActionsIt->vkCode);
+				else
+					pressedKeys.erase(prevActionsIt->vkCode);
+
+				break;
+			}
+		}
+
+		for (auto vkCode : pressedKeys)
+		{
+			InputManager::SendKeyOrMouse(vkCode, false);
+		}
+
+		return;
 	}
 }
 

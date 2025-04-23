@@ -139,12 +139,12 @@ struct Actions
     };
 
     REGISTER_SERIALIZABLE_OBJECT();
-    //--------------------------------------------------------------------------------------------- 
+    //---------------------------------------------------------------------------------------------
     // UI settings
     DECLARE_SERIALIZABLE_FIELD(std::wstring, description);
     DECLARE_SERIALIZABLE_FIELD(MouseRecordMode, mouseRecordMode, MouseRecordMode::eNoMouseMovements);
     DECLARE_SERIALIZABLE_FIELD(bool, showMouseMovementsUnited, true);
-    //--------------------------------------------------------------------------------------------- 
+    //---------------------------------------------------------------------------------------------
     DECLARE_SERIALIZABLE_FIELD(bool, enableRandomDelay, false);
     DECLARE_SERIALIZABLE_FIELD(unsigned, randomizeDelayMs, 1);
     DECLARE_SERIALIZABLE_FIELD(std::list<Action>, actions);
@@ -232,7 +232,7 @@ struct ProcessConfiguration
 
     const std::wstring& GetExeName() const;
     void SetExeName(const std::wstring& exeName);
-    
+
     // Check if given exe name matches process configuration
     bool MatchExeName(const std::wstring& exeName) const;
 private:
@@ -253,7 +253,7 @@ struct Settings
     DECLARE_SERIALIZABLE_FIELD(Bind, enableBind);
     DECLARE_SERIALIZABLE_FIELD(int, activeConfiguration, 0);
     DECLARE_SERIALIZABLE_FIELD(std::list<std::shared_ptr<ProcessConfiguration>>, processConfigurations,
-        std::make_shared<ProcessConfiguration>());
+        { std::make_shared<ProcessConfiguration>() });
 
     Settings();
 };

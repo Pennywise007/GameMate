@@ -300,6 +300,7 @@ bool InputManager::OnKeyOrMouseEvent(WORD vkCode, bool isPressed)
 {
     m_keyStates[vkCode] = isPressed;
 
+    std::shared_lock lock(m_callbacksMutex);
     for (auto&& [_, callback] : m_onKeyOrMouseEvents)
     {
         if (callback(vkCode, isPressed))
@@ -319,6 +320,7 @@ void InputManager::UpdateMousePosition(LONG x, LONG y)
     };
     m_mousePosition = newPos;
 
+    std::shared_lock lock(m_callbacksMutex);
     for (auto&& [_, callback] : m_onMouseMoveEvents)
     {
         callback(newPos, delta);
@@ -364,38 +366,48 @@ POINT InputManager::GetMousePosition()
 
 unsigned InputManager::AddKeyOrMouseHandler(OnKeyOrMouseCallback handler)
 {
-    auto& manager = ext::get_singleton<InputManager>();
     unsigned id = 0;
+    auto& manager = ext::get_singleton<InputManager>();
+
+    std::unique_lock lock(manager.m_callbacksMutex);
     auto& events = manager.m_onKeyOrMouseEvents;
     if (!events.empty())
         id = events.rbegin()->first + 1;
     auto res = events.try_emplace(id, std::move(handler));
     EXT_ASSERT(res.second);
+
     return id;
 }
 
 void InputManager::RemoveKeyOrMouseHandler(unsigned id)
 {
     auto& manager = ext::get_singleton<InputManager>();
+
+    std::unique_lock lock(manager.m_callbacksMutex);
     auto res = manager.m_onKeyOrMouseEvents.erase(id);
     EXT_ASSERT(res == 1);
 }
 
 unsigned InputManager::AddMouseMoveHandler(OnMouseMoveCallback handler)
 {
-    auto& manager = ext::get_singleton<InputManager>();
     unsigned id = 0;
+    auto& manager = ext::get_singleton<InputManager>();
+
+    std::unique_lock lock(manager.m_callbacksMutex);
     auto& events = manager.m_onMouseMoveEvents;
     if (!events.empty())
         id = events.rbegin()->first + 1;
     auto res = events.try_emplace(id, std::move(handler));
     EXT_ASSERT(res.second);
+
     return id;
 }
 
 void InputManager::RemoveMouseMoveHandler(unsigned id)
 {
     auto& manager = ext::get_singleton<InputManager>();
+
+    std::unique_lock lock(manager.m_callbacksMutex);
     auto res = manager.m_onMouseMoveEvents.erase(id);
     EXT_ASSERT(res == 1);
 }

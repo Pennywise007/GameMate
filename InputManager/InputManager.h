@@ -13,7 +13,7 @@
 class InputManager
 {
     friend ext::Singleton<InputManager>;
- 
+
     // Callback about mouse or keyboard key pressed, also includes VK_MOUSE_WHEEL and VK_MOUSE_HWHEEL
     using OnKeyOrMouseCallback = std::function<bool(WORD vkCode, bool isDown)>;
     using OnMouseMoveCallback = std::function<void(const POINT& position, const POINT& delta)>;
@@ -38,7 +38,7 @@ public:
 
     [[nodiscard]] static bool IsKeyPressed(DWORD vkCode);
     [[nodiscard]] static POINT GetMousePosition();
-    
+
     // Subscribe/unsubscribe on low level key or mouse press
     static unsigned AddKeyOrMouseHandler(OnKeyOrMouseCallback handler);
     static void RemoveKeyOrMouseHandler(unsigned id);
@@ -49,7 +49,7 @@ public:
     // Callback will be called from a different thread
     static unsigned AddDirectInputMouseMoveHandler(HINSTANCE hInstance, OnDirectInputMouseMoveCallback handler);
     static void RemoveDirectInputMouseMoveHandler(unsigned id);
-    
+
     static void SendKeyOrMouse(WORD vkCode, bool isDown);
 
     static void MouseSendDown(DWORD mouseVkCode);
@@ -75,6 +75,7 @@ private:
     std::atomic<POINT> m_mousePosition = POINT{ 0, 0 };
     std::array<std::atomic_bool, 256> m_keyStates;
 
+    std::shared_mutex m_callbacksMutex;
     std::map<unsigned, OnKeyOrMouseCallback> m_onKeyOrMouseEvents;
     std::map<unsigned, OnMouseMoveCallback> m_onMouseMoveEvents;
 
