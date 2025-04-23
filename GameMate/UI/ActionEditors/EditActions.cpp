@@ -742,6 +742,10 @@ void CActionsEditorView::OnBnClickedButtonAdd()
 	if (!action.has_value())
 		return;
 
+	// To non first action we set 30 milliseconds delay
+	if (m_listActions.GetItemCount() != 0)
+		action->delayInMilliseconds = 30;
+
 	addAction(std::move(*action));
 
 	onSettingsChanged(true);
