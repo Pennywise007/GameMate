@@ -31,8 +31,9 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnPaint();
 	afx_msg void OnDestroy();
+	afx_msg void OnNcDestroy();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
-	afx_msg void OnTcnSelchangeTabcontrolGames(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg UINT OnPowerBroadcast(UINT nID, LPARAM lParam);
 	afx_msg void OnCbnSelchangeComboInputDriver();
 	afx_msg void OnBnClickedMfcbuttonInputSimulatorInfo();
 	afx_msg void OnBnClickedMfcbuttonTimerHotkey();

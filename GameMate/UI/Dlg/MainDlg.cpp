@@ -94,9 +94,10 @@ BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
 	ON_WM_DESTROY()
+	ON_WM_NCDESTROY()
 	ON_WM_SYSCOMMAND()
+	ON_WM_POWERBROADCAST()
 	ON_CBN_SELCHANGE(IDC_COMBO_INPUT_DRIVER, &CMainDlg::OnCbnSelchangeComboInputDriver)
-	ON_NOTIFY(TCN_SELCHANGE, IDC_TABCONTROL_MODES, &CMainDlg::OnTcnSelchangeTabcontrolGames)
 	ON_BN_CLICKED(IDC_MFCBUTTON_INPUT_DRIVER_INFO, &CMainDlg::OnBnClickedMfcbuttonInputSimulatorInfo)
 	ON_BN_CLICKED(IDC_MFCBUTTON_TIMER_HOTKEY, &CMainDlg::OnBnClickedMfcbuttonTimerHotkey)
 	ON_BN_CLICKED(IDC_CHECK_TIMER, &CMainDlg::OnBnClickedCheckTimer)
@@ -115,7 +116,7 @@ BOOL CMainDlg::OnInitDialog()
 
 	m_buttonInputSimulatorInfo.SetImageOffset(7);
 	updateDriverInfoButton();
-	
+
 	std::list<CRect> tabRects;
 	m_tabControlModes.SetDrawSelectedAsWindow();
 	tabRects.emplace_back(add_tab<CActiveProcessToolkitTab>(m_tabControlModes, L"Active process toolkit"));
@@ -179,8 +180,8 @@ BOOL CMainDlg::OnInitDialog()
 				ext::get_tracer().Reset();
 				ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eGeneralSettings);
 				break;
-			case ID_MENU_CLOSE:
-				EndDialog(IDCANCEL);
+			case ID_MENU_EXIT:
+				EndDialog(IDOK);
 				break;
 			default:
 				EXT_ASSERT(!"Unknown command!") << commandId;
@@ -215,7 +216,7 @@ BOOL CMainDlg::OnInitDialog()
 		}
 
 		EXT_EXPECT(kDriverNames.contains_key(inputMode));
-		
+
 		if (settings.inputSimulator != inputMode)
 		{
 			settings.inputSimulator = inputMode;
@@ -292,9 +293,18 @@ void CMainDlg::OnPaint()
 
 void CMainDlg::OnDestroy()
 {
+	auto& settings = ext::get_singleton<Settings>();
+	settings.selectedMode = Settings::ProgramMode(m_tabControlModes.GetCurSel());
+
 	m_timerDlg.DestroyWindow();
 	CDialogEx::OnDestroy();
+}
 
+void CMainDlg::OnNcDestroy()
+{
+	CDialogEx::OnNcDestroy();
+
+	// Final save settings, need to ensure that they was saved since during destroying other windows they might save some settings
 	ext::get_singleton<Settings>().SaveSettings();
 }
 
@@ -363,14 +373,22 @@ void CMainDlg::OnSysCommand(UINT nID, LPARAM lParam)
 	CDialogEx::OnSysCommand(nID, lParam);
 }
 
-void CMainDlg::OnTcnSelchangeTabcontrolGames(NMHDR* pNMHDR, LRESULT* pResult)
+UINT CMainDlg::OnPowerBroadcast(UINT nID, LPARAM lParam)
 {
-	auto& settings = ext::get_singleton<Settings>();
-	settings.selectedMode = Settings::ProgramMode(m_tabControlModes.GetCurSel());
+	// After hibernation, the device loses its connection, making the handle invalid. Reinit input manager
+	if (nID == PBT_APMRESUMEAUTOMATIC && ext::get_singleton<Settings>().inputSimulator != InputManager::InputSimulator::SendInput)
+	{
+		ext::Scheduler::GlobalInstance().SubscribeTaskAtTime(
+			[&]()
+			{
+				ext::InvokeMethodAsync([&]() {
+					OnCbnSelchangeComboInputDriver();
+				});
+			},
+			std::chrono::system_clock::now() + std::chrono::seconds(2));
+	}
 
-	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eGeneralSettings);
-
-	*pResult = 0;
+	return CDialogEx::OnPowerBroadcast(nID, lParam);
 }
 
 void CMainDlg::OnCbnSelchangeComboInputDriver()

@@ -197,7 +197,7 @@ void CActionsExecutorTab::OnSettingsChanged(ISettingsChanged::ChangedType change
 		std::set<CWnd*> excludedControls;
 	};
 
-	const Data data { 
+	const Data data {
 		.enable = !ext::get_singleton<Settings>().actions_executor.enabled,
 		.excludedControls = { &m_buttonEnable, &m_buttonHotkey }
 	};
@@ -223,15 +223,21 @@ void CActionsExecutorTab::UpdateEnableButtonText()
 	m_buttonEnable.SetWindowTextW(buttonName.c_str());
 }
 
-void CActionsExecutorTab::UpdateSettingsFromControl(CSpinEdit& edit, unsigned& setting)
+void CActionsExecutorTab::UpdateSettingsFromControl(CSpinEdit& edit, unsigned& settingsValue)
 {
 	CString controlText;
 	edit.GetWindowTextW(controlText);
 
 	std::wstringstream str(controlText.GetString());
-	str >> setting;
 
-	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor);
+	unsigned value;
+	str >> value;
+
+	if (settingsValue != value)
+	{
+		settingsValue = value;
+		ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eActionsExecutor);
+	}
 }
 
 void CActionsExecutorTab::EditActions()

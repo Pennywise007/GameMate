@@ -408,7 +408,7 @@ inline void CActionsEditorView::startRecording()
 				if (GetWindowThreadProcessId(wnd->m_hWnd, &dwProcessId) != 0 && dwProcessId == kCurrentProcessId)
 					return true;
 			}
-			
+
 			return false;
 		}
 		}
@@ -572,7 +572,7 @@ void CActionsEditorView::addActions(const std::list<Action>& actions, bool lockR
 			case Action::Type::eCursorPosition:
 				if (!mousePosChangeActions.empty() && mousePosChangeActions.back().type != action.type)
 					addActions();
-				
+
 				mousePosChangeActions.emplace_back(action);
 				break;
 			default:
@@ -660,7 +660,15 @@ void CActionsEditorView::copyItemsToClipboard()
 	}
 
 	std::wstring text;
-	EXT_EXPECT(SerializeObject(Factory::TextSerializer(text), clipboardData));
+	try
+	{
+		SerializeToJson(clipboardData, text);
+	}
+	catch (...)
+	{
+		::MessageBox(NULL, ext::ManageExceptionText(L"").c_str(), L"Failed to copy text to the clipboard", MB_ICONERROR | MB_OK);
+		return;
+	}
 
 	if (!OpenClipboard())
 		return;
@@ -703,8 +711,9 @@ void CActionsEditorView::pasteItemsFromClipboard()
 	ClipboardData copiedData;
 	try
 	{
-		if (!DeserializeObject(Factory::TextDeserializer(text), copiedData))
-			return;
+		DeserializeFromJson(copiedData, text);
+		::MessageBox(NULL, ext::ManageExceptionText(L"").c_str(), L"Failed to copy text from the clipboard", MB_ICONERROR | MB_OK);
+		return;
 	}
 	catch (...)
 	{
@@ -919,10 +928,16 @@ void CActionsEditorView::OnEnChangeEditRandomizeDelays()
 {
 	CString text;
 	m_editRandomizeDelays.GetWindowTextW(text);
-	std::wistringstream str(text.GetString());
-	str >> m_actions->randomizeDelayMs;
 
-	onSettingsChanged(false);
+	std::wistringstream str(text.GetString());
+	unsigned value;
+	str >> value;
+
+	if (m_actions->randomizeDelayMs != value)
+	{
+		m_actions->randomizeDelayMs = value;
+		onSettingsChanged(false);
+	}
 }
 
 IMPLEMENT_DYNAMIC(CActionsEditDlg, CDialogEx)

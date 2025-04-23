@@ -3,6 +3,7 @@
 #include "DirectInputManager.h"
 
 #include <ext/core/check.h>
+#include <ext/scope/defer.h>
 
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
@@ -252,7 +253,7 @@ bool DirectInputManager::InitHandler(HINSTANCE hInstance, bool mouse)
 void DirectInputManager::DeinitHandler(bool mouse)
 {
 	LPDIRECTINPUTDEVICE8& deviceToDeinit = mouse ? m_directInputMouseDevice : m_directInputKeyboardDevice;
-	
+
 	if (mouse && m_mouseHandlingThread.joinable())
 		m_mouseHandlingThread.interrupt_and_join();
 	else if (!mouse && m_keyboardHandlingThread.joinable())

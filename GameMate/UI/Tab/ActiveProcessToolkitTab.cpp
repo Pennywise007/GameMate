@@ -183,7 +183,7 @@ BOOL CActiveProcessToolkitTab::OnInitDialog()
 	m_splitterForKeys.AttachSplitterToWindow(*this, CMFCDynamicLayout::MoveHorizontal(100), CMFCDynamicLayout::SizeVertical(100));
 	m_splitterForKeys.SetControlBounds(CSplitter::BoundsType::eOffsetFromParentBounds,
 		CRect(300, CSplitter::kNotSpecified, rect.Width(), CSplitter::kNotSpecified));
-	
+
 	UpdateControlsData();
 
 	return TRUE;
@@ -372,7 +372,7 @@ void CActiveProcessToolkitTab::initKeyRebindingsTable()
 
 			// Deleting line with old key and replacing text
 			it = keysRemapping.emplace(std::move(keyToAdd.value()), std::move(Key(0))).first;
-			int itemIndex = std::distance(keysRemapping.begin(), it);
+			int itemIndex = (int)std::distance(keysRemapping.begin(), it);
 
 			auto& table = m_keyRemappingDlg.GetTable();
 			table.InsertItem(itemIndex, it->first.ToString().c_str());
@@ -436,14 +436,14 @@ void CActiveProcessToolkitTab::initKeyRebindingsTable()
 				if (it != keysRemapping.end())
 				{
 					it->second = std::move(newKeyValue);
-					int itemIndex = std::distance(keysRemapping.begin(), it);
+					int itemIndex = (int)std::distance(keysRemapping.begin(), it);
 					list.SetItemText(itemIndex, RebingingColumns::eNew, it->second.ToString().c_str());
 					list.SelectItem(itemIndex);
 				}
 				else
 				{
 					it = keysRemapping.emplace(std::move(keyToAdd.value()), std::move(newKeyValue)).first;
-					int itemIndex = std::distance(keysRemapping.begin(), it);
+					int itemIndex = (int)std::distance(keysRemapping.begin(), it);
 
 					list.InsertItem(itemIndex, it->first.ToString().c_str());
 					list.SetItemText(itemIndex, RebingingColumns::eNew, it->second.ToString().c_str());
@@ -575,8 +575,8 @@ void CActiveProcessToolkitTab::UpdateControlsData()
 	}
 
 	m_checkChangeBrightness.SetCheck(m_configuration->changeBrightness);
-	OnBnClickedCheckChangeBrightness();
 	m_brightness.SetPositions(std::make_pair(m_configuration->brightnessLevel, m_configuration->brightnessLevel));
+	updateBrightness();
 
 	auto& crosshair = m_configuration->crosshairSettings;
 	m_checkboxShowCrosshair.SetCheck(crosshair.show);
@@ -872,8 +872,6 @@ void CActiveProcessToolkitTab::OnCbnSelchangeComboConfiguration()
 	settings.activeConfiguration = m_comboConfigurations.GetCurSel();
 
 	UpdateControlsData();
-
-	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
 }
 
 void CActiveProcessToolkitTab::OnBnClickedButtonAddConfiguration()
@@ -896,7 +894,7 @@ void CActiveProcessToolkitTab::OnBnClickedButtonRenameConfiguration()
 	auto& settings = ext::get_singleton<Settings>().process_toolkit;
 	EXT_EXPECT(settings.activeConfiguration != -1);
 	EXT_EXPECT(!settings.processConfigurations.empty());
-	
+
 	auto activetab = *std::next(settings.processConfigurations.begin(), settings.activeConfiguration);
 
 	auto configuration = CAddingProcessToolkitDlg::ExecModal(this, activetab.get());
@@ -1091,7 +1089,12 @@ void CActiveProcessToolkitTab::OnCbnSelchangeComboAccidentalPress()
 void CActiveProcessToolkitTab::OnBnClickedCheckChangeBrightness()
 {
 	m_configuration->changeBrightness = m_checkChangeBrightness.GetCheck();
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+	updateBrightness();
+}
 
+void CActiveProcessToolkitTab::updateBrightness()
+{
 	const bool brightnessControllSupported = DisplayBrightnessController::BrightnessControlAvailable();
 	if (!brightnessControllSupported)
 	{
@@ -1109,8 +1112,6 @@ void CActiveProcessToolkitTab::OnBnClickedCheckChangeBrightness()
 		tooltip = L"Can't find any display which can support brightness control.\n";
 	tooltip += L"This feature works only if you enabled DDC/CI on your HDMI monitor or if you use build-in monitor.";
 	controls::SetTooltip(m_staticBrightnessInfo, tooltip);
-
-	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
 }
 
 void CActiveProcessToolkitTab::OnTRBNThumbPosChangingSliderBrightness(NMHDR* pNMHDR, LRESULT* pResult)
@@ -1118,9 +1119,11 @@ void CActiveProcessToolkitTab::OnTRBNThumbPosChangingSliderBrightness(NMHDR* pNM
 	NMTRBTHUMBPOSCHANGING* pNMTPC = reinterpret_cast<NMTRBTHUMBPOSCHANGING*>(pNMHDR);
 
 	ASSERT(pNMTPC->nReason == (int)CSlider::TrackMode::TRACK_LEFT);
-	m_configuration->brightnessLevel = pNMTPC->dwPos;
-
-	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+	if (m_configuration->brightnessLevel != pNMTPC->dwPos)
+	{
+		m_configuration->brightnessLevel = pNMTPC->dwPos;
+		ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+	}
 
 	*pResult = 0;
 }

@@ -452,7 +452,7 @@ void InputManager::MouseSendDown(DWORD mouseVkCode)
         {
             if (!IbSendMouseWheel(-WHEEL_DELTA))
             {
-                EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse wheel down";
+                EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse wheel down, err = " << GetLastError();
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
                 INPUT input = CreateMouseInput(mouseVkCode, true);
@@ -478,7 +478,7 @@ void InputManager::MouseSendDown(DWORD mouseVkCode)
 
             if (!IbSendInput(1, &input, sizeof INPUT))
             {
-                EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse wheel down";
+                EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse wheel down, err = " << GetLastError();
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
                 SendInput(1, &input, sizeof(INPUT));
@@ -494,7 +494,7 @@ void InputManager::MouseSendDown(DWORD mouseVkCode)
 
     if (!IbSendMouseClick(button))
     {
-        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse down for " << mouseVkCode;
+        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse down for " << mouseVkCode << ", err = " << GetLastError();
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
         INPUT input = CreateMouseInput(mouseVkCode, true);
@@ -527,7 +527,7 @@ void InputManager::MouseSendUp(DWORD mouseVkCode)
         {
             if (!IbSendMouseWheel(WHEEL_DELTA))
             {
-                EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse wheel down";
+                EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse wheel down, err = " << GetLastError();
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
                 INPUT input = CreateMouseInput(mouseVkCode, false);
@@ -553,7 +553,7 @@ void InputManager::MouseSendUp(DWORD mouseVkCode)
 
             if (!IbSendInput(1, &input, sizeof INPUT))
             {
-                EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse wheel down";
+                EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse wheel down, err = " << GetLastError();
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
                 SendInput(1, &input, sizeof(INPUT));
@@ -569,7 +569,7 @@ void InputManager::MouseSendUp(DWORD mouseVkCode)
 
     if (!IbSendMouseClick(button))
     {
-        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse down for " << mouseVkCode;
+        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse down for " << mouseVkCode << ", err = " << GetLastError();
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
         INPUT input = CreateMouseInput(mouseVkCode, true);
@@ -588,7 +588,7 @@ void InputManager::SetCursorPos(POINT position)
 
     if (!IbSendMouseMove(position.x, position.y, Send::MoveMode::Absolute))
     {
-        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse move";
+        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse move, err = " << GetLastError();
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
         INPUT input = CreateSetCursorPosInput(position);
@@ -601,7 +601,7 @@ void InputManager::MouseMove(POINT delta)
 {
     if (!IbSendMouseMove(delta.x, delta.y, Send::MoveMode::Relative))
     {
-        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse move";
+        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send mouse move, err = " << GetLastError();
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
         INPUT input = CreateMouseMoveInput(delta);
@@ -614,7 +614,7 @@ void InputManager::KeyboardSendDown(WORD vkCode)
 {
     if (!IbSendKeybdDown(vkCode))
     {
-        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send keyboard down " << vkCode;
+        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send keyboard down " << vkCode << ", err = " << GetLastError();
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
         INPUT input = CreateKeyboardInput(vkCode, true);
@@ -627,7 +627,7 @@ void InputManager::KeyboardSendUp(WORD vkCode)
 {
     if (!IbSendKeybdUp(vkCode))
     {
-        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send keyboard up " << vkCode;
+        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << "Failed to send keyboard up " << vkCode << ", err = " << GetLastError();
 
 #ifdef SEND_INPUT_ON_DRIVER_FAIL
         INPUT input = CreateKeyboardInput(vkCode, false);

@@ -50,7 +50,7 @@ std::wstring VkCodeToText(WORD vkCode)
 		return L"Mouse wheel";
 	case InputManager::VK_MOUSE_HWHEEL:
 		return L"Mouse H wheel";
-	// extended keyboard 
+	// extended keyboard
 	case VK_CANCEL:
 	case VK_NUMLOCK:
 	case VK_PRIOR:
@@ -110,7 +110,7 @@ bool runScriptSilently(const std::wstring& scriptPath) {
 		FALSE,                  // Set handle inheritance to FALSE
 		0,                      // No creation flags
 		NULL,                   // Use parent's environment block
-		NULL,                   // Use parent's starting directory 
+		NULL,                   // Use parent's starting directory
 		&si,                    // Pointer to STARTUPINFO structure
 		&pi                     // Pointer to PROCESS_INFORMATION structure
 	);
@@ -362,7 +362,7 @@ void Action::ExecuteAction(unsigned delayRandomizeInMs) const
 			auto path = std::filesystem::get_exe_directory() / scriptPath;
 			if (std::filesystem::exists(path))
 				script = path;
-		
+
 			if (!runScriptSilently(script))
 				EXT_TRACE_ERR() << EXT_TRACE_FUNCTION << "Failed to run script, last err: " << GetLastError();
 		}
@@ -494,17 +494,17 @@ Settings::Settings()
 	try
 	{
 		std::wifstream file(kFullFileName);
-		EXT_CHECK(file.is_open()) << "Failed to open file " << kFileName;
+		if (!file.is_open())
+			return;
 		EXT_DEFER(file.close());
 
 		const std::wstring settings{ std::istreambuf_iterator<wchar_t>(file),
 									 std::istreambuf_iterator<wchar_t>() };
-
-		DeserializeObject(Factory::TextDeserializer(settings), *this);
+		DeserializeFromJson(*this, settings);
 	}
 	catch (const std::exception&)
 	{
-		ext::ManageException("Failed to load settings");
+		MessageBox(NULL, ext::ManageExceptionText(L"").c_str(), L"Failed to load settings", MB_ICONERROR);
 	}
 }
 
@@ -513,7 +513,7 @@ void Settings::SaveSettings()
 	try
 	{
 		std::wstring settings;
-		SerializeObject(Factory::TextSerializer(settings), *this);
+		SerializeToJson(*this, settings);
 
 		std::wofstream file(kFullFileName);
 		EXT_CHECK(file.is_open()) << "Failed to open file " << kFileName;

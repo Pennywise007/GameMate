@@ -131,6 +131,8 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
     std::scoped_lock l(m_dataMutex);
     if (m_activeWindowConfiguration.has_value())
     {
+        EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << L"Resetting previous active window configuration: " << m_activeWindowConfiguration->name;
+
         ext::get_singleton<DisplayBrightnessController>().RestoreBrightness();
         m_crosshairWindow.RemoveCrosshairWindow();
 
@@ -153,7 +155,7 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
     if (!m_activeWindowConfiguration.has_value())
         return;
 
-    EXT_TRACE() << EXT_TRACE_FUNCTION << "active config " << m_activeWindowConfiguration->name;
+    EXT_TRACE() << EXT_TRACE_FUNCTION << "Active config " << m_activeWindowConfiguration->name;
 
     if (m_activeWindowConfiguration->changeBrightness)
         ext::get_singleton<DisplayBrightnessController>().SetBrightnessByHWND(m_activeWindow, m_activeWindowConfiguration->brightnessLevel);

@@ -216,7 +216,7 @@
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
-#define ID_MENU_CLOSE                   32774
+#define ID_MENU_EXIT                    32774
 #define ID_MENU_ENABLE_TRACES           32775
 #define ID_MENU_DISABLE_TRACES          32776
 #define ID_MENU_DISABLE_PROGRAM         32777

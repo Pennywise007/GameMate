@@ -66,6 +66,7 @@ private:
 	void initKeyRebindingsTable();
 	void UpdateControlsData();
 	void UpdateEnableButton();
+	void updateBrightness();
 
 	void AddNewActions(const Bind& bind, Actions&& actions);
 	void UpdateDemoCrosshair();
