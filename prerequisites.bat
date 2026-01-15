@@ -78,6 +78,11 @@ if %errorlevel% neq 0 (
 )
 
 cd ..\..
+
+echo :: Copying build artifacts...
+xcopy "%BUILD_DIR%\Simulator\Debug" "x64\Debug" /s /e /i /Y
+xcopy "%BUILD_DIR%\Simulator\Release" "x64\Release" /s /e /i /Y
+
 echo.
 echo Build complete!
 pause
