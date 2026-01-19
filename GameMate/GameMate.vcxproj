@@ -226,6 +226,7 @@
     <ClInclude Include="Controls\TrayHelper\TrayHelper.h" />
     <ClInclude Include="Controls\TabControl\TabControl.h" />
     <ClInclude Include="Controls\Tables\List\ListGroupCtrl\ListGroupCtrl.h" />
+    <ClInclude Include="core\Actions.h" />
     <ClInclude Include="core\DisplayBrightnessController.h" />
     <ClInclude Include="core\events.h" />
     <ClInclude Include="core\Crosshairs.h" />
@@ -364,6 +365,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="core\Actions.cpp" />
     <ClCompile Include="core\Crosshairs.cpp" />
     <ClCompile Include="core\DisplayBrightnessController.cpp" />
     <ClCompile Include="core\Settings.cpp" />

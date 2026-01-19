@@ -220,7 +220,7 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
     {
         if (bind.IsPressed(vkCode, down))
         {
-            m_macrosExecutor.add_task([](Actions actions) { actions.Execute(); }, actions);
+            m_macrosExecutor.add_task([](Actions actions) { actions.Execute(ext::this_thread::get_stop_token()); }, actions);
             return true;
         }
     }

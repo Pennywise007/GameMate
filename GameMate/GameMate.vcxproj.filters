@@ -203,6 +203,9 @@
     <ClInclude Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditorImpl.h">
       <Filter>UI\Controls\Table</Filter>
     </ClInclude>
+    <ClInclude Include="core\Actions.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -330,6 +333,9 @@
     </ClCompile>
     <ClCompile Include="Controls\Tables\List\Widgets\SubItemsEditor\SubItemsEditor.cpp">
       <Filter>UI\Controls\Table</Filter>
+    </ClCompile>
+    <ClCompile Include="core\Actions.cpp">
+      <Filter>core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
