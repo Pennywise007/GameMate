@@ -26,7 +26,7 @@ public:
 
 private: // ISettingsChanged
     void OnSettingsChanged(ISettingsChanged::ChangedType changedType) override;
-    
+
 private: // IKeyHandlerBlocker
     void OnBlockHandler() override;
     void OnUnblockHandler() override;
@@ -36,7 +36,7 @@ private:
     void updateKeyBindings();
 
 private:
-    std::atomic_bool m_keyHandlingBlocked = false;
+    std::atomic_int m_keyHandlingBlocked = 0;
     int m_keyMauseHandlerId = -1;
     // Active window changed hook
     HWINEVENTHOOK m_activeWindowHook = nullptr;

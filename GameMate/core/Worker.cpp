@@ -167,7 +167,7 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
 
 bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
 {
-    if (m_keyHandlingBlocked)
+    if (m_keyHandlingBlocked != 0)
         return false;
 
     std::scoped_lock l(m_dataMutex);
@@ -323,10 +323,10 @@ void Worker::OnSettingsChanged(ISettingsChanged::ChangedType changedType)
 
 void Worker::OnBlockHandler()
 {
-    m_keyHandlingBlocked = true;
+    ++m_keyHandlingBlocked;
 }
 
 void Worker::OnUnblockHandler()
 {
-    m_keyHandlingBlocked = false;
+    --m_keyHandlingBlocked;
 }
