@@ -104,6 +104,7 @@ void CTimerWindow::OnSize(UINT nType, int cx, int cy)
 {
 	CWnd::OnSize(nType, cx, cy);
 	recalcFont();
+	Invalidate();
 }
 
 void CTimerWindow::recalcFont()
@@ -150,7 +151,7 @@ CString CTimerWindow::getDisplayText() const
 	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(currentTime);
 	currentTime -= seconds;
 	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime);
-	
+
 	CString text;
 	if (m_displayHours)
 		text.Format(L"%02d:", hours.count());
@@ -373,6 +374,7 @@ void CTimerDlg::showFullInterface()
 	m_interfaceMinimized = false;
 
 	SetRedraw(FALSE);
+    m_timerWindow.SetRedraw(FALSE);
 
 	m_buttonTimerSettings.ShowWindow(SW_SHOW);
 	m_buttonReset.ShowWindow(SW_SHOW);
@@ -383,16 +385,17 @@ void CTimerDlg::showFullInterface()
 	m_timerWindow.GetWindowRect(timerWindowRect);
 	timerWindowRect.OffsetRect(m_timerOffsetFromWindow);
 	ScreenToClient(timerWindowRect);
-	m_timerWindow.MoveWindow(timerWindowRect);
+	m_timerWindow.MoveWindow(timerWindowRect, FALSE);
 
-	ModifyStyle(0, WS_CAPTION | WS_THICKFRAME, SWP_FRAMECHANGED);
+	ModifyStyle(0, WS_CAPTION | WS_THICKFRAME, SWP_FRAMECHANGED | SWP_NOREDRAW);
 
-	MoveWindow(m_fullWindowRect);
+	MoveWindow(m_fullWindowRect, FALSE);
 
 	Layout::AnchorWindow(m_timerWindow, *this, { AnchorSide::eRight }, AnchorSide::eRight, 100);
 	Layout::AnchorWindow(m_timerWindow, *this, { AnchorSide::eBottom }, AnchorSide::eBottom, 100);
 
 	SetRedraw(TRUE);
+	m_timerWindow.SetRedraw(TRUE);
 	RedrawWindow();
 
 	// Restore minimum window size restrictions
@@ -418,6 +421,7 @@ void CTimerDlg::minimizeInterface()
 	ScreenToClient(timerWindowRectWithoutGaps);
 
 	SetRedraw(FALSE);
+	m_timerWindow.SetRedraw(FALSE);
 
 	m_timerWindow.MoveWindow(timerWindowRectWithoutGaps);
 
@@ -428,9 +432,11 @@ void CTimerDlg::minimizeInterface()
 	// Remove minimum size restrictions
 	Layout::SetWindowMinimumSize(*this, std::nullopt, std::nullopt);
 
-	MoveWindow(timerWindowRect);
+	MoveWindow(timerWindowRect, FALSE);
 	// Remove caption after moving window because without caption we face some problems with double monitor with different DPI
-	ModifyStyle(WS_CAPTION | WS_THICKFRAME, 0, SWP_FRAMECHANGED);
+	ModifyStyle(WS_CAPTION | WS_THICKFRAME, 0, SWP_FRAMECHANGED | SWP_NOREDRAW);
 
 	SetRedraw(TRUE);
+	m_timerWindow.SetRedraw(TRUE);
+	RedrawWindow();
 }
