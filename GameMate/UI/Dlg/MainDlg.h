@@ -5,9 +5,11 @@
 #include <Controls/TabControl/TabControl.h>
 #include <Controls/TabControl/CustomDrawWidgets.h>
 
+#include <core/events.h>
+
 #include "UI/Dlg/TimerDlg.h"
 
-class CMainDlg : public CDialogEx, ext::events::ScopeSubscription<ITimerNotifications>
+class CMainDlg : public CDialogEx, ext::events::ScopeSubscription<ITimerNotifications, ISettingsChanged>
 {
 // Construction
 public:
@@ -15,7 +17,7 @@ public:
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
-	enum { IDD = IDD_MAIN_DIALOG };
+	enum { IDD = IDD_DIALOG_MAIN };
 #endif
 
 protected:
@@ -36,13 +38,16 @@ protected:
 	afx_msg UINT OnPowerBroadcast(UINT nID, LPARAM lParam);
 	afx_msg void OnCbnSelchangeComboInputDriver();
 	afx_msg void OnBnClickedMfcbuttonInputSimulatorInfo();
-	afx_msg void OnBnClickedMfcbuttonTimerHotkey();
+	afx_msg void OnBnClickedMfcbuttonMainSettings();
 	afx_msg void OnBnClickedCheckTimer();
 
 private: // ITimerNotifications
 	void OnShowHideTimer() override;
 	void OnStartOrPauseTimer() override {}
 	void OnResetTimer() override {}
+
+private: // ISettiingsChangeg
+    void OnSettingsChanged(ISettingsChanged::ChangedType changedMode) override;
 
 private:
 	void updateDriverInfoButton();
@@ -53,7 +58,7 @@ private:
 	CComboBox m_inputSimulator;
 	CIconButton m_buttonInputSimulatorInfo;
 	CButton m_buttonShowTimer;
-	CIconButton m_buttonShowTimerHotkey;
+	CIconButton m_buttonSetting;
 	CButtonsTabCtrl<CTabControl> m_tabControlModes;
 
 private:

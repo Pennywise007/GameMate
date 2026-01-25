@@ -3,7 +3,7 @@
 // Used by GameMate.rc
 //
 #define IDD_GAMEMATE_DIALOG             102
-#define IDD_MAIN_DIALOG                 102
+#define IDD_DIALOG_MAIN                 102
 #define IDR_MAINFRAME                   128
 #define IDR_MENU_TRAY                   128
 #define IDD_TAB_GAME_SETTINGS           130
@@ -68,6 +68,7 @@
 #define IDB_PNG_START_RECORDING         198
 #define IDB_PNG_STOP_RECORDING          199
 #define IDD_DIALOG_TABLE                202
+#define IDD_DIALOG_MAIN_SETTINGS        203
 #define IDC_TABCONTROL_MODES            1000
 #define IDC_BUTTON_ADD_TAB              1001
 #define IDC_BUTTON_DELETE_TAB           1002
@@ -131,9 +132,9 @@
 #define IDC_STATIC_CROSSHAIR_INFO2      1042
 #define IDC_STATIC_BRIGHTNESS_INFO      1042
 #define IDC_BUTTON_MOVE_UP              1043
-#define IDC_MFCBUTTON_TIMER_HOTKEY      1043
 #define IDC_BUTTON_MOVE_UP2             1044
 #define IDC_BUTTON_MOVE_DOWN            1044
+#define IDC_MFCBUTTON_MAIN_SETTINGS     1044
 #define IDC_CHECK_PROGRAM_WORKING       1045
 #define IDC_BUTTON_EDIT_DELAY           1045
 #define IDC_STATIC_NO_TABS              1046
@@ -148,6 +149,7 @@
 #define IDC_BUTTON_CHANGE_RESET_BIND    1049
 #define IDC_STATIC_GROUP                1050
 #define IDC_BUTTON_ADD_CONFIGURATION    1050
+#define IDC_BUTTON_CHANGE_ACTIONS_EXECUTOR_BIND 1050
 #define IDC_MFCLINK_RAZER               1051
 #define IDC_BUTTON_REMOVE_CONFIGURATION 1051
 #define IDC_MFCLINK_LOGITECH_8          1052
@@ -205,6 +207,7 @@
 #define IDC_STATIC_RESET_BIND           1113
 #define IDC_CHECK_RANDOMIZE_DELAY       1113
 #define IDC_EDIT_DESCRIPTION            1114
+#define IDC_STATIC_ACTIONS_EXECUTOR_BIND 1114
 #define IDC_STATIC_DESTRIPTION          1115
 #define IDC_STATIC_ACCIDENTAL           1116
 #define IDC_COMBO_ACCIDENTAL_PRESS      1117
@@ -213,6 +216,13 @@
 #define IDC_BUTTON_REMOVE_REMAPPING     1120
 #define IDC_TABLE                       1121
 #define IDC_STATIC_GROUP_TITLE          1122
+#define IDC_CHECK1                      1123
+#define IDC_CHECK_ENABLE_TRACES         1123
+#define IDC_CHECK_RUN_ON_STARTUP        1124
+#define IDC_STATIC_ACTIVE_PROCESS_TOOLKIT_BIND 1125
+#define IDC_STATIC_SHOW_TIMER_BIND      1126
+#define IDC_BUTTON_CHAGE_SHOW_TIMER_BIND 1127
+#define IDC_BUTTON_CHANGE_ACTIVE_PROCESS_TOOLKIT_BIND 1128
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -225,12 +235,12 @@
 #define ID_MENU_DISABLE_PROCESS_TOOLKIT 32780
 
 // Next default values for new objects
-// 
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        204
+#define _APS_NEXT_RESOURCE_VALUE        206
 #define _APS_NEXT_COMMAND_VALUE         32781
-#define _APS_NEXT_CONTROL_VALUE         1123
+#define _APS_NEXT_CONTROL_VALUE         1129
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

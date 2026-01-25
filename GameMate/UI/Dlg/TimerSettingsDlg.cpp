@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "resource.h"
 
+#include "core/events.h"
 #include "core/Settings.h"
 
 #include "UI/Dlg/InputEditorDlg.h"
@@ -66,6 +67,7 @@ void CTimerSettings::OnOK()
 	timerSettings.textColor = m_textColor.GetColor();
 	timerSettings.startPauseTimerBind = m_pauseBind;
 	timerSettings.resetTimerBind = m_resetBind;
+	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eTimer);
 
 	CDialogEx::OnOK();
 }

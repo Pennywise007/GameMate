@@ -8,6 +8,7 @@
 #include "UI/Tab/ActionsExecutorTab.h"
 #include "UI/Dlg/InputSimulatorInfoDlg.h"
 #include "UI/Dlg/InputEditorDlg.h"
+#include "UI/Dlg/MainSettingsDlg.h"
 
 #include "InputManager.h"
 
@@ -72,7 +73,7 @@ template <class Type>
 } // namespace
 
 CMainDlg::CMainDlg(CWnd* pParent /*=nullptr*/)
-	: CDialogEx(IDD_MAIN_DIALOG, pParent)
+	: CDialogEx(IDD_DIALOG_MAIN, pParent)
 {
 	ext::core::Init();
 
@@ -87,7 +88,7 @@ void CMainDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_INPUT_DRIVER, m_inputSimulator);
 	DDX_Control(pDX, IDC_MFCBUTTON_INPUT_DRIVER_INFO, m_buttonInputSimulatorInfo);
 	DDX_Control(pDX, IDC_CHECK_TIMER, m_buttonShowTimer);
-	DDX_Control(pDX, IDC_MFCBUTTON_TIMER_HOTKEY, m_buttonShowTimerHotkey);
+	DDX_Control(pDX, IDC_MFCBUTTON_MAIN_SETTINGS, m_buttonSetting);
 }
 
 BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
@@ -99,7 +100,7 @@ BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
 	ON_WM_POWERBROADCAST()
 	ON_CBN_SELCHANGE(IDC_COMBO_INPUT_DRIVER, &CMainDlg::OnCbnSelchangeComboInputDriver)
 	ON_BN_CLICKED(IDC_MFCBUTTON_INPUT_DRIVER_INFO, &CMainDlg::OnBnClickedMfcbuttonInputSimulatorInfo)
-	ON_BN_CLICKED(IDC_MFCBUTTON_TIMER_HOTKEY, &CMainDlg::OnBnClickedMfcbuttonTimerHotkey)
+	ON_BN_CLICKED(IDC_MFCBUTTON_MAIN_SETTINGS, &CMainDlg::OnBnClickedMfcbuttonMainSettings)
 	ON_BN_CLICKED(IDC_CHECK_TIMER, &CMainDlg::OnBnClickedCheckTimer)
 END_MESSAGE_MAP()
 
@@ -234,7 +235,7 @@ BOOL CMainDlg::OnInitDialog()
 		MessageBox((L"Try to remove config file and restart app. Err:\n" + ext::ManageExceptionText(L"")).c_str(), L"Failed to init input simulator", MB_OK);
 	}
 
-	m_buttonShowTimerHotkey.SetBitmap(IDB_PNG_SETTINGS, Alignment::CenterCenter);
+	m_buttonSetting.SetBitmap(IDB_PNG_SETTINGS, Alignment::LeftCenter);
 	m_timerDlg.Create(CTimerDlg::IDD, GetDesktopWindow());
 	updateTimerButton();
 
@@ -437,16 +438,9 @@ void CMainDlg::OnBnClickedMfcbuttonInputSimulatorInfo()
 	CInputSimulatorInfoDlg(this).DoModal();
 }
 
-void CMainDlg::OnBnClickedMfcbuttonTimerHotkey()
+void CMainDlg::OnBnClickedMfcbuttonMainSettings()
 {
-	auto& currentBind = ext::get_singleton<Settings>().timer.showTimerBind;
-	auto bind = CInputEditorDlg::EditBind(this, currentBind);
-	if (!bind.has_value() || currentBind.ToString() == bind->ToString())
-		return;
-
-	currentBind = bind.value();
-	updateTimerButton();
-	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eTimer);
+	MainSettingsDlg(this).DoModal();
 }
 
 void CMainDlg::OnBnClickedCheckTimer()
@@ -458,6 +452,14 @@ void CMainDlg::OnBnClickedCheckTimer()
 void CMainDlg::OnShowHideTimer()
 {
 	m_buttonShowTimer.SetCheck(m_buttonShowTimer.GetCheck() == BST_CHECKED ? BST_UNCHECKED : BST_CHECKED);
+}
+
+void CMainDlg::OnSettingsChanged(ISettingsChanged::ChangedType changedMode)
+{
+	if (changedMode == ISettingsChanged::ChangedType::eTimer)
+	{
+		updateTimerButton();
+    }
 }
 
 void CMainDlg::updateDriverInfoButton()

@@ -250,6 +250,7 @@
     <ClInclude Include="UI\Dlg\EditValueDlg.h" />
     <ClInclude Include="UI\Dlg\InputSimulatorInfoDlg.h" />
     <ClInclude Include="UI\Dlg\MainDlg.h" />
+    <ClInclude Include="UI\Dlg\MainSettingsDlg.h" />
     <ClInclude Include="UI\Dlg\TableDlg.h" />
     <ClInclude Include="UI\Dlg\TimerDlg.h" />
     <ClInclude Include="UI\Dlg\TimerSettingsDlg.h" />
@@ -390,6 +391,7 @@
     <ClCompile Include="UI\Dlg\EditValueDlg.cpp" />
     <ClCompile Include="UI\Dlg\InputSimulatorInfoDlg.cpp" />
     <ClCompile Include="UI\Dlg\MainDlg.cpp" />
+    <ClCompile Include="UI\Dlg\MainSettingsDlg.cpp" />
     <ClCompile Include="UI\Dlg\TableDlg.cpp" />
     <ClCompile Include="UI\Dlg\TimerDlg.cpp" />
     <ClCompile Include="UI\Dlg\TimerSettingsDlg.cpp" />

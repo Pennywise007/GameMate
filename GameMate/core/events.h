@@ -8,7 +8,7 @@ struct ISettingsChanged : ext::events::IBaseEvent
     enum class ChangedType
     {
         eGeneralSettings,               // General settings like traces/selected mode changed
-        eInputSimulator,                // Input simulator changed 
+        eInputSimulator,                // Input simulator changed
         eProcessToolkit,                // Settings of the process toolkit changed
         eActionsExecutor,               // Settings of the actions executor changed
         eActionsExecutorEnableChanged,  // Actions executor enabled state changed

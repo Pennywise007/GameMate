@@ -206,6 +206,9 @@
     <ClInclude Include="core\Actions.h">
       <Filter>core</Filter>
     </ClInclude>
+    <ClInclude Include="UI\Dlg\MainSettingsDlg.h">
+      <Filter>UI\Dlg</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -336,6 +339,9 @@
     </ClCompile>
     <ClCompile Include="core\Actions.cpp">
       <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="UI\Dlg\MainSettingsDlg.cpp">
+      <Filter>UI\Dlg</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

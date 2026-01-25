@@ -2,7 +2,7 @@
 
 #include "afxdialogex.h"
 
-#include "core/Settings.h"
+#include "core/Actions.h"
 
 #include "Controls/MFC/CMFCColorSelection.h"
 
