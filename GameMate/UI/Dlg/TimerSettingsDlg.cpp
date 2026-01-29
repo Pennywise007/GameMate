@@ -29,11 +29,13 @@ void CTimerSettings::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STATIC_START_BIND, m_staticStartPauseBind);
 	DDX_Control(pDX, IDC_STATIC_RESET_BIND, m_staticResetBind);
 	DDX_Control(pDX, IDC_CHECK_HIDE_INTERFACE, m_checkHideInterface);
+	DDX_Control(pDX, IDC_CHECK_TRANSPARENT_BACKGROUND, m_checkboxTransparentBackground);
 }
 
 BEGIN_MESSAGE_MAP(CTimerSettings, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_CHANGE_START_BIND, &CTimerSettings::OnBnClickedButtonChangeStartBind)
 	ON_BN_CLICKED(IDC_BUTTON_CHANGE_RESET_BIND, &CTimerSettings::OnBnClickedButtonChangeResetBind)
+	ON_BN_CLICKED(IDC_CHECK_TRANSPARENT_BACKGROUND, &CTimerSettings::OnBnClickedCheckTransparentBackground)
 END_MESSAGE_MAP()
 
 BOOL CTimerSettings::OnInitDialog()
@@ -44,6 +46,7 @@ BOOL CTimerSettings::OnInitDialog()
 
 	m_checkHideInterface.SetCheck(timerSettings.minimizeInterface ? BST_CHECKED : BST_UNCHECKED);
 	m_checkDisplayHours.SetCheck(timerSettings.displayHours ? BST_CHECKED : BST_UNCHECKED);
+    m_checkboxTransparentBackground.SetCheck(timerSettings.transparentBackground ? BST_CHECKED : BST_UNCHECKED);
 	m_textColor.SetColor(timerSettings.textColor);
 	m_textColor.EnableAutomaticButton(L"Default", kDefaultTextColor);
 	m_backgroundColor.SetColor(timerSettings.backgroundColor);
@@ -54,6 +57,8 @@ BOOL CTimerSettings::OnInitDialog()
 	m_resetBind = timerSettings.resetTimerBind;
 	m_staticResetBind.SetWindowTextW(m_resetBind.ToString().c_str());
 
+	OnBnClickedCheckTransparentBackground();
+
 	return TRUE;
 }
 
@@ -63,6 +68,7 @@ void CTimerSettings::OnOK()
 
 	timerSettings.minimizeInterface = m_checkHideInterface.GetCheck() == BST_CHECKED;
 	timerSettings.displayHours = m_checkDisplayHours.GetCheck() == BST_CHECKED;
+	timerSettings.transparentBackground = m_checkboxTransparentBackground.GetCheck() == BST_CHECKED;
 	timerSettings.backgroundColor = m_backgroundColor.GetColor();
 	timerSettings.textColor = m_textColor.GetColor();
 	timerSettings.startPauseTimerBind = m_pauseBind;
@@ -70,6 +76,14 @@ void CTimerSettings::OnOK()
 	ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eTimer);
 
 	CDialogEx::OnOK();
+}
+
+void CTimerSettings::OnBnClickedCheckTransparentBackground()
+{
+    const auto showState = m_checkboxTransparentBackground.GetCheck() == BST_CHECKED ? SW_HIDE : SW_SHOW;
+
+    m_backgroundColor().ShowWindow(showState);
+    GetDlgItem(IDC_STATIC_BACKGROUND_COLOR)->ShowWindow(showState);
 }
 
 void CTimerSettings::OnBnClickedButtonChangeStartBind()

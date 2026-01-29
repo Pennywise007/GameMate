@@ -61,24 +61,92 @@ void CTimerWindow::SetColors(COLORREF backColor, COLORREF textColor)
 	RedrawWindow();
 }
 
+void CTimerWindow::SetTransparent(bool transparent)
+{
+	m_transparentMode = transparent;
+	if (m_transparentMode)
+	{
+		// Add layered window style
+		ModifyStyleEx(0, WS_EX_LAYERED, SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW);
+		// Set window transparency - make background color fully transparent
+		SetLayeredWindowAttributes(GetBackColor(), 0, LWA_COLORKEY);
+	}
+	else
+	{
+		// Remove layered window style
+		ModifyStyleEx(WS_EX_LAYERED, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW);
+	}
+	RedrawWindow();
+}
+
+COLORREF CTimerWindow::GetBackColor() const
+{
+	if (m_transparentMode)
+	{
+		// Return non text color to make background transparent with SetLayeredWindowAttributes
+		return m_textColor ^ 0x00000001; // flip lowest bit of Red
+	}
+
+	return m_backColor;
+}
+
 void CTimerWindow::OnPaint()
 {
-	const CString text = getDisplayText();
-
 	CRect rect;
 	GetClientRect(&rect);
 
-	CPaintDC dcPaint(this);
-	CMemDC memDC(dcPaint, rect);
-	CDC& dc = memDC.GetDC();
+	if (GetExStyle() & WS_EX_LAYERED)
+	{
+		CWindowDC screenDC(nullptr);
+		CDC memDC;
+		if (!memDC.CreateCompatibleDC(&screenDC))
+			return;
+
+		CBitmap bitmap;
+		if (!bitmap.CreateCompatibleBitmap(&screenDC, rect.Width(), rect.Height()))
+			return;
+
+		CBitmap* pOldBitmap = memDC.SelectObject(&bitmap);
+
+		PaintContent(memDC, rect);
+
+		// Setup blend function for alpha blending with per-pixel alpha
+		BLENDFUNCTION blend = { 0 };
+		blend.BlendOp = AC_SRC_OVER;
+		blend.BlendFlags = 0;
+		blend.SourceConstantAlpha = 255;
+		blend.AlphaFormat = AC_SRC_ALPHA;
+
+		POINT pptDst = {};
+		SIZE size = rect.Size();
+		POINT pptSrc = {};
+
+		// Update layered window with per-pixel alpha (AC_SRC_ALPHA) instead of color key
+		UpdateLayeredWindow(&memDC, &pptDst, &size, &memDC, &pptSrc, RGB(0, 0, 0), &blend, ULW_ALPHA);
+
+		memDC.SelectObject(pOldBitmap);
+		bitmap.DeleteObject();
+	}
+	else
+	{
+		CPaintDC dcPaint(this);
+		CMemDC memDC(dcPaint, rect);
+		CDC& dc = memDC.GetDC();
+
+		PaintContent(dc, rect);
+	}
+}
+
+void CTimerWindow::PaintContent(CDC& dc, const CRect& rect)
+{
+	const CString text = getDisplayText();
 
 	LOGFONT logfont = {};
 	wcscpy_s(logfont.lfFaceName, kTimerFontName);
 	logfont.lfHeight = m_logFontSize;
+	logfont.lfQuality = NONANTIALIASED_QUALITY;  // Disable anti-aliasing to avoid halo effect
 	CFont font;
 	font.CreateFontIndirect(&logfont);
-
-	dc.FillSolidRect(rect, m_backColor);
 
 	CFont* pOldFont = dc.SelectObject(&font);
 
@@ -86,6 +154,10 @@ void CTimerWindow::OnPaint()
 	CPoint textStartPos = rect.CenterPoint();
 	textStartPos.Offset(-textSize.cx / 2, -textSize.cy / 2);
 
+	dc.FillSolidRect(rect, GetBackColor());
+
+	dc.SetTextColor(m_textColor);
+	dc.SetBkMode(TRANSPARENT);
 	dc.TextOutW(textStartPos.x, textStartPos.y, text);
 
 	dc.SelectObject(pOldFont);
@@ -216,6 +288,8 @@ BOOL CTimerDlg::OnInitDialog()
 	ScreenToClient(timerRect);
 	m_timerOffsetFromWindow = timerRect.TopLeft();
 
+	m_transparentMode = timerSettings.transparentBackground;
+
 	m_checkStart.UseCustomBackgroundDraw(true);
 
 	return TRUE;
@@ -318,6 +392,7 @@ void CTimerDlg::OnBnClickedMfcbuttonTimerSettigns()
 	updateButtonText();
 	m_timerWindow.SetColors(timerSettings.backgroundColor, timerSettings.textColor);
 	m_timerWindow.DisplayHours(timerSettings.displayHours);
+	m_transparentMode = timerSettings.transparentBackground;
 
 	if (timerSettings.minimizeInterface)
 		SetTimer(kHideTimerId, kHideInterfaceTimerInterval, nullptr);
@@ -367,11 +442,28 @@ void CTimerDlg::updateButtonText()
 	m_buttonReset.SetWindowTextW((L"Reset\n" + settings.resetTimerBind.ToString()).c_str());
 }
 
+void CTimerDlg::setDialogTransparent(bool transparent)
+{
+	m_timerWindow.SetTransparent(transparent);
+
+	if (transparent)
+	{
+		ModifyStyleEx(0, WS_EX_LAYERED | WS_EX_COMPOSITED, SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW);
+		SetLayeredWindowAttributes(m_timerWindow.GetBackColor(), 0, LWA_COLORKEY);
+	}
+	else
+	{
+		ModifyStyleEx(WS_EX_LAYERED | WS_EX_COMPOSITED, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOREDRAW);
+	}
+}
+
 void CTimerDlg::showFullInterface()
 {
 	if (!m_interfaceMinimized)
 		return;
 	m_interfaceMinimized = false;
+
+	setDialogTransparent(false);
 
 	SetRedraw(FALSE);
     m_timerWindow.SetRedraw(FALSE);
@@ -435,6 +527,9 @@ void CTimerDlg::minimizeInterface()
 	MoveWindow(timerWindowRect, FALSE);
 	// Remove caption after moving window because without caption we face some problems with double monitor with different DPI
 	ModifyStyle(WS_CAPTION | WS_THICKFRAME, 0, SWP_FRAMECHANGED | SWP_NOREDRAW);
+
+	if (m_transparentMode)
+		setDialogTransparent(true);
 
 	SetRedraw(TRUE);
 	m_timerWindow.SetRedraw(TRUE);

@@ -198,6 +198,7 @@
 #define IDC_MFCBUTTON_TIMER_SETTIGNS    1104
 #define IDC_CHECK_DISPLAY_HOURS         1106
 #define IDC_MFCCOLORBUTTON_TEXT         1107
+#define IDC_CHECK_TRANSPARENT_BACKGROUND 1108
 #define IDC_MFCCOLORBUTTON_BACKGROUND   1109
 #define IDC_EDIT_START_BIND             1110
 #define IDC_OK                          1111
@@ -223,6 +224,7 @@
 #define IDC_STATIC_SHOW_TIMER_BIND      1126
 #define IDC_BUTTON_CHAGE_SHOW_TIMER_BIND 1127
 #define IDC_BUTTON_CHANGE_ACTIVE_PROCESS_TOOLKIT_BIND 1128
+#define IDC_STATIC_BACKGROUND_COLOR     1129
 #define ID_ID_ASD                       32771
 #define ID_ID_ASD32772                  32772
 #define ID_MENU_OPEN                    32773
@@ -235,12 +237,12 @@
 #define ID_MENU_DISABLE_PROCESS_TOOLKIT 32780
 
 // Next default values for new objects
-//
+// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        206
 #define _APS_NEXT_COMMAND_VALUE         32781
-#define _APS_NEXT_CONTROL_VALUE         1129
+#define _APS_NEXT_CONTROL_VALUE         1130
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

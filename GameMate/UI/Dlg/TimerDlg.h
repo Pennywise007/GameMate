@@ -19,6 +19,9 @@ public:
 	void ResetTimer();
 	void DisplayHours(bool show);
 	void SetColors(COLORREF backColor, COLORREF textColor);
+	void SetTransparent(bool transparent);
+	COLORREF GetBackColor() const;
+	void PaintContent(CDC& dc, const CRect& rect);
 
 private:
 	afx_msg void OnPaint();
@@ -37,6 +40,7 @@ private:
 private: // drawing info
 	int m_displayHours = true;
 	int m_logFontSize = -10;
+	bool m_transparentMode = false;
 	COLORREF m_backColor;
 	COLORREF m_textColor = RGB(0, 0, 0);
 };
@@ -62,6 +66,7 @@ protected:
 	afx_msg void OnBnClickedCheckStart();
 	afx_msg void OnBnClickedButtonReset();
 	afx_msg void OnBnClickedMfcbuttonTimerSettigns();
+	afx_msg void OnPaint();
 
 	DECLARE_MESSAGE_MAP()
 
@@ -74,6 +79,7 @@ private:
 	void updateButtonText();
 	void showFullInterface();
 	void minimizeInterface();
+	void setDialogTransparent(bool transparent);
 
 private:
 	CIconButton m_checkStart;
@@ -86,4 +92,5 @@ private:
 	CRect m_fullWindowRect;
 	bool m_interfaceMinimized = false;
 	bool m_childDlgOpened = false;
+	bool m_transparentMode = false;
 };
