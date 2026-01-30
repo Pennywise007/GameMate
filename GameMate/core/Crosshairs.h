@@ -50,7 +50,7 @@ public:
     CursorReplacingWindow() = default;
 
     void Create(CBitmap&& cursorImage);
-    
+
     using TransparentWindowWithBitmap::DestroyWindow;
     using TransparentWindowWithBitmap::m_hWnd;
 
