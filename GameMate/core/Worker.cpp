@@ -86,6 +86,7 @@ void CALLBACK WindowForegroundChangedProc(HWINEVENTHOOK hWinEventHook, DWORD eve
 } // namespace
 
 Worker::Worker()
+    : m_actionExecutor(std::thread::hardware_concurrency() <= 2 ? 1 : std::thread::hardware_concurrency() - 2)
 {
     m_activeWindowHook = SetWinEventHook(EVENT_SYSTEM_FOREGROUND, EVENT_SYSTEM_FOREGROUND, NULL, &WindowForegroundChangedProc, 0, 0, WINEVENT_OUTOFCONTEXT);
     if (m_activeWindowHook == nullptr) {
@@ -117,6 +118,8 @@ Worker::Worker()
 
 Worker::~Worker()
 {
+    m_actionExecutor.interrupt_and_remove_all_tasks();
+
     ASSERT(m_activeWindowHook);
     UnhookWinEvent(m_activeWindowHook);
 
@@ -129,7 +132,8 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
     m_activeProcessName = processName;
 
     std::scoped_lock l(m_dataMutex);
-    if (m_activeWindowConfiguration.has_value())
+    const bool oldConfigExisted = m_activeWindowConfiguration.has_value();
+    if (oldConfigExisted)
     {
         EXT_TRACE_DBG() << EXT_TRACE_FUNCTION << L"Resetting previous active window configuration: " << m_activeWindowConfiguration->name;
 
@@ -138,6 +142,11 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
 
         m_activeWindowConfiguration.reset();
     }
+
+    EXT_DEFER([&]() {
+        if (oldConfigExisted || m_activeWindowConfiguration.has_value())
+            updateKeyBindings();
+    });
 
     auto& settings = ext::get_singleton<Settings>().process_toolkit;
     if (!settings.enabled)
@@ -171,58 +180,17 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
         return false;
 
     std::scoped_lock l(m_dataMutex);
-    // Execute program callbacks
-    for (auto&& [key, callback] : m_keyBindingsCallbacks)
-    {
-        if (key.IsPressed(vkCode, down))
-        {
-            ext::InvokeMethodAsync([&callback]() {
-                callback();
-            });
-            return false;
-        }
-    }
 
-    if (!m_activeWindowConfiguration.has_value())
+    if (vkCode > m_vkHandlers.size())
+    {
+        EXT_TRACE_ERR() << EXT_TRACE_FUNCTION << L"vkCode is bigger than handlers size, vkCode: " << vkCode << L", handlers size: " << m_vkHandlers.size();
         return false;
-
-    // Ignore accidental press
-    for (auto& key : m_activeWindowConfiguration->keysToIgnoreAccidentalPress)
-    {
-        if (!key.IsPressed(vkCode, down))
-            continue;
-
-        auto now = std::chrono::system_clock::now();
-        if (key.lastTimeWhenKeyWasIgnored.has_value() &&
-            (now - *key.lastTimeWhenKeyWasIgnored) <= std::chrono::seconds(1))
-        {
-            break;
-        }
-
-        if (down)
-            key.lastTimeWhenKeyWasIgnored = std::move(now);
-
-        return true;
     }
 
-    // Key remapping
-    for (auto&& [keyToReplace, replacingKey] : m_activeWindowConfiguration->keysRemapping)
+    for (const auto& handler : m_vkHandlers[vkCode])
     {
-        if (!keyToReplace.IsPressed(vkCode, down))
-            continue;
-
-        Action::NewAction(replacingKey.vkCode, down, 0).ExecuteAction(0);
-        return true;
-    }
-
-    // Execute binds commands
-    for (auto&& [bind, actions] : m_activeWindowConfiguration->actionsByBind)
-    {
-        if (bind.IsPressed(vkCode, down))
-        {
-            m_macrosExecutor.add_task([](Actions actions) { actions.Execute(ext::this_thread::get_stop_token()); }, actions);
+        if (handler(down))
             return true;
-        }
     }
 
     return false;
@@ -230,8 +198,12 @@ bool Worker::OnKeyOrMouseEvent(WORD vkCode, bool down)
 
 void Worker::updateKeyBindings()
 {
+    std::scoped_lock l(m_dataMutex);
+
     auto& settings = ext::get_singleton<Settings>();
-    decltype(m_keyBindingsCallbacks) bindings = {
+
+    // Callbacks for each key bind
+    std::map<Bind, std::function<void()>> keyBindingsCallbacks = {
         {
             settings.process_toolkit.enableBind,
             []() {
@@ -262,8 +234,128 @@ void Worker::updateKeyBindings()
         },
     };
 
-    std::scoped_lock l(m_dataMutex);
-    m_keyBindingsCallbacks = std::move(bindings);
+    m_vkHandlers.fill({});
+
+    // first add handlers for binds, so they will have higher priority
+    for (auto&& [key, callback] : keyBindingsCallbacks)
+    {
+        m_vkHandlers[key.vkCode].emplace_back([input = key, callback = callback](bool down)
+        {
+            if (!input.IsPressed(input.vkCode, down))
+                return false;
+
+            ext::InvokeMethodAsync([&callback]() {
+                callback();
+            });
+            EXT_TRACE() << EXT_TRACE_FUNCTION << "keyBindingsCallbacks " << input.vkCode;
+            return true;
+        });
+    }
+
+    if (!m_activeWindowConfiguration.has_value())
+        return;
+
+    // Ignore accidental press
+    for (auto& key : m_activeWindowConfiguration->keysToIgnoreAccidentalPress)
+    {
+        m_vkHandlers[key.vkCode].emplace_back(
+            [input = key, lastTimeWhenKeyWasIgnored = std::optional<std::chrono::system_clock::time_point>{}](bool down) mutable {
+                if (!input.IsPressed(input.vkCode, down))
+                    return false;
+
+                auto now = std::chrono::system_clock::now();
+                if (lastTimeWhenKeyWasIgnored.has_value() &&
+                    (now - *lastTimeWhenKeyWasIgnored) <= std::chrono::seconds(1))
+                {
+                    return false;
+                }
+
+                if (down)
+                    lastTimeWhenKeyWasIgnored = std::move(now);
+
+                EXT_TRACE() << EXT_TRACE_FUNCTION << "keysToIgnoreAccidentalPress " << input.vkCode;
+                return true;
+            });
+    }
+
+    // Key remapping
+    for (auto&& [keyToReplace, replacingKey] : m_activeWindowConfiguration->keysRemapping)
+    {
+        m_vkHandlers[keyToReplace.vkCode].emplace_back([input = keyToReplace, replacingKey](bool down) {
+            if (!input.IsPressed(input.vkCode, down))
+                return false;
+
+            Action::NewAction(replacingKey.vkCode, down, 0).ExecuteAction(0);
+            EXT_TRACE() << EXT_TRACE_FUNCTION << "keysRemapping " << input.vkCode;
+            return true;
+        });
+    }
+
+    // Execute binds commands
+    for (auto&& [bind, actions] : m_activeWindowConfiguration->actionsByBind)
+    {
+        if (bind.whileHold)
+        {
+            m_vkHandlers[bind.vkCode].emplace_back(
+                [
+                    input = bind,
+                    bindActions = actions,
+                    actionExecutor = &m_actionExecutor,
+                    taskId = std::optional<ext::thread_pool::TaskId>{}
+                ](bool down) mutable {
+
+                    const bool pressed = input.IsPressed(input.vkCode, down);
+                    if (!pressed)
+                    {
+                        EXT_TRACE() << EXT_TRACE_FUNCTION << "Not pressed: " << input.vkCode;
+                        if (taskId.has_value())
+                        {
+                            EXT_TRACE() << EXT_TRACE_FUNCTION << "Interrupting while hold bind actions, vkCode: " << input.vkCode;
+                            // Key was released but it was hold bind, we need to stop it's execution
+                            actionExecutor->stop_and_remove_task(taskId.value());
+                            taskId.reset();
+                            return true;
+                        }
+                        EXT_TRACE() << "No task: " << input.vkCode;
+                        return false;
+                    }
+
+                    if (pressed && !taskId.has_value())
+                    {
+                        EXT_TRACE() << EXT_TRACE_FUNCTION << "Starting while hold bind actions, vkCode: " << input.vkCode;
+                        taskId.emplace(actionExecutor->add_task([](Actions actions) {
+                            auto stopToken = ext::this_thread::get_stop_token();
+                            do
+                            {
+                                actions.Execute(stopToken);
+                            } while (!stopToken.stop_requested());
+                        }, bindActions).first);
+                    }
+
+                    EXT_TRACE() << EXT_TRACE_FUNCTION << "actionsByBind " << input.vkCode;
+                    return true;
+                });
+        }
+        else
+        {
+            m_vkHandlers[bind.vkCode].emplace_back(
+                [
+                    input = bind,
+                    bindActions = actions,
+                    actionExecutor = &m_actionExecutor
+                ](bool down) {
+                    if (!input.IsPressed(input.vkCode, down))
+                        return false;
+
+                    actionExecutor->add_task([](Actions actions) {
+                        actions.Execute(ext::this_thread::get_stop_token());
+                    }, bindActions);
+
+                    EXT_TRACE() << EXT_TRACE_FUNCTION << "actionsByBind " << input.vkCode;
+                    return true;
+                });
+        }
+    }
 }
 
 void Worker::OnSettingsChanged(ISettingsChanged::ChangedType changedType)

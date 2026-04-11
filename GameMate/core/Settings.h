@@ -149,7 +149,7 @@ struct Settings
     DECLARE_SERIALIZABLE_FIELD(Rect, windowRect);
     DECLARE_SERIALIZABLE_FIELD(bool, minimizeInterface, true);
     DECLARE_SERIALIZABLE_FIELD(bool, displayHours, false);
-    DECLARE_SERIALIZABLE_FIELD(bool, transparentBackground, false);
+    DECLARE_OPTIONAL_SERIALIZABLE_FIELD(bool, transparentBackground, false);
     DECLARE_SERIALIZABLE_FIELD(COLORREF, textColor, RGB(0, 0, 0));
     DECLARE_SERIALIZABLE_FIELD(COLORREF, backgroundColor, GetSysColor(COLOR_3DFACE));
 };

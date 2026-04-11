@@ -12,20 +12,6 @@ using namespace ext::serializer;
 
 namespace {
 
-constexpr ext::constexpr_map kExtraKeysTovkCodes = {
-	std::pair{Bind::ExtraKeys::LCtrl,	VK_LCONTROL},
-	std::pair{Bind::ExtraKeys::RCtrl,	VK_RCONTROL},
-	std::pair{Bind::ExtraKeys::LShift,	VK_LSHIFT},
-	std::pair{Bind::ExtraKeys::RShift,	VK_RSHIFT},
-	std::pair{Bind::ExtraKeys::LAlt,	VK_LMENU},
-	std::pair{Bind::ExtraKeys::RAlt,	VK_RMENU},
-	std::pair{Bind::ExtraKeys::LWin,	VK_LWIN},
-	std::pair{Bind::ExtraKeys::RWin,	VK_RWIN},
-};
-static_assert(!kExtraKeysTovkCodes.contain_duplicate_keys());
-static_assert(!kExtraKeysTovkCodes.contain_duplicate_values());
-static_assert(kExtraKeysTovkCodes.size() == ext::reflection::get_enum_size<Bind::ExtraKeys>() - 2, "Not all extra keys set");
-
 std::wstring VkCodeToText(WORD vkCode)
 {
 	unsigned extFlag = 0;
@@ -166,12 +152,12 @@ Bind::Bind(WORD vkCode)
 {
 	std::wstring actionString;
 
-	for (auto key = unsigned(ExtraKeys::FirstModifierKey), last = unsigned(ExtraKeys::LastModifierKey); key < last; ++key)
+	for (size_t i = 0, size = Bind::kExtraKeys.size(); i < size; ++i)
 	{
-		if ((extraKeys & (1u << key)) == 0)
+		if (!extraKeys.test(i))
 			continue;
 
-		auto vkCodeKey = kExtraKeysTovkCodes.get_value(ExtraKeys(key));
+		auto vkCodeKey = Bind::kExtraKeys[i];
 		if (vkCodeKey == vkCode)
 			continue;
 
@@ -183,7 +169,7 @@ Bind::Bind(WORD vkCode)
 	{
 	case InputManager::VK_MOUSE_WHEEL:
 	case InputManager::VK_MOUSE_HWHEEL:
-		vkCodeText = ((extraKeys & (1u << (int)ExtraKeys::eScrollUp)) ? L"↑ " : L"↓ ") + vkCodeText;
+		vkCodeText = (extraFlags.test(ExtraFlags::eScrollUp) ? L"↑ " : L"↓ ") + vkCodeText;
 		break;
 	default:
 		break;
@@ -191,19 +177,23 @@ Bind::Bind(WORD vkCode)
 
 	actionString += vkCodeText;
 
+	if (whileHold)
+        actionString += L" (while hold)";
+
 	return actionString;
 }
 
 void Bind::UpdateInput(WORD _vkCode, bool down)
 {
-	unsigned modifiers = 0;
+    decltype(extraKeys) newExtraKeys = 0;
+    decltype(extraFlags) newExtraFlags = 0;
 
 	switch (_vkCode)
 	{
 	case InputManager::VK_MOUSE_WHEEL:
 	case InputManager::VK_MOUSE_HWHEEL:
 		if (!down)
-			modifiers = (1u << (int)ExtraKeys::eScrollUp);
+			newExtraFlags.set(ExtraFlags::eScrollUp);
 		break;
 	default:
 		if (!down)
@@ -211,26 +201,41 @@ void Bind::UpdateInput(WORD _vkCode, bool down)
 		break;
 	}
 
-	for (auto key = unsigned(ExtraKeys::FirstModifierKey), last = unsigned(ExtraKeys::LastModifierKey); key < last; ++key)
+	for (size_t i = 0, size = Bind::kExtraKeys.size(); i < size; ++i)
 	{
-		WORD extravkCode = kExtraKeysTovkCodes.get_value(ExtraKeys(key));
+		WORD extravkCode = Bind::kExtraKeys[i];
 		if (_vkCode == extravkCode || !InputManager::IsKeyPressed(extravkCode))
 			continue;
 
-		modifiers |= (1u << key);
+        newExtraKeys.set(i);
 	}
 
 	vkCode = _vkCode;
-	extraKeys = modifiers;
+	extraKeys = std::move(newExtraKeys);
+	extraFlags = std::move(newExtraFlags);
+}
+
+void Bind::SetExtraKeyPressed(WORD vkCode, bool down)
+{
+	for (size_t i = 0, size = Bind::kExtraKeys.size(); i < size; ++i)
+	{
+		if (Bind::kExtraKeys[i] == vkCode)
+		{
+			extraKeys.set(i, down);
+			return;
+		}
+    }
+    EXT_ASSERT(false) << "Unknown extra key vkCode: " << vkCode;
 }
 
 [[nodiscard]] bool Bind::IsPressed(WORD _vkCode, bool down) const
 {
+	EXT_TRACE() << EXT_FUNCTION << " " << _vkCode << (down ? "v" : "^") << ". required: " << vkCode;
 	switch (vkCode)
 	{
 	case InputManager::VK_MOUSE_WHEEL:
 	case InputManager::VK_MOUSE_HWHEEL:
-		if (down == ((extraKeys & (1u << (int)ExtraKeys::eScrollUp)) == 0))
+		if (down == !extraFlags.test(ExtraFlags::eScrollUp))
 			return false;
 		break;
 	default:
@@ -241,11 +246,10 @@ void Bind::UpdateInput(WORD _vkCode, bool down)
 	}
 
 	bool pressed = vkCode == _vkCode;
-	for (auto key = unsigned(ExtraKeys::FirstModifierKey), last = unsigned(ExtraKeys::LastModifierKey); pressed && key < last; ++key)
+	for (size_t i = 0, size = Bind::kExtraKeys.size(); pressed && i < size; ++i)
 	{
-		const bool keyMustbePressed = (extraKeys & (1u << key)) != 0;
-		if (keyMustbePressed)
-			pressed &= InputManager::IsKeyPressed(kExtraKeysTovkCodes.get_value(ExtraKeys(key)));
+		if (extraKeys.test(i))
+			pressed &= InputManager::IsKeyPressed(Bind::kExtraKeys[i]);
 	}
 
 	return pressed;
@@ -373,7 +377,7 @@ void Action::ExecuteAction(unsigned delayRandomizeInMs) const
 	}
 }
 
-void Actions::Execute(ext::stop_token stopToken) const
+void Actions::Execute(std::stop_token stopToken) const
 {
 	EXT_TRACE_SCOPE() << EXT_FUNCTION;
 
@@ -383,7 +387,7 @@ void Actions::Execute(ext::stop_token stopToken) const
 		for (; it != end; ++it)
 		{
 			if (stopToken.stop_requested())
-				ext::this_thread::interruption_point();
+				throw ::ext::thread::thread_interrupted();
 
 			it->ExecuteAction(enableRandomDelay ? randomizeDelayMs : 0);
 		}

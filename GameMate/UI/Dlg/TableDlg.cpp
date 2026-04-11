@@ -44,7 +44,7 @@ BOOL CTableDlg::OnInitDialog()
     return TRUE;
 }
 
-controls::list::widgets::SubItemsEditor<CListGroupCtrl>& CTableDlg::GetTable()
+CTableDlg::TableType& CTableDlg::GetTable()
 {
     return m_table;
 }

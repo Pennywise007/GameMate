@@ -104,15 +104,15 @@ process_toolkit::Settings::Settings()
 {
 	// Init vk code here to avoid calling UpdateInput before object deserialization
 	enableBind.vkCode = VK_F8;
-	enableBind.extraKeys |= (1u << (unsigned)Bind::ExtraKeys::LShift);
+	enableBind.SetExtraKeyPressed(VK_LSHIFT, true);
 }
 
 timer::Settings::Settings()
 {
 	// Init vk code here to avoid calling UpdateInput before object deserialization
 	startPauseTimerBind.vkCode = showTimerBind.vkCode = resetTimerBind.vkCode = VK_F7;
-	showTimerBind.extraKeys |= (1u << (unsigned)Bind::ExtraKeys::LShift);
-	resetTimerBind.extraKeys |= (1u << (unsigned)Bind::ExtraKeys::LCtrl);
+	showTimerBind.SetExtraKeyPressed(VK_LSHIFT, true);
+	resetTimerBind.SetExtraKeyPressed(VK_LCONTROL, true);
 }
 
 Settings::Settings()

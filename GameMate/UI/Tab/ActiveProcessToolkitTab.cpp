@@ -31,6 +31,7 @@ namespace {
 
 enum MacrosesColumns {
 	eKeybind = 0,
+	eWhileHold,
 	eMacros,
 	eRandomizeDelay
 };
@@ -274,11 +275,18 @@ void CActiveProcessToolkitTab::initMacrosesTable()
 	list.GetClientRect(rect);
 
 	constexpr int kKeybindColumnWidth = 80;
+	constexpr int kWhileHoldColumnWidth = 80;
 	constexpr int kRandomizeDelayColumnWidth = 50;
 	list.InsertColumn(MacrosesColumns::eKeybind, L"Key bind", LVCFMT_CENTER, kKeybindColumnWidth);
-	list.InsertColumn(MacrosesColumns::eMacros, L"Macros", LVCFMT_CENTER, rect.Width() - kKeybindColumnWidth - kRandomizeDelayColumnWidth);
+	list.InsertColumn(MacrosesColumns::eWhileHold, L"While hold", LVCFMT_CENTER, kWhileHoldColumnWidth);
+	list.InsertColumn(MacrosesColumns::eMacros, L"Macros", LVCFMT_CENTER, rect.Width() - kKeybindColumnWidth - kKeybindColumnWidth - kRandomizeDelayColumnWidth);
 	list.InsertColumn(MacrosesColumns::eRandomizeDelay, L"Randomize delay, ms", LVCFMT_CENTER, kRandomizeDelayColumnWidth);
 	list.SetProportionalResizingColumns({ MacrosesColumns::eMacros });
+
+	list.SetCheckboxColumn(MacrosesColumns::eWhileHold);
+	// remove common checkbox
+	CHeaderCtrl* header = list.GetHeaderCtrl();
+	header->ModifyStyle(HDS_CHECKBOXES | HDS_BUTTONS, 0);
 
 	list.setSubItemEditorController(MacrosesColumns::eKeybind,
 		[&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
@@ -322,6 +330,44 @@ void CActiveProcessToolkitTab::initMacrosesTable()
 
 			return nullptr;
 		});
+
+	list.SetCheckboxChangedCallback([&](int item, int subItem, bool checked)
+		{
+			auto& actionsByBind = m_configuration->actionsByBind;
+
+			ASSERT((int)actionsByBind.size() > item);
+			auto editableActionsIt = std::next(actionsByBind.begin(), item);
+
+			auto newBind = editableActionsIt->first;
+			newBind.whileHold = checked;
+
+			if (auto sameBindIt = actionsByBind.find(newBind); sameBindIt != actionsByBind.end())
+			{
+				if (MessageBox((L"Bind '" + newBind.ToString() + L"' already exists, do you want to replace it?").c_str(),
+					L"This bind already exist", MB_ICONWARNING | MB_OKCANCEL) == IDCANCEL)
+				{
+					m_macrosesDlg.GetTable().SetCheckbox(item, subItem, !checked);
+					return;
+				}
+				auto sameItem = (int)std::distance(actionsByBind.begin(), sameBindIt);
+				auto actions = std::move(editableActionsIt->second);
+				actionsByBind.erase(editableActionsIt);
+				actionsByBind.erase(sameBindIt);
+				m_macrosesDlg.GetTable().DeleteItem(std::max<int>(item, sameItem));
+				m_macrosesDlg.GetTable().DeleteItem(std::min<int>(item, sameItem));
+				AddNewActions(std::move(newBind), std::move(actions));
+			}
+			else
+			{
+				auto currentActions = std::move(editableActionsIt->second);
+				actionsByBind.erase(editableActionsIt);
+				m_macrosesDlg.GetTable().DeleteItem(item);
+				AddNewActions(std::move(newBind), std::move(currentActions));
+			}
+
+			ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eProcessToolkit);
+		});
+
 	const auto actionsEdit = [&](CListCtrl* pList, CWnd* parentWindow, const LVSubItemParams* pParams)
 		{
 			auto& actionsByBind = m_configuration->actionsByBind;
@@ -650,6 +696,7 @@ void CActiveProcessToolkitTab::AddNewActions(const Bind& keybind, Actions&& newA
 		}
 	}
 	table.SetItemText(item, MacrosesColumns::eMacros, actions.c_str());
+	table.SetCheckbox(item, MacrosesColumns::eWhileHold, it.first->first.whileHold);
 
 	std::wostringstream str;
 	if (it.first->second.enableRandomDelay)

@@ -5,8 +5,10 @@
 #include <Controls/Button/IconButton/IconButton.h>
 #include <Controls/Tables/List/ListGroupCtrl/ListGroupCtrl.h>
 #include <Controls/Tables/List/Widgets/SubItemsEditor/SubItemsEditor.h>
+#include <Controls/Tables/List/Widgets/SubItemsControls/SubItemsControls.h>
 
 #include "UI/Controls/CenteredLineStatic.h"
+
 
 class CTableDlg : public CDialogEx
 {
@@ -17,6 +19,8 @@ public:
 
 	enum { IDD = IDD_DIALOG_TABLE };
 
+    using TableType = controls::list::widgets::SubItemsControls<controls::list::widgets::SubItemsEditor<CListGroupCtrl>>;
+
 public:
 	void Init(
 		const wchar_t* title,
@@ -24,7 +28,7 @@ public:
 		std::function<void()>&& onAddClicked,
 		std::function<void()>&& onRemoveClicked);
 
-	[[nodiscard]] controls::list::widgets::SubItemsEditor<CListGroupCtrl>& GetTable();
+	[[nodiscard]] TableType& GetTable();
 	void UpdateRemoveButtonState();
 
 protected:
@@ -40,7 +44,7 @@ protected:
 	afx_msg void OnWindowPosChanged(WINDOWPOS* lpwndpos);
 
 protected:
-	controls::list::widgets::SubItemsEditor<CListGroupCtrl> m_table;
+	TableType m_table;
 	CIconButton m_buttonAdd;
 	CIconButton m_buttonRemove;
 	CCenteredLineStatic m_staticTitle;

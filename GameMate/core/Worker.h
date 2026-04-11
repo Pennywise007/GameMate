@@ -7,6 +7,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <array>
 
 #include "events.h"
 #include "Crosshairs.h"
@@ -42,19 +43,18 @@ private:
     HWINEVENTHOOK m_activeWindowHook = nullptr;
     // Transparent window to show top most crosshair
     process_toolkit::crosshair::AttachableCrosshairWindow m_crosshairWindow;
-    // we use 1 thread to put macroses in a single queue
-    ext::thread_pool m_macrosExecutor = { 1 };
-    ext::thread_pool m_actionExecutor = { 1 };
     // Current active window and process name, we store it just to avoid problems with getting
     // process name from GetForegroundWindow and with protected processes
     HWND m_activeWindow = nullptr;
     std::wstring m_activeProcessName;
     // Mutex for key press information
-    std::mutex m_dataMutex;
-    // Callbacks for each key bind
-    std::map<Bind, std::function<void()>> m_keyBindingsCallbacks;
+    std::shared_mutex m_dataMutex;
     // Active window program configuration
     std::optional<process_toolkit::ProcessConfiguration> m_activeWindowConfiguration;
     // Task id of the saving settings task
     ext::TaskId m_saveSettingsTaskId;
+
+    // Array of handlers by VK code
+    std::array<std::list<std::function<bool(bool down)>>, 256> m_vkHandlers;
+    ext::thread_pool m_actionExecutor;
 };

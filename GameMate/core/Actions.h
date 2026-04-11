@@ -58,28 +58,35 @@ struct Bind : IBaseInput
     [[nodiscard]] bool IsPressed(WORD vkCode, bool down) const override;
     // Update input
     void UpdateInput(WORD vkCode, bool down) override;
+    // Set extra key pressed state, note that vkCode must be in kExtraKeys array
+    void SetExtraKeyPressed(WORD vkCode, bool down);
 
-    enum class ExtraKeys
+    // Extra keyboard keys that can be used in combination with main key (vkCode) to trigger bind.
+    // For example, Ctrl+Shift+F1 or Win+F2 etc.
+    constexpr static std::array kExtraKeys = {
+        VK_LCONTROL,
+        VK_RCONTROL,
+        VK_LSHIFT,
+        VK_RSHIFT,
+        VK_LMENU,
+        VK_RMENU,
+        VK_LWIN,
+        VK_RWIN
+    };
+
+    enum ExtraFlags
     {
-        FirstModifierKey,
-        LCtrl = FirstModifierKey,
-        RCtrl,
-        LShift,
-        RShift,
-        LAlt,
-        RAlt,
-        LWin,
-        RWin,
-        LastModifierKey,
-        eScrollUp   // for mouse (h)wheel up
+        eScrollUp,   // for mouse (h)wheel up
+
+        eCount,
     };
 
     REGISTER_SERIALIZABLE_OBJECT();
     DECLARE_SERIALIZABLE_FIELD(int, vkCode, kNotSetVkCode);
-    DECLARE_SERIALIZABLE_FIELD(unsigned, extraKeys, 0);
-
-    static_assert(size_t(ExtraKeys::eScrollUp) < CHAR_BIT * sizeof(decltype(extraKeys)),
-        "Bind::extraKeys type is too small to use enum ExtraKeys as flags");
+    DECLARE_OPTIONAL_SERIALIZABLE_FIELD(std::bitset<kExtraKeys.size()>, extraKeys);
+    DECLARE_OPTIONAL_SERIALIZABLE_FIELD(std::bitset<ExtraFlags::eCount - 1>, extraFlags);
+    // Execute the bind when key hold, not on release
+    DECLARE_OPTIONAL_SERIALIZABLE_FIELD(bool, whileHold, false);
 };
 
 struct Action : IBaseInput

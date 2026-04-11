@@ -123,17 +123,7 @@ std::optional<InputManager::Error> InputManager::SetInputSimulator(InputSimulato
     else
         error = IbSendInit(Send::SendType(inputSimulator), 0, 0);
 
-    if (error == Send::Error::Success)
-    {
-        EXT_TRACE() << EXT_TRACE_FUNCTION << "Input simulator successfully set " << uint32_t(inputSimulator);
-
-        // If we use default SendInput method it means that we send event with injected flag which can be detected
-        // by some anti-cheat programs, will try to extract this flag(no proves that it works, but a lot of people recommend)
-        if (inputSimulator == InputSimulator::SendInput)
-            ext::get_singleton<InputManager>().m_extractInjectedEvents = true;
-        return std::nullopt;
-    }
-    else
+    if (error != Send::Error::Success)
     {
         std::map<Send::Error, const wchar_t*> kErrorCodes = {
             { Send::Error::InvalidArgument,    L"invalid argument"},
@@ -150,6 +140,15 @@ std::optional<InputManager::Error> InputManager::SetInputSimulator(InputSimulato
             << ", err " << uint32_t(error) << "(" << errorText << ")";
         return errorText;
     }
+
+    EXT_TRACE() << EXT_TRACE_FUNCTION << "Input simulator successfully set " << uint32_t(inputSimulator);
+
+    // If we use default SendInput method it means that we send event with injected flag which can be detected
+    // by some anti-cheat programs, will try to extract this flag(no proves that it works, but a lot of people recommend)
+    if (inputSimulator == InputSimulator::SendInput)
+        ext::get_singleton<InputManager>().m_extractInjectedEvents = true;
+
+    return std::nullopt;
 }
 
 InputManager::InputManager()
