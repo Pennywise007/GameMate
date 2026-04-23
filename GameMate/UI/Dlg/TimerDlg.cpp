@@ -488,7 +488,7 @@ void CTimerDlg::showFullInterface()
 
 	SetRedraw(TRUE);
 	m_timerWindow.SetRedraw(TRUE);
-	RedrawWindow();
+	RedrawWindow(NULL, NULL, RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE);
 
 	// Restore minimum window size restrictions
 	Layout::SetWindowMinimumSize(*this, kMinimumTimerWindowSize.cx, kMinimumTimerWindowSize.cy);

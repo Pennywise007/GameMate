@@ -522,7 +522,7 @@ void CActiveProcessToolkitTab::initKeyRebindingsTable()
 void CActiveProcessToolkitTab::UpdateControlsData()
 {
 	SetRedraw(FALSE);
-	EXT_DEFER(SetRedraw(TRUE); RedrawWindow());
+	EXT_DEFER(SetRedraw(TRUE); RedrawWindow(NULL, NULL, RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE););
 
 	auto& settings = ext::get_singleton<Settings>().process_toolkit;
 

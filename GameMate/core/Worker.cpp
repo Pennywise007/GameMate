@@ -143,10 +143,10 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
         m_activeWindowConfiguration.reset();
     }
 
-    EXT_DEFER([&]() {
+    EXT_DEFER(
         if (oldConfigExisted || m_activeWindowConfiguration.has_value())
             updateKeyBindings();
-    });
+    );
 
     auto& settings = ext::get_singleton<Settings>().process_toolkit;
     if (!settings.enabled)
@@ -154,7 +154,7 @@ void Worker::OnForegroundChanged(HWND hWnd, const std::wstring& processName)
 
     for (auto& program : settings.processConfigurations)
     {
-        if (program->MatchExeName(m_activeProcessName))
+        if (program->enabled && program->MatchExeName(m_activeProcessName))
         {
             m_activeWindowConfiguration = *program;
             break;
@@ -253,7 +253,10 @@ void Worker::updateKeyBindings()
     }
 
     if (!m_activeWindowConfiguration.has_value())
+    {
+        EXT_TRACE() << EXT_TRACE_FUNCTION << "No active window";
         return;
+    }
 
     // Ignore accidental press
     for (auto& key : m_activeWindowConfiguration->keysToIgnoreAccidentalPress)
