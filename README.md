@@ -57,6 +57,11 @@ Go to [releases](https://github.com/Pennywise007/GameMate/releases) and download
 1. Run `prerequisites.bat` to load submodules and build dependencies.
 2. Open `GameMate.sln` with Visual Studio and build.
 
+## Supported flags
+
+--minimized: app is started in the minimized to tray mode.
+--execute: app will start and execute configured actions. Useful for automation.
+
 ## Recognitions
 
 Special thanks to [@Chaoses-Ib](https://github.com/Chaoses-Ib) for the collaboration and amazing [IbInputSimulator](https://github.com/Chaoses-Ib/IbInputSimulator)

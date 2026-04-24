@@ -28,6 +28,7 @@ protected:
 
 private:
 	bool IsRunAtStartupEnabled() const;
+	void UpdateStartupSettings(bool enable) const;
 	void ApplySettings() const;
 
 private:

@@ -116,6 +116,30 @@ bool MainSettingsDlg::IsRunAtStartupEnabled() const
     return key.QueryStringValue(kAppName.c_str(), value, &size) == ERROR_SUCCESS;
 }
 
+void MainSettingsDlg::UpdateStartupSettings(bool enable) const
+{
+    CRegKey key;
+    if (auto res = key.Open(kUser, kKey, KEY_WRITE); res == ERROR_SUCCESS)
+    {
+        if (enable)
+        {
+            const std::wstring value = std::string_swprintf(LR"("%s" --minimized)", std::filesystem::get_full_exe_path().c_str());
+            key.SetStringValue(kAppName.c_str(), value.c_str());
+        }
+        else
+        {
+            key.DeleteValue(kAppName.c_str());
+        }
+    }
+    else
+    {
+        std::error_code ec(res, std::system_category());
+        ::MessageBox(m_hWnd, std::widen(ec.message()).c_str(),
+                     L"Failed to update startup settings",
+                     MB_OK | MB_ICONERROR);
+    }
+}
+
 void MainSettingsDlg::ApplySettings() const
 {
     auto& settings = ext::get_singleton<Settings>();
@@ -138,26 +162,7 @@ void MainSettingsDlg::ApplySettings() const
         }
     }
 
-    CRegKey key;
-    if (auto res = key.Open(kUser, kKey, KEY_WRITE); res == ERROR_SUCCESS)
-    {
-        if (m_checkboxRunOnStartup.GetCheck() == BST_CHECKED)
-        {
-            const std::wstring value = std::string_swprintf(LR"("%s" --autostart)", std::filesystem::get_full_exe_path().c_str());
-            key.SetStringValue(kAppName.c_str(), value.c_str());
-        }
-        else
-        {
-            key.DeleteValue(kAppName.c_str());
-        }
-    }
-    else
-    {
-        std::error_code ec(res, std::system_category());
-        ::MessageBox(m_hWnd, std::widen(ec.message()).c_str(),
-                     L"Failed to update startup settings",
-                     MB_OK | MB_ICONERROR);
-    }
+    UpdateStartupSettings(m_checkboxRunOnStartup.GetCheck() == BST_CHECKED);
 
     settings.timer.showTimerBind = m_bindShowTimer;
     ext::send_event(&ISettingsChanged::OnSettingsChanged, ISettingsChanged::ChangedType::eTimer);

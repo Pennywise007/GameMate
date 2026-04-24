@@ -40,6 +40,7 @@ protected:
 	afx_msg void OnBnClickedMfcbuttonInputSimulatorInfo();
 	afx_msg void OnBnClickedMfcbuttonMainSettings();
 	afx_msg void OnBnClickedCheckTimer();
+	afx_msg void OnWindowPosChanging(WINDOWPOS* lpwndpos);
 
 private: // ITimerNotifications
 	void OnShowHideTimer() override;
@@ -52,6 +53,7 @@ private: // ISettiingsChangeg
 private:
 	void updateDriverInfoButton();
 	void updateTimerButton();
+	void restoreWindow();
 
 private:
 	HICON m_hIcon;
@@ -60,6 +62,10 @@ private:
 	CButton m_buttonShowTimer;
 	CIconButton m_buttonSetting;
 	CButtonsTabCtrl<CTabControl> m_tabControlModes;
+	// flag that app started in the hidden mode
+	bool m_hideWindow = false;
+	// previously active window before starting the app
+	const HWND m_previouslyActiveWindow;
 
 private:
 	CTimerDlg m_timerDlg;

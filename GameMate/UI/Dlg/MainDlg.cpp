@@ -18,6 +18,7 @@
 
 #include <ext/core.h>
 #include <ext/core/check.h>
+#include <ext/core/command_line.h>
 #include <ext/constexpr/map.h>
 
 #include <Controls/Layout/Layout.h>
@@ -74,10 +75,20 @@ template <class Type>
 
 CMainDlg::CMainDlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_DIALOG_MAIN, pParent)
+	, m_previouslyActiveWindow(::GetForegroundWindow())
 {
 	ext::core::Init();
 
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+
+	ext::core::CommandLineParser parser;
+	parser.GetFlag(L"minimized", m_hideWindow);
+	if (!m_hideWindow)
+	{
+		bool executeActions;
+		if (parser.GetFlag(L"execute", executeActions) && executeActions)
+			m_hideWindow = true;
+	}
 }
 
 void CMainDlg::DoDataExchange(CDataExchange* pDX)
@@ -102,6 +113,7 @@ BEGIN_MESSAGE_MAP(CMainDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_MFCBUTTON_INPUT_DRIVER_INFO, &CMainDlg::OnBnClickedMfcbuttonInputSimulatorInfo)
 	ON_BN_CLICKED(IDC_MFCBUTTON_MAIN_SETTINGS, &CMainDlg::OnBnClickedMfcbuttonMainSettings)
 	ON_BN_CLICKED(IDC_CHECK_TIMER, &CMainDlg::OnBnClickedCheckTimer)
+	ON_WM_WINDOWPOSCHANGING()
 END_MESSAGE_MAP()
 
 BOOL CMainDlg::OnInitDialog()
@@ -160,8 +172,7 @@ BOOL CMainDlg::OnInitDialog()
 			switch (commandId)
 			{
 			case ID_MENU_OPEN:
-				ShowWindow(SW_RESTORE);
-				SetForegroundWindow();
+				restoreWindow();
 				break;
 			case ID_MENU_ENABLE_PROCESS_TOOLKIT:
 			case ID_MENU_DISABLE_PROCESS_TOOLKIT:
@@ -191,8 +202,7 @@ BOOL CMainDlg::OnInitDialog()
 		},
 		[this]()
 		{
-			ShowWindow(SW_RESTORE);
-			SetForegroundWindow();
+			restoreWindow();
 		});
 
 	try
@@ -233,6 +243,20 @@ BOOL CMainDlg::OnInitDialog()
 	catch (...)
 	{
 		MessageBox((L"Try to remove config file and restart app. Err:\n" + ext::ManageExceptionText(L"")).c_str(), L"Failed to init input simulator", MB_OK);
+	}
+
+	bool executeActions;
+	ext::core::CommandLineParser parser;
+	if (parser.GetFlag(L"execute", executeActions) && executeActions)
+	{
+		EXT_TRACE_SCOPE() << EXT_TRACE_FUNCTION << "Running actions";
+		auto thread = ext::thread([&]() {
+			// Activate previous window to execute actions in the prev app
+			::SetForegroundWindow(m_previouslyActiveWindow);
+			settings.actions_executor.actions.Execute(ext::this_thread::get_stop_token());
+		});
+		thread.join();
+		ExitProcess(0);
 	}
 
 	m_buttonSetting.SetBitmap(IDB_PNG_SETTINGS, Alignment::LeftCenter);
@@ -364,8 +388,7 @@ void CMainDlg::OnSysCommand(UINT nID, LPARAM lParam)
 				NIIF_INFO,
 				[this]()
 				{
-					ShowWindow(SW_RESTORE);
-					SetForegroundWindow();
+					restoreWindow();
 				});
 		}
 		break;
@@ -509,4 +532,19 @@ void CMainDlg::updateTimerButton()
 	CString buttonText;
 	buttonText.Format(L"Show timer (%s)", ext::get_singleton<Settings>().timer.showTimerBind.ToString().c_str());
 	m_buttonShowTimer.SetWindowTextW(buttonText);
+}
+
+void CMainDlg::restoreWindow()
+{
+	m_hideWindow = false;
+	ShowWindow(SW_RESTORE);
+	SetForegroundWindow();
+}
+
+void CMainDlg::OnWindowPosChanging(WINDOWPOS* lpwndpos)
+{
+	if (m_hideWindow)
+		lpwndpos->flags &= ~SWP_SHOWWINDOW;
+
+	__super::OnWindowPosChanging(lpwndpos);
 }
