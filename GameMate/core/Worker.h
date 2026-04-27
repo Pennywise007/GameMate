@@ -48,7 +48,7 @@ private:
     HWND m_activeWindow = nullptr;
     std::wstring m_activeProcessName;
     // Mutex for key press information
-    std::shared_mutex m_dataMutex;
+    std::recursive_mutex m_dataMutex;
     // Active window program configuration
     std::optional<process_toolkit::ProcessConfiguration> m_activeWindowConfiguration;
     // Task id of the saving settings task
