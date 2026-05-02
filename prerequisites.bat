@@ -54,7 +54,7 @@ if %errorlevel% neq 0 (
 )
 
 echo :: Configuring CMake project...
-cmake .. -G "%VS_GEN%" -A x64 -DCMAKE_TOOLCHAIN_FILE="..\..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static
+cmake .. -G "%VS_GEN%" -A x64 -DCMAKE_TOOLCHAIN_FILE="..\..\vcpkg\scripts\buildsystems\vcpkg.cmake" -DVCPKG_TARGET_TRIPLET=x64-windows-static -DBUILD_SHARED_LIBS=OFF
 if %errorlevel% neq 0 (
     echo [ERROR] CMake configuration failed.
     pause
@@ -82,6 +82,8 @@ cd ..\..
 echo :: Copying build artifacts...
 xcopy "%BUILD_DIR%\Simulator\Debug" "x64\Debug" /s /e /i /Y
 xcopy "%BUILD_DIR%\Simulator\Release" "x64\Release" /s /e /i /Y
+xcopy "vcpkg\installed\x64-windows-static\lib" "x64\Debug" /s /e /i /Y
+xcopy "vcpkg\installed\x64-windows-static\lib" "x64\Release" /s /e /i /Y
 
 echo.
 echo Build complete!
