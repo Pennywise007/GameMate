@@ -326,6 +326,9 @@ void AttachableCrosshairWindow::OnWindowPosChanged(HWND hwnd)
     CPoint topLeft = activeWindowRect.CenterPoint();
     topLeft.Offset(-rect.Width() / 2, -rect.Height() / 2);
 
+    const auto style = GetStyle();
+    const auto styleEx = GetExStyle();
+    EXT_TRACE() << EXT_TRACE_FUNCTION << "Set pos {" << topLeft.x << ", " << topLeft.y << "}, style " << style << ", styleEx " << styleEx;
     SetWindowPos(
            nullptr,
            topLeft.x,

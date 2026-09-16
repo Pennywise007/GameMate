@@ -7,12 +7,26 @@
 #include "InputSimulator.hpp"
 
 #include <ext/core/check.h>
+#include <ext/reflection/enum.h>
 #include <ext/core/tracer.h>
 #include <ext/constexpr/map.h>
 
 //#define DONT_USE_HOOK
 
 namespace {
+
+ext::constexpr_map kInputSimulatorToSendType = {
+    std::pair{ InputManager::InputSimulator::Auto, Send::SendType::AnyDriver },
+    std::pair{ InputManager::InputSimulator::SendInput, Send::SendType::SendInput },
+    std::pair{ InputManager::InputSimulator::Logitech, Send::SendType::Logitech },
+    std::pair{ InputManager::InputSimulator::LogitechGHubNew, Send::SendType::LogitechGHubNew },
+    std::pair{ InputManager::InputSimulator::Razer, Send::SendType::Razer },
+    std::pair{ InputManager::InputSimulator::DD, Send::SendType::DD },
+    std::pair{ InputManager::InputSimulator::MouClassInputInjection, Send::SendType::MouClassInputInjection },
+};
+
+static_assert(ext::reflection::get_enum_size<InputManager::InputSimulator>() ==
+              ext::reflection::get_enum_size<Send::SendType>(), "Missmatch in send types found!");
 
 //#define SEND_INPUT_ON_DRIVER_FAIL
 
@@ -114,14 +128,34 @@ std::optional<InputManager::Error> InputManager::SetInputSimulator(InputSimulato
 
         for (const auto& mode : driversPriority)
         {
-            inputSimulator = InputSimulator(mode);
             error = IbSendInit(mode, 0, 0);
             if (error == Send::Error::Success)
+            {
+                EXT_ASSERT(kInputSimulatorToSendType.contains_value(mode));
+                if (!kInputSimulatorToSendType.contains_value(mode))
+                {
+                    error = Send::Error::InvalidArgument;
+                    continue;
+                }
+
+                inputSimulator = kInputSimulatorToSendType.get_key(mode);
                 break;
+            }
         }
     }
     else
-        error = IbSendInit(Send::SendType(inputSimulator), 0, 0);
+    {
+        EXT_ASSERT(kInputSimulatorToSendType.contains_key(inputSimulator));
+        if (!kInputSimulatorToSendType.contains_key(inputSimulator))
+        {
+            constexpr auto error = L"failed to map input simulator to driver type";
+            EXT_TRACE_ERR() << EXT_TRACE_FUNCTION << "Failed to set input simulator " << uint32_t(inputSimulator)
+                << ", err " << error;
+            return error;
+        }
+
+        error = IbSendInit(kInputSimulatorToSendType.get_value(inputSimulator), 0, 0);
+    }
 
     if (error != Send::Error::Success)
     {
